@@ -98,7 +98,7 @@ CATATAN GAP (sadar, bukan lupa):
 ## 8. Pengembangan Lanjut (kosong — diisi Fairuz sesuai permintaan nanti)
 - (contoh: kategori custom, grafik per minggu, export CSV, MySQL beneran,
   anggota keluarga terpisah dengan hak akses, dst.)
--
+- Pengembangan Profile lanjutan (detail menyusul dari Fairuz; versi sekarang cukup).
 -
 
 ## 9. Catatan Porting Desktop `customtkinter` (NANTI — setelah webapp lulus total)
