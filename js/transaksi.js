@@ -38,7 +38,7 @@ function tampil() {
   }
   data.forEach(function(t) {
     const li = document.createElement('li');
-    li.textContent = '[' + t.id + '] ' + t.jenis + ' Rp' + t.jumlah + ' (' + t.tanggal + ') ';
+    li.textContent = '[' + t.id + '] ' + t.jenis + ' Rp' + formatRupiah(t.jumlah) + ' (' + t.tanggal + ') ';
 
     const btnUbah = document.createElement('button');
     btnUbah.textContent = 'Ubah';
@@ -64,7 +64,7 @@ function tampil() {
           hasil.textContent = 'Gagal (' + out.code + '): ' + out.error;
           return;
         }
-        hasil.textContent = 'Transaksi id ' + t.id + ' diubah jadi Rp' + baru + '.';
+        hasil.textContent = 'Transaksi id ' + t.id + ' diubah jadi Rp' + formatRupiah(baru) + '.';
         tampil();
       });
 
@@ -85,7 +85,7 @@ function tampil() {
     const btnHapus = document.createElement('button');
     btnHapus.textContent = 'Hapus';
     btnHapus.addEventListener('click', function() {
-      if (!window.confirm('Hapus transaksi Rp' + t.jumlah + '?')) return;
+      if (!window.confirm('Hapus transaksi Rp' + formatRupiah(t.jumlah) + '?')) return;
       deleteTransaksi(t.id);
       hasil.textContent = 'Transaksi id ' + t.id + ' dihapus.';
       tampil();
@@ -112,7 +112,7 @@ form.addEventListener('submit', function(e) {
   btnTambah.textContent = 'Catat';
   if (res.code === 201) {
     document.getElementById('jumlah').value = '';
-    hasil.textContent = res.data.jenis + ' Rp' + res.data.jumlah + ' tercatat!';
+    hasil.textContent = res.data.jenis + ' Rp' + formatRupiah(res.data.jumlah) + ' tercatat!';
     tampil();
   } else {
     hasil.textContent = 'Gagal (' + res.code + '): ' + res.error;
