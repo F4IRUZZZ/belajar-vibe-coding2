@@ -4,6 +4,14 @@ const btnTambah = document.getElementById('btn-tambah');
 const hasil = document.getElementById('hasil');
 const listEl = document.getElementById('list-transaksi');
 
+// Parse nominal Rupiah versi bulat: buang semua non-digit.
+// '20.000' -> 20000, 'Rp 20.000' -> 20000, 'abc'/kosong -> NaN (ditolak 400).
+function parseRupiah(teks) {
+  const digit = String(teks).replace(/[^0-9]/g, '');
+  if (!digit) return NaN;
+  return Number(digit);
+}
+
 // Guard: harus login — baca token, 401 = redirect ke login
 const token = window.localStorage.getItem('token');
 const resProfile = getProfile(token);
@@ -38,14 +46,14 @@ function tampil() {
       // Mode edit inline (tanpa prompt): input jumlah baru + Simpan/Batal
       li.innerHTML = '';
       const input = document.createElement('input');
-      input.type = 'number';
-      input.min = '1';
+      input.type = 'text';
+      input.inputMode = 'numeric';
       input.value = t.jumlah;
 
       const btnSimpan = document.createElement('button');
       btnSimpan.textContent = 'Simpan';
       btnSimpan.addEventListener('click', function() {
-        const baru = Number(input.value);
+        const baru = parseRupiah(input.value);
         const out = updateTransaksi(t.id, { jumlah: baru });
         if (!out) {
           hasil.textContent = 'Gagal: transaksi tidak ditemukan.';
@@ -97,7 +105,7 @@ form.addEventListener('submit', function(e) {
     return;
   }
   const jenis = document.getElementById('jenis').value;
-  const jumlah = Number(document.getElementById('jumlah').value);
+  const jumlah = parseRupiah(document.getElementById('jumlah').value);
   const tanggal = document.getElementById('tanggal').value;
   btnTambah.textContent = 'Loading...';
   const res = addTransaksi({ userId: userId, jenis: jenis, jumlah: jumlah, tanggal: tanggal });
