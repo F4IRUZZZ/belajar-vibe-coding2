@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Produk - Catatan Keuangan Keluarga</title>
+  <meta name="description" content="Kelola daftar kebutuhan dan barang rumah">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/auth.js" defer></script>
+  <script src="js/keuangan.js" defer></script>
+  <script src="js/produk.js" defer></script>
+</head>
+<body>
+  <main class="card">
+    <h1>Produk</h1>
+    <p id="info-user">Loading...</p>
+    <hr>
+    <h2>Tambah Produk</h2>
+    <form id="form-produk">
+      <label for="nama-produk">Nama:</label>
+      <input type="text" id="nama-produk" placeholder="contoh: Beras"><br><br>
+      <label for="kategori-produk">Kategori:</label>
+      <select id="kategori-produk">
+        <option value="pangan">Pangan</option>
+        <option value="mandi">Mandi</option>
+        <option value="lainnya">Lainnya</option>
+      </select><br><br>
+      <button type="submit" id="btn-tambah-produk" class="btn">Tambah</button>
+    </form>
+    <p id="hasil"></p>
+    <hr>
+    <h2>Daftar</h2>
+    <ul id="list-produk"></ul>
+    <p><a href="index.html">Ke Dashboard</a> | <a href="transaksi.html">Catat Transaksi</a></p>
+  </main>
+</body>
+</html>

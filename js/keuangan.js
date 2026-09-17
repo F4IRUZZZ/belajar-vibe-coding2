@@ -46,6 +46,34 @@ function addProduk(nama, kategori) {
   return { data: item, code: 201 };
 }
 
+function updateProduk(id, patch) {
+  const i = produk.findIndex(function(p) { return p.id === id; });
+  if (i === -1) {
+    return null; // simulasi 404
+  }
+  if (patch.nama !== undefined) {
+    if (!patch.nama || !patch.nama.trim()) {
+      return { error: 'Nama produk wajib', code: 400 };
+    }
+    produk[i].nama = patch.nama.trim();
+  }
+  if (patch.kategori !== undefined) {
+    produk[i].kategori = patch.kategori;
+  }
+  saveKeuanganDB();
+  return produk[i];
+}
+
+function deleteProduk(id) {
+  const i = produk.findIndex(function(p) { return p.id === id; });
+  if (i === -1) {
+    return false; // simulasi 404
+  }
+  produk.splice(i, 1);
+  saveKeuanganDB();
+  return true;
+}
+
 // --- Transaksi ---
 function addTransaksi(input) {
   const jenis = input.jenis;
