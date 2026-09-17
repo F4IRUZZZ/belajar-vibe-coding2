@@ -6,8 +6,11 @@ const listEl = document.getElementById('list-transaksi');
 
 // Parse nominal Rupiah versi bulat: buang semua non-digit.
 // '20.000' -> 20000, 'Rp 20.000' -> 20000, 'abc'/kosong -> NaN (ditolak 400).
+// Teks ber-minus ('-5000') DITOLAK (NaN): minus tidak boleh diam-diam jadi plus.
 function parseRupiah(teks) {
-  const digit = String(teks).replace(/[^0-9]/g, '');
+  const asli = String(teks);
+  if (asli.indexOf('-') !== -1) return NaN;
+  const digit = asli.replace(/[^0-9]/g, '');
   if (!digit) return NaN;
   return Number(digit);
 }
@@ -25,7 +28,7 @@ if (resProfile.code !== 200) {
 } else {
   userId = resProfile.data.id;
   infoUser.textContent = 'Login sebagai: ' + resProfile.data.email + ' (' + resProfile.data.role + ')';
-  document.getElementById('tanggal').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('tanggal').value = tanggalHariIni(); // lokal, bukan UTC
   tampil();
 }
 
