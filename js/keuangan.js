@@ -69,10 +69,13 @@ function addTransaksi(input) {
   return { data: item, code: 201 };
 }
 
-function updateTransaksi(id, patch) {
+function updateTransaksi(id, patch, userId) {
   const i = transaksi.findIndex(function(t) { return t.id === id; });
   if (i === -1) {
     return null; // simulasi 404
+  }
+  if (userId !== undefined && transaksi[i].userId !== userId) {
+    return { error: 'Bukan milikmu', code: 401 }; // otorisasi: milik user lain
   }
   if (patch.jumlah !== undefined) {
     if (typeof patch.jumlah !== 'number' || !(patch.jumlah > 0)) {
@@ -90,10 +93,13 @@ function updateTransaksi(id, patch) {
   return transaksi[i];
 }
 
-function deleteTransaksi(id) {
+function deleteTransaksi(id, userId) {
   const i = transaksi.findIndex(function(t) { return t.id === id; });
   if (i === -1) {
     return false; // simulasi 404
+  }
+  if (userId !== undefined && transaksi[i].userId !== userId) {
+    return { error: 'Bukan milikmu', code: 401 }; // otorisasi: milik user lain
   }
   transaksi.splice(i, 1);
   saveKeuanganDB();
@@ -149,17 +155,23 @@ async function main() {
   console.log('\n----- CATATAN -----');
   console.log(await addCatatan(2, 'Belanja mingguan'));
 
-  console.log('\n----- UBAH transaksi 2 jadi Rp150 -----');
-  console.log(await updateTransaksi(2, { jumlah: 150 }));
+  console.log('\n----- UBAH transaksi 2 jadi Rp150 (user 1) -----');
+  console.log(await updateTransaksi(2, { jumlah: 150 }, 1));
 
   console.log('\n----- SALDO setelah ubah (harap 150) -----');
   console.log(await getSaldo(1));
+
+  console.log('\n----- UBAH milik user lain (401) -----');
+  console.log(await updateTransaksi(2, { jumlah: 10 }, 2));
+
+  console.log('\n----- HAPUS milik user lain (401) -----');
+  console.log(await deleteTransaksi(2, 2));
 
   console.log('\n----- UBAH id 99 (null) -----');
   console.log(await updateTransaksi(99, { jumlah: 10 }));
 
   console.log('\n----- HAPUS transaksi 1 (true) -----');
-  console.log(await deleteTransaksi(1));
+  console.log(await deleteTransaksi(1, 1));
 
   console.log('\n----- HAPUS id 99 (false) -----');
   console.log(await deleteTransaksi(99));

@@ -55,7 +55,7 @@ function tampil() {
       btnSimpan.textContent = 'Simpan';
       btnSimpan.addEventListener('click', function() {
         const baru = parseRupiah(input.value);
-        const out = updateTransaksi(t.id, { jumlah: baru });
+        const out = updateTransaksi(t.id, { jumlah: baru }, userId);
         if (!out) {
           hasil.textContent = 'Gagal: transaksi tidak ditemukan.';
           tampil();
@@ -87,7 +87,16 @@ function tampil() {
     btnHapus.textContent = 'Hapus';
     btnHapus.addEventListener('click', function() {
       if (!window.confirm('Hapus transaksi Rp' + formatRupiah(t.jumlah) + '?')) return;
-      deleteTransaksi(t.id);
+      const outDel = deleteTransaksi(t.id, userId);
+      if (outDel && outDel.error) {
+        hasil.textContent = 'Gagal (' + outDel.code + '): ' + outDel.error;
+        return;
+      }
+      if (!outDel) {
+        hasil.textContent = 'Gagal: transaksi tidak ditemukan.';
+        tampil();
+        return;
+      }
       hasil.textContent = 'Transaksi Rp' + formatRupiah(t.jumlah) + ' dihapus.';
       tampil();
     });
