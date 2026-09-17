@@ -48,7 +48,7 @@ function tampil() {
       const input = document.createElement('input');
       input.type = 'text';
       input.inputMode = 'numeric';
-      input.value = t.jumlah;
+      input.value = formatRupiah(t.jumlah); // tampilkan format 20.000 (parse saat Simpan)
 
       const btnSimpan = document.createElement('button');
       btnSimpan.textContent = 'Simpan';
