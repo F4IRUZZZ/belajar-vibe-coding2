@@ -36,9 +36,10 @@ function tampil() {
     listEl.innerHTML = '<li>Belum ada transaksi.</li>';
     return;
   }
-  data.forEach(function(t) {
+  data.forEach(function(t, i) {
+    const nomor = i + 1; // nomor tampil (1,2,3...) — bukan id, rapat otomatis
     const li = document.createElement('li');
-    li.textContent = '[' + t.id + '] ' + t.jenis + ' Rp' + formatRupiah(t.jumlah) + ' (' + t.tanggal + ') ';
+    li.textContent = nomor + '. ' + t.jenis + ' Rp' + formatRupiah(t.jumlah) + ' (' + t.tanggal + ') ';
 
     const btnUbah = document.createElement('button');
     btnUbah.textContent = 'Ubah';
@@ -64,7 +65,7 @@ function tampil() {
           hasil.textContent = 'Gagal (' + out.code + '): ' + out.error;
           return;
         }
-        hasil.textContent = 'Transaksi id ' + t.id + ' diubah jadi Rp' + formatRupiah(baru) + '.';
+        hasil.textContent = 'Transaksi diubah jadi Rp' + formatRupiah(baru) + '.';
         tampil();
       });
 
@@ -74,7 +75,7 @@ function tampil() {
         tampil();
       });
 
-      li.appendChild(document.createTextNode('[' + t.id + '] ' + t.jenis + ' '));
+      li.appendChild(document.createTextNode(nomor + '. ' + t.jenis + ' '));
       li.appendChild(input);
       li.appendChild(document.createTextNode(' '));
       li.appendChild(btnSimpan);
@@ -87,7 +88,7 @@ function tampil() {
     btnHapus.addEventListener('click', function() {
       if (!window.confirm('Hapus transaksi Rp' + formatRupiah(t.jumlah) + '?')) return;
       deleteTransaksi(t.id);
-      hasil.textContent = 'Transaksi id ' + t.id + ' dihapus.';
+      hasil.textContent = 'Transaksi Rp' + formatRupiah(t.jumlah) + ' dihapus.';
       tampil();
     });
 
