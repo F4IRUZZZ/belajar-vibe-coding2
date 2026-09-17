@@ -1,6 +1,6 @@
 // Sub-task (a): model + CRUD keuangan (produk/transaksi/catatan) + getSaldo
-// Adaptasi BELAJAR JS/items.js. Tahap Node dulu (tanpa localStorage);
-// persist browser menyusul saat halaman dashboard/transaksi (pola auth.js).
+// Adaptasi BELAJAR JS/items.js. Persist browser via localStorage('keuanganDB')
+// (pola auth.js); di Node dilewati, data tetap di memori.
 
 let produk = [];
 let transaksi = [];
@@ -9,6 +9,32 @@ let nextProdukId = 1;
 let nextTransaksiId = 1;
 let nextCatatanId = 1;
 
+function loadKeuanganDB() {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  try {
+    const raw = window.localStorage.getItem('keuanganDB');
+    if (raw) {
+      const db = JSON.parse(raw);
+      produk = db.produk || [];
+      transaksi = db.transaksi || [];
+      catatan = db.catatan || [];
+      nextProdukId = db.nextProdukId || 1;
+      nextTransaksiId = db.nextTransaksiId || 1;
+      nextCatatanId = db.nextCatatanId || 1;
+    }
+  } catch (e) { /* pakai memori default */ }
+}
+
+function saveKeuanganDB() {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  window.localStorage.setItem('keuanganDB', JSON.stringify({
+    produk: produk, transaksi: transaksi, catatan: catatan,
+    nextProdukId: nextProdukId, nextTransaksiId: nextTransaksiId, nextCatatanId: nextCatatanId
+  }));
+}
+
+loadKeuanganDB();
+
 // --- Produk ---
 function addProduk(nama, kategori) {
   if (!nama || !nama.trim()) {
@@ -16,6 +42,7 @@ function addProduk(nama, kategori) {
   }
   const item = { id: nextProdukId++, nama: nama.trim(), kategori: kategori || 'lainnya' };
   produk.push(item);
+  saveKeuanganDB();
   return { data: item, code: 201 };
 }
 
@@ -38,6 +65,7 @@ function addTransaksi(input) {
     tanggal: input.tanggal || new Date().toISOString().slice(0, 10)
   };
   transaksi.push(item);
+  saveKeuanganDB();
   return { data: item, code: 201 };
 }
 
@@ -58,6 +86,7 @@ function updateTransaksi(id, patch) {
     }
     transaksi[i].jenis = patch.jenis;
   }
+  saveKeuanganDB();
   return transaksi[i];
 }
 
@@ -67,6 +96,7 @@ function deleteTransaksi(id) {
     return false; // simulasi 404
   }
   transaksi.splice(i, 1);
+  saveKeuanganDB();
   return true;
 }
 
@@ -81,6 +111,7 @@ function addCatatan(transaksiId, isi) {
   }
   const item = { id: nextCatatanId++, transaksiId: transaksiId, isi: isi.trim() };
   catatan.push(item);
+  saveKeuanganDB();
   return { data: item, code: 201 };
 }
 
