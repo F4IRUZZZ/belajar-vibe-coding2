@@ -75,14 +75,19 @@
 - Nanti: `register.html`, `login.html`, `profile.html`, `produk.html`,
   halaman daftar per kategori.
 
-## 6. Sub-task (3–5, ala `issue.md`)
-- (a) `keuangan.js` lulus di Node: CRUD produk/transaksi/catatan urut +
-  404/401 rapi + `getSaldo()` benar (contoh: masuk Rp300 − keluar Rp200 = Rp100).
-- (b) Halaman dashboard: baca token, tampil saldo, 401 redirect login.
-- (c) Halaman transaksi: form tambah + daftar + ubah/hapus inline
-  (pola `barang-app.js`), persist refresh tetap.
-- (d) Test orang awam end-to-end: daftar → login → tambah produk →
-  catat masuk Rp300 → catat keluar Rp200 → saldo Rp100 → logout → hangus.
+## 6. Sub-task (3–5, ala `issue.md`) — STATUS: backend tuntas 17 Sep 2026
+- (a) [x] `keuangan.js` lulus di Node (PR #3: CRUD + saldo Rp100, 404/401 rapi).
+- (b) [x] Auth + dashboard: role, register/login/profile... (posisi: register/login/index jadi; profile.html BELUM — lihat catatan).
+- (c) [x] Halaman transaksi: form + daftar + ubah/hapus inline + persist (PR #7).
+- (d) [x] Test orang awam end-to-end: daftar → login → tambah → saldo → logout → hangus.
+- (+) [x] `produk.html` CRUD shared (PR #10).
+- (+) [x] Hardening: tolak minus + tanggal lokal (PR #11).
+- (+) [x] Otorisasi ubah/hapus transaksi 401 (PR #8, tindak lanjut review).
+
+CATATAN GAP (sadar, bukan lupa):
+- `profile.html` belum ada di proyek ini (baru di folder belajar). Perlu sebelum fase frontend polish.
+- `addCatatan` belum ada UI (fungsi ada). Masuk bagian 8 bila diminta.
+- Utang sadar: password polos (nanti bcrypt/MySQL), 404-vs-401 enumeration, `confirm()` webview.
 
 ## 7. Testing
 - Node: `node "js/keuangan.js"` (dari root `Webapp Keuangan`) → urut tambah → ubah → hapus →
