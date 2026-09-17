@@ -1,0 +1,100 @@
+:root {
+  --primary-color: #1a73e8;
+  --primary-dark: #1558b0;
+  --bg-color: #f3f4f6;
+  --card-bg: #ffffff;
+  --text-main: #1f2937;
+  --text-muted: #6b7280;
+  --radius: 12px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  line-height: 1.5;
+  padding: 16px;
+}
+
+/* --- Kartu --- */
+.card {
+  background-color: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  width: 90%;
+  max-width: 600px;
+  margin: 16px auto;
+}
+
+.card h1, .card h2 {
+  color: var(--primary-color);
+  margin-bottom: 12px;
+}
+
+/* --- Form --- */
+label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+input[type="email"],
+input[type="password"],
+input[type="text"],
+input[type="number"],
+select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 4px;
+  font-size: 0.9rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+input:focus, select:focus {
+  border-color: var(--primary-color);
+  outline: 2px solid var(--primary-color);
+}
+
+/* --- Tombol --- */
+.btn, button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn:hover, button:hover {
+  background-color: var(--primary-dark);
+}
+
+/* --- Teks --- */
+#hasil, #hasil-login, #hasil-register, #info-user {
+  margin-top: 12px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+a {
+  color: var(--primary-color);
+}
+
+/* --- Responsif --- */
+@media (min-width: 600px) {
+  .card { width: 500px; }
+}
+
+@media (min-width: 1024px) {
+  .card { width: 600px; }
+}
