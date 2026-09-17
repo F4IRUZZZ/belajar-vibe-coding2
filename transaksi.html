@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transaksi - Catatan Keuangan Keluarga</title>
+  <meta name="description" content="Catat, ubah, dan hapus transaksi masuk dan keluar">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/auth.js" defer></script>
+  <script src="js/keuangan.js" defer></script>
+  <script src="js/format.js" defer></script>
+  <script src="js/transaksi.js" defer></script>
+</head>
+<body>
+  <main class="card">
+    <h1>Transaksi</h1>
+    <p id="info-user">Loading...</p>
+    <hr>
+    <h2>Catat Transaksi</h2>
+    <form id="form-transaksi">
+      <label for="jenis">Jenis:</label>
+      <select id="jenis">
+        <option value="masuk">Masuk (pendapatan)</option>
+        <option value="keluar">Keluar (pengeluaran)</option>
+      </select><br><br>
+      <label for="jumlah">Jumlah (Rp):</label>
+      <input type="text" id="jumlah" inputmode="numeric" placeholder="contoh: 20000"><br><br>
+      <label for="tanggal">Tanggal:</label>
+      <input type="date" id="tanggal"><br><br>
+      <button type="submit" id="btn-tambah" class="btn">Catat</button>
+    </form>
+    <p id="hasil"></p>
+    <hr>
+    <h2>Daftar</h2>
+    <ul id="list-transaksi"></ul>
+    <p><a href="index.html">Ke Dashboard</a></p>
+  </main>
+</body>
+</html>

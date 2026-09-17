@@ -18,9 +18,9 @@ if (resProfile.code !== 200) {
   const user = resProfile.data;
   infoUser.textContent = 'Login sebagai: ' + user.email + ' (' + user.role + ')';
   const ringkasan = getSaldo(user.id);
-  totalMasuk.textContent = 'Rp' + ringkasan.masuk;
-  totalKeluar.textContent = 'Rp' + ringkasan.keluar;
-  saldoEl.textContent = 'Rp' + ringkasan.saldo;
+  totalMasuk.textContent = 'Rp' + formatRupiah(ringkasan.masuk);
+  totalKeluar.textContent = 'Rp' + formatRupiah(ringkasan.keluar);
+  saldoEl.textContent = 'Rp' + formatRupiah(ringkasan.saldo);
 }
 
 btnLogout.addEventListener('click', function() {
