@@ -101,9 +101,27 @@ CATATAN GAP (sadar, bukan lupa):
 - Pengembangan Profile lanjutan (detail menyusul dari Fairuz; versi sekarang cukup).
 -
 
-## 9. Catatan Porting Desktop `customtkinter` (NANTI — setelah webapp lulus total)
-- Konsep yang dipakai ulang: Auth (register/login/logout + token/sesi),
-  CRUD + validasi, bentuk error `{error, code}`, alur layered
-  Route → Service → DB → Response.
-- Detail implementasi desktop (Python + `customtkinter` + penyimpanan lokal)
-  ditulis di sini setelah webapp dinyatakan lulus.
+## 9. Multi-device & Porting (SETELAH webapp + backend 4.2 lulus total)
+
+### 9.1 Syarat mutlak: backend beneran
+- Data pindah dari `localStorage` (per HP) ke server + MySQL terpusat
+  (Bun + ElysiaJS + hosting — Tahap 4.2). Tanpa ini, HP anggota keluarga
+  tidak bisa lihat data yang sama.
+
+### 9.2 Android via PWA (rekomendasi)
+- Tambah manifest + service worker → install dari Chrome jadi ikon app,
+  fullscreen, offline dasar. Tanpa Play Store, update otomatis via link.
+- Target user: keluarga (internal, kirim link → install → pakai).
+
+### 9.3 Alternatif: Capacitor APK
+- Bungkus kode web jadi aplikasi Android (Play Store $25 sekali / sideload APK).
+- Dipilih hanya jika butuh store/publik. Keputusan nanti.
+
+### 9.4 Desktop `customtkinter` (rencana lama, tetap valid)
+- Konsep dipakai ulang: Auth, CRUD, validasi, `{error, code}`, layered.
+- Bicara ke server yang sama (bukan `localStorage` lagi).
+
+## 10. Riwayat Perubahan
+- 2026-09-17 — transaksi — Rupiah input+tampil 2 arah (PR #7)
+- 2026-09-17 — transaksi — otorisasi ubah/hapus 401 (PR #8)
+- 2026-09-17 — produk — halaman CRUD shared (PR #10)

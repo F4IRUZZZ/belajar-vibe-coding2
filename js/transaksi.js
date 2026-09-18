@@ -104,9 +104,68 @@ function tampil() {
       tampil();
     });
 
+    const btnCatatan = document.createElement('button');
+    btnCatatan.textContent = 'Catatan';
+    btnCatatan.addEventListener('click', function() {
+      // Kembangkan/tutup panel catatan di bawah baris ini
+      const lama = li.querySelector('.panel-catatan');
+      if (lama) {
+        li.removeChild(lama);
+        return;
+      }
+      const panel = document.createElement('div');
+      panel.className = 'panel-catatan';
+
+      const daftar = catatan.filter(function(c) { return c.transaksiId === t.id; });
+      const ul = document.createElement('ul');
+      if (daftar.length === 0) {
+        const kosong = document.createElement('li');
+        kosong.textContent = 'Belum ada catatan.';
+        ul.appendChild(kosong);
+      } else {
+        daftar.forEach(function(c) {
+          const item = document.createElement('li');
+          item.textContent = c.isi;
+          ul.appendChild(item);
+        });
+      }
+      panel.appendChild(ul);
+
+      const inputCatatan = document.createElement('input');
+      inputCatatan.type = 'text';
+      inputCatatan.placeholder = 'Tulis catatan...';
+      panel.appendChild(inputCatatan);
+      panel.appendChild(document.createTextNode(' '));
+
+      const btnSimpanCatatan = document.createElement('button');
+      btnSimpanCatatan.textContent = 'Simpan';
+      btnSimpanCatatan.addEventListener('click', function() {
+        const res = addCatatan(t.id, inputCatatan.value, userId);
+        if (res.code === 201) {
+          hasil.textContent = 'Catatan tersimpan.';
+          tampil();
+        } else {
+          hasil.textContent = 'Gagal (' + res.code + '): ' + res.error;
+        }
+      });
+      panel.appendChild(btnSimpanCatatan);
+      panel.appendChild(document.createTextNode(' '));
+
+      const btnTutup = document.createElement('button');
+      btnTutup.textContent = 'Tutup';
+      btnTutup.addEventListener('click', function() {
+        li.removeChild(panel);
+      });
+      panel.appendChild(btnTutup);
+
+      li.appendChild(panel);
+    });
+
     li.appendChild(btnUbah);
     li.appendChild(document.createTextNode(' '));
     li.appendChild(btnHapus);
+    li.appendChild(document.createTextNode(' '));
+    li.appendChild(btnCatatan);
     listEl.appendChild(li);
   });
 }
