@@ -92,7 +92,7 @@ input:focus, select:focus {
 }
 
 /* --- Teks --- */
-#hasil, #hasil-login, #hasil-register, #info-user {
+#hasil, #hasil-login, #hasil-register, #info-user, #meter-password {
   margin-top: 12px;
   color: var(--text-muted);
   font-size: 0.9rem;
