@@ -143,3 +143,4 @@ CATATAN GAP (sadar, bukan lupa):
 - 2026-09-18 — profile — ubah username + favicon (PR #29)
 - 2026-09-18 — auth — kebijakan password min-8 + meter (PR #31)
 - 2026-09-18 — docs — sinkronisasi Riwayat (PR #32)
+- 2026-09-18 — polish — sapu nav + Console + Riwayat final (PR #34)
