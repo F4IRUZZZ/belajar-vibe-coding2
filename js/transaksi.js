@@ -52,6 +52,7 @@ function tampil() {
       const input = document.createElement('input');
       input.type = 'text';
       input.inputMode = 'numeric';
+      input.setAttribute('aria-label', 'Jumlah baru');
       input.value = formatRupiah(t.jumlah); // tampilkan format 20.000 (parse saat Simpan)
 
       const btnSimpan = document.createElement('button');
@@ -134,6 +135,7 @@ function tampil() {
             item.innerHTML = '';
             const inputUbah = document.createElement('input');
             inputUbah.type = 'text';
+            inputUbah.setAttribute('aria-label', 'Isi catatan baru');
             inputUbah.value = c.isi;
 
             const btnSimpanU = document.createElement('button');
@@ -196,6 +198,7 @@ function tampil() {
 
       const inputCatatan = document.createElement('input');
       inputCatatan.type = 'text';
+      inputCatatan.setAttribute('aria-label', 'Tulis catatan');
       inputCatatan.placeholder = 'Tulis catatan...';
       panel.appendChild(inputCatatan);
       panel.appendChild(document.createTextNode(' '));

@@ -18,24 +18,32 @@
     <hr>
     <h2>Catat Transaksi</h2>
     <form id="form-transaksi">
-      <label for="jenis">Jenis:</label>
-      <select id="jenis">
-        <option value="masuk">Masuk (pendapatan)</option>
-        <option value="keluar">Keluar (pengeluaran)</option>
-      </select><br><br>
-      <label for="jumlah">Jumlah (Rp):</label>
-      <input type="text" id="jumlah" inputmode="numeric" placeholder="contoh: 20000"><br><br>
-      <label for="tanggal">Tanggal:</label>
-      <input type="date" id="tanggal"><br><br>
-      <label for="catatan-awal">Catatan (opsional, boleh kosong):</label>
-      <input type="text" id="catatan-awal" placeholder="contoh: Gajian minggu ini"><br><br>
+      <div class="field">
+        <label for="jenis">Jenis:</label>
+        <select id="jenis">
+          <option value="masuk">Masuk (pendapatan)</option>
+          <option value="keluar">Keluar (pengeluaran)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="jumlah">Jumlah (Rp):</label>
+        <input type="text" id="jumlah" inputmode="numeric" placeholder="contoh: 20000">
+      </div>
+      <div class="field">
+        <label for="tanggal">Tanggal:</label>
+        <input type="date" id="tanggal">
+      </div>
+      <div class="field">
+        <label for="catatan-awal">Catatan (opsional, boleh kosong):</label>
+        <input type="text" id="catatan-awal" placeholder="contoh: Gajian minggu ini">
+      </div>
       <button type="submit" id="btn-tambah" class="btn">Catat</button>
     </form>
     <p id="hasil"></p>
     <hr>
     <h2>Daftar</h2>
     <ul id="list-transaksi"></ul>
-    <p><a href="index.html">Ke Dashboard</a></p>
+    <p><a href="index.html">Dashboard</a> | <a href="transaksi.html">Transaksi</a> | <a href="produk.html">Produk</a> | <a href="profile.html">Profile</a></p>
   </main>
 </body>
 </html>

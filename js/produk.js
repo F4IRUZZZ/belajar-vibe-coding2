@@ -49,6 +49,7 @@ function tampil() {
       li.innerHTML = '';
       const input = document.createElement('input');
       input.type = 'text';
+      input.setAttribute('aria-label', 'Nama produk baru');
       input.value = p.nama;
 
       const btnSimpan = document.createElement('button');
