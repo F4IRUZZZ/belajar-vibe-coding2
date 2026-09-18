@@ -179,6 +179,8 @@ function deleteTransaksi(id, userId) {
     return { error: 'Bukan milikmu', code: 401 }; // otorisasi: milik user lain
   }
   transaksi.splice(i, 1);
+  // Cascade: catatan milik transaksi ikut terhapus (hindari yatim)
+  catatan = catatan.filter(function(c) { return c.transaksiId !== id; });
   saveKeuanganDB();
   return true;
 }
@@ -199,6 +201,37 @@ function addCatatan(transaksiId, isi, userId) {
   catatan.push(item);
   saveKeuanganDB();
   return { data: item, code: 201 };
+}
+
+function updateCatatan(id, isi, userId) {
+  const i = catatan.findIndex(function(c) { return c.id === id; });
+  if (i === -1) {
+    return null; // simulasi 404
+  }
+  const induk = transaksi.find(function(t) { return t.id === catatan[i].transaksiId; });
+  if (userId !== undefined && (!induk || induk.userId !== userId)) {
+    return { error: 'Bukan milikmu', code: 401 }; // otorisasi via transaksi induk
+  }
+  if (!isi || !isi.trim()) {
+    return { error: 'Isi catatan wajib', code: 400 };
+  }
+  catatan[i].isi = isi.trim();
+  saveKeuanganDB();
+  return catatan[i];
+}
+
+function deleteCatatan(id, userId) {
+  const i = catatan.findIndex(function(c) { return c.id === id; });
+  if (i === -1) {
+    return false; // simulasi 404
+  }
+  const induk = transaksi.find(function(t) { return t.id === catatan[i].transaksiId; });
+  if (userId !== undefined && (!induk || induk.userId !== userId)) {
+    return { error: 'Bukan milikmu', code: 401 }; // otorisasi via transaksi induk
+  }
+  catatan.splice(i, 1);
+  saveKeuanganDB();
+  return true;
 }
 
 // --- Saldo: total masuk - total keluar (Rp) ---
