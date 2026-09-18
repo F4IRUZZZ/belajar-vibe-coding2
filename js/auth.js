@@ -7,6 +7,13 @@ let users = [];      // {id, email, username, password, role} - password polos d
 let sessions = {};   // token -> userId
 let nextUserId = 1;
 
+// Validasi email pragmatis (saring sampah jelas, bukan RFC-sempurna):
+// wajib user@domain.tld. 'aaa2gmail.c' tanpa @ -> tolak. Verifikasi
+// beneran butuh kirim email (tahap server nanti).
+function validEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim());
+}
+
 // Turunkan username sementara dari email (dipakai migrasi user lama).
 // 'tatata@gmail.com' -> 'Tatata'; tambah angka bila kembar/pendek.
 function turunkanUsername(email, abaikanId) {
@@ -14,7 +21,8 @@ function turunkanUsername(email, abaikanId) {
   dasar = dasar.charAt(0).toUpperCase() + dasar.slice(1);
   let nama = dasar;
   let n = 2;
-  while (nama.length < 3 || users.some(function(u) { return u.id !== abaikanId && u.username === nama; })) {
+  // Banding lowercase: 'Tatata' vs 'tatata' = kembar (anti-impersonasi case).
+  while (nama.length < 3 || users.some(function(u) { return u.id !== abaikanId && String(u.username).toLowerCase() === nama.toLowerCase(); })) {
     nama = dasar + n;
     n++;
   }
@@ -66,6 +74,9 @@ function register(email, username, password, role) {
   if (!email) {
     return { error: 'Email wajib', code: 400 };
   }
+  if (!validEmail(email)) {
+    return { error: 'Format email tidak valid', code: 400 };
+  }
   if (!username || username.trim().length < 3) {
     return { error: 'Username wajib min 3 karakter', code: 400 };
   }
@@ -79,7 +90,7 @@ function register(email, username, password, role) {
   if (ada) {
     return { error: 'Email sudah dipakai', code: 400 };
   }
-  const namaAda = users.find(function(u) { return u.username === username.trim(); });
+  const namaAda = users.find(function(u) { return String(u.username).toLowerCase() === username.trim().toLowerCase(); });
   if (namaAda) {
     return { error: 'Username sudah dipakai', code: 400 };
   }
