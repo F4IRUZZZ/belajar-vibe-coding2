@@ -4,6 +4,9 @@ const btnTambah = document.getElementById('btn-tambah-produk');
 const hasil = document.getElementById('hasil');
 const listEl = document.getElementById('list-produk');
 
+// Default kategori (wajib di atas sebelum dipakai tampil() — hindari TDZ).
+const DEFAULT_KATEGORI = ['pangan', 'mandi', 'lainnya'];
+
 // Guard: harus login — baca token, 401 = redirect ke login.
 // Tahap 1: list produk shared (tanpa cek pemilik), login wajib.
 const token = window.localStorage.getItem('token');
@@ -97,8 +100,6 @@ function tampil() {
 // Isi datalist kategori: mulai dari default, tambah existing yang belum ada.
 // Banding lowercase di kedua sumber biar tidak dobel (default 'pangan'
 // vs data 'Pangan' tampil 1 opsi).
-const DEFAULT_KATEGORI = ['pangan', 'mandi', 'lainnya'];
-
 function isiDatalistKategori() {
   const dl = document.getElementById('daftar-kategori');
   if (!dl) return;
