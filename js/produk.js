@@ -13,7 +13,7 @@ const ddOpsi = document.getElementById('dropdown-opsi');
 const ddHidden = document.getElementById('kategori-produk');
 
 // Default kategori (wajib di atas sebelum dipakai tampil() — hindari TDZ).
-const DEFAULT_KATEGORI = ['pangan', 'mandi', 'lainnya'];
+const DEFAULT_KATEGORI = ['Pangan', 'Mandi', 'Lainnya'];
 
 // Guard: harus login — baca token, 401 = redirect ke login.
 // Tahap 1: list produk shared (tanpa cek pemilik), login wajib.

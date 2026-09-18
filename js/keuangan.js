@@ -21,6 +21,10 @@ function loadKeuanganDB() {
       nextProdukId = db.nextProdukId || 1;
       nextTransaksiId = db.nextTransaksiId || 1;
       nextCatatanId = db.nextCatatanId || 1;
+      if (migrasiKapitalKategori(db)) {
+        produk = db.produk || [];
+        saveKeuanganDB(); // simpan hasil migrasi + penanda versi sekaligus
+      }
     }
   } catch (e) { /* pakai memori default */ }
 }
@@ -29,8 +33,31 @@ function saveKeuanganDB() {
   if (typeof window === 'undefined' || !window.localStorage) return;
   window.localStorage.setItem('keuanganDB', JSON.stringify({
     produk: produk, transaksi: transaksi, catatan: catatan,
-    nextProdukId: nextProdukId, nextTransaksiId: nextTransaksiId, nextCatatanId: nextCatatanId
+    nextProdukId: nextProdukId, nextTransaksiId: nextTransaksiId, nextCatatanId: nextCatatanId,
+    kategoriCapsV1: true // penanda migrasi kapitalisasi sudah jalan
   }));
+}
+
+// Kapitalisasi per kata: 'listrik' -> 'Listrik', 'UANG SAKU' -> 'Uang Saku'.
+function kapitalisasi(teks) {
+  return String(teks).trim().split(/\s+/).map(function(kata) {
+    return kata.charAt(0).toUpperCase() + kata.slice(1).toLowerCase();
+  }).join(' ');
+}
+
+// Migrasi 1x: rapikan ejaan kategori lama (pangan/MANDI -> Pangan/Mandi).
+// Isi lain utuh; bertanda versi agar tidak jalan ulang.
+function migrasiKapitalKategori(db) {
+  if (!db || db.kategoriCapsV1) return false;
+  let berubah = false;
+  (db.produk || []).forEach(function(p) {
+    const rapi = kapitalisasi(p.kategori);
+    if (p.kategori !== rapi) {
+      p.kategori = rapi;
+      berubah = true;
+    }
+  });
+  return berubah;
 }
 
 loadKeuanganDB();
@@ -44,16 +71,17 @@ function tanggalHariIni() {
   return d.getFullYear() + '-' + mm + '-' + dd;
 }
 
-// Normalisasi kategori varian A: bandingkan huruf-kecil, simpan casing
-// yang pertama kali muncul. 'pangan' saat 'Pangan' ada -> pakai 'Pangan'
-// (tidak bikin duplikat). Beda kata ('Makanan' vs 'Pangan') TIDAK digabung:
-// itu butuh manajemen kategori (bagian 8 planning).
+// Normalisasi kategori varian A + kapitalisasi: bandingkan huruf-kecil
+// (anti-dobel utuh), simpan versi kapital per kata. 'pangan' saat 'Pangan'
+// ada -> pakai 'Pangan'; 'listrik' baru -> simpan 'Listrik'.
+// Beda kata ('Makanan' vs 'Pangan') TIDAK digabung: butuh manajemen
+// kategori (bagian 8 planning).
 function normalisasiKategori(nama) {
   const bersih = String(nama || '').trim();
-  if (!bersih) return 'lainnya';
+  if (!bersih) return 'Lainnya';
   const ada = produk.find(function(p) { return p.kategori.toLowerCase() === bersih.toLowerCase(); });
   if (ada) return ada.kategori; // pakai ejaan yang sudah ada
-  return bersih; // kategori benar-benar baru
+  return kapitalisasi(bersih); // kategori benar-benar baru -> kapitalisasi
 }
 
 // --- Produk ---
