@@ -3,9 +3,45 @@
 // getProfile = GET /profile (kirim token), logout = DELETE /session.
 // Role: 'pribadi' (data sendiri) atau 'keluarga' (1 email dipakai bersama).
 
-let users = [];      // {id, email, password, role} - password polos dulu
+let users = [];      // {id, email, username, password, role} - password polos dulu
 let sessions = {};   // token -> userId
 let nextUserId = 1;
+
+// Validasi email pragmatis (saring sampah jelas, bukan RFC-sempurna):
+// wajib user@domain.tld. 'aaa2gmail.c' tanpa @ -> tolak. Verifikasi
+// beneran butuh kirim email (tahap server nanti).
+function validEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim());
+}
+
+// Turunkan username sementara dari email (dipakai migrasi user lama).
+// 'tatata@gmail.com' -> 'Tatata'; tambah angka bila kembar/pendek.
+function turunkanUsername(email, abaikanId) {
+  let dasar = String(email).split('@')[0] || 'User';
+  dasar = dasar.charAt(0).toUpperCase() + dasar.slice(1);
+  let nama = dasar;
+  let n = 2;
+  // Banding lowercase: 'Tatata' vs 'tatata' = kembar (anti-impersonasi case).
+  while (nama.length < 3 || users.some(function(u) { return u.id !== abaikanId && String(u.username).toLowerCase() === nama.toLowerCase(); })) {
+    nama = dasar + n;
+    n++;
+  }
+  return nama;
+}
+
+// Migrasi 1x: user lama tanpa username diisi turunan email + tandai versi.
+// Berjalan di array users global (sudah diisi dari db) agar cek kembar benar.
+function migrasiUsername(db) {
+  if (!db || db.usernameV1) return false;
+  let berubah = false;
+  users.forEach(function(u) {
+    if (!u.username) {
+      u.username = turunkanUsername(u.email, u.id);
+      berubah = true;
+    }
+  });
+  return berubah;
+}
 
 function loadDB() {
   if (typeof window === 'undefined' || !window.localStorage) {
@@ -18,6 +54,9 @@ function loadDB() {
       users = db.users || [];
       sessions = db.sessions || {};
       nextUserId = db.nextUserId || 1;
+      if (migrasiUsername(db)) {
+        saveDB(); // simpan hasil migrasi + penanda versi sekaligus
+      }
     }
   } catch (e) { /* pakai memori kosong */ }
 }
@@ -26,14 +65,20 @@ function saveDB() {
   if (typeof window === 'undefined' || !window.localStorage) {
     return;
   }
-  window.localStorage.setItem('authDB', JSON.stringify({ users: users, sessions: sessions, nextUserId: nextUserId }));
+  window.localStorage.setItem('authDB', JSON.stringify({ users: users, sessions: sessions, nextUserId: nextUserId, usernameV1: true }));
 }
 
 loadDB();
 
-function register(email, password, role) {
+function register(email, username, password, role) {
   if (!email) {
     return { error: 'Email wajib', code: 400 };
+  }
+  if (!validEmail(email)) {
+    return { error: 'Format email tidak valid', code: 400 };
+  }
+  if (!username || username.trim().length < 3) {
+    return { error: 'Username wajib min 3 karakter', code: 400 };
   }
   if (!password || password.length < 4) {
     return { error: 'Password min 4 karakter', code: 400 };
@@ -45,10 +90,14 @@ function register(email, password, role) {
   if (ada) {
     return { error: 'Email sudah dipakai', code: 400 };
   }
-  const user = { id: nextUserId++, email: email, password: password, role: role };
+  const namaAda = users.find(function(u) { return String(u.username).toLowerCase() === username.trim().toLowerCase(); });
+  if (namaAda) {
+    return { error: 'Username sudah dipakai', code: 400 };
+  }
+  const user = { id: nextUserId++, email: email, username: username.trim(), password: password, role: role };
   users.push(user);
   saveDB();
-  return { data: { id: user.id, email: user.email, role: user.role }, code: 201 };
+  return { data: { id: user.id, email: user.email, username: user.username, role: user.role }, code: 201 };
 }
 
 function login(email, password) {
@@ -67,7 +116,7 @@ function getProfile(token) {
     return { error: 'Unauthorized', code: 401 };
   }
   const user = users.find(function(u) { return u.id === sessions[token]; });
-  return { data: { id: user.id, email: user.email, role: user.role }, code: 200 };
+  return { data: { id: user.id, email: user.email, username: user.username || user.email, role: user.role }, code: 200 };
 }
 
 function logout(token) {
@@ -81,18 +130,24 @@ function logout(token) {
 
 async function main() {
   console.log('----- REGISTER pribadi -----');
-  console.log(await register('aku@mail.com', '1234', 'pribadi'));
+  console.log(await register('aku@mail.com', 'Aku', '1234', 'pribadi'));
 
   console.log('\n----- REGISTER keluarga -----');
-  console.log(await register('keluarga@mail.com', '1234', 'keluarga'));
+  console.log(await register('keluarga@mail.com', 'Akun Keluarga', '1234', 'keluarga'));
+
+  console.log('\n----- REGISTER username pendek (400) -----');
+  console.log(await register('x@mail.com', 'AB', '1234', 'pribadi'));
+
+  console.log('\n----- REGISTER username kembar beda email (400) -----');
+  console.log(await register('lain@mail.com', 'Aku', '1234', 'pribadi'));
 
   console.log('\n----- REGISTER role salah (400) -----');
-  console.log(await register('x@mail.com', '1234', 'admin'));
+  console.log(await register('x@mail.com', 'Xrole', '1234', 'admin'));
 
   console.log('\n----- REGISTER duplikat (400) -----');
-  console.log(await register('aku@mail.com', '1234', 'pribadi'));
+  console.log(await register('aku@mail.com', 'Aku2', '1234', 'pribadi'));
 
-  console.log('\n----- LOGIN + PROFILE (role kebawa) -----');
+  console.log('\n----- LOGIN + PROFILE (role + username kebawa) -----');
   const l = await login('keluarga@mail.com', '1234');
   console.log(l);
   console.log(await getProfile(l.data.token));

@@ -4,13 +4,15 @@ const btnTambah = document.getElementById('btn-tambah');
 const hasil = document.getElementById('hasil');
 const listEl = document.getElementById('list-transaksi');
 
-// Parse nominal Rupiah versi bulat: buang semua non-digit.
-// '20.000' -> 20000, 'Rp 20.000' -> 20000, 'abc'/kosong -> NaN (ditolak 400).
-// Teks ber-minus ('-5000') DITOLAK (NaN): minus tidak boleh diam-diam jadi plus.
+// Parse nominal Rupiah versi bulat + allowlist ketat (bukan strip-buta).
+// Lolos: digit + titik ribuan + awalan Rp + spasi. Selain itu -> NaN (400).
+// '20.000' -> 20000; 'Rp 20.000' -> 20000; 'ssss2000sss'/'-5000'/kosong -> NaN.
 function parseRupiah(teks) {
-  const asli = String(teks);
-  if (asli.indexOf('-') !== -1) return NaN;
-  const digit = asli.replace(/[^0-9]/g, '');
+  let s = String(teks).trim();
+  s = s.replace(/^rp\s*/i, '');
+  s = s.replace(/\s+/g, '');
+  if (!/^[0-9.]+$/.test(s)) return NaN;
+  const digit = s.replace(/\./g, '');
   if (!digit) return NaN;
   return Number(digit);
 }
@@ -27,7 +29,7 @@ if (resProfile.code !== 200) {
   }, 800);
 } else {
   userId = resProfile.data.id;
-  infoUser.textContent = 'Login sebagai: ' + resProfile.data.email + ' (' + resProfile.data.role + ')';
+  infoUser.textContent = 'Login sebagai: ' + (resProfile.data.username || resProfile.data.email) + ' (' + resProfile.data.role + ')';
   document.getElementById('tanggal').value = tanggalHariIni(); // lokal, bukan UTC
   tampil();
 }
@@ -52,6 +54,7 @@ function tampil() {
       const input = document.createElement('input');
       input.type = 'text';
       input.inputMode = 'numeric';
+      input.setAttribute('aria-label', 'Jumlah baru');
       input.value = formatRupiah(t.jumlah); // tampilkan format 20.000 (parse saat Simpan)
 
       const btnSimpan = document.createElement('button');
@@ -134,6 +137,7 @@ function tampil() {
             item.innerHTML = '';
             const inputUbah = document.createElement('input');
             inputUbah.type = 'text';
+            inputUbah.setAttribute('aria-label', 'Isi catatan baru');
             inputUbah.value = c.isi;
 
             const btnSimpanU = document.createElement('button');
@@ -196,6 +200,7 @@ function tampil() {
 
       const inputCatatan = document.createElement('input');
       inputCatatan.type = 'text';
+      inputCatatan.setAttribute('aria-label', 'Tulis catatan');
       inputCatatan.placeholder = 'Tulis catatan...';
       panel.appendChild(inputCatatan);
       panel.appendChild(document.createTextNode(' '));

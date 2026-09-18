@@ -22,6 +22,14 @@ body {
   padding: 16px;
 }
 
+/* --- Layar auth di tengah (login/register saja, halaman app rata atas) --- */
+.center-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* --- Kartu --- */
 .card {
   background-color: var(--card-bg);
@@ -39,6 +47,10 @@ body {
 }
 
 /* --- Form --- */
+.field {
+  margin-bottom: 16px;
+}
+
 label {
   font-weight: 600;
   font-size: 0.9rem;

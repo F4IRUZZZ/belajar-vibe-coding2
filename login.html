@@ -9,18 +9,22 @@
   <script src="js/auth.js" defer></script>
   <script src="js/login.js" defer></script>
 </head>
-<body>
+<body class="center-screen">
   <main class="card">
     <h1>Login</h1>
     <form id="form-login">
-      <label for="email">Email:</label>
-      <input type="email" id="email"><br><br>
-      <label for="password">Password:</label>
-      <input type="password" id="password"><br><br>
+      <div class="field">
+        <label for="email">Email:</label>
+        <input type="email" id="email" autocomplete="email">
+      </div>
+      <div class="field">
+        <label for="password">Password:</label>
+        <input type="password" id="password" autocomplete="current-password">
+      </div>
       <button type="submit" id="btn-login" class="btn">Masuk</button>
     </form>
     <p id="hasil-login"></p>
-    <p><a href="index.html">Ke Dashboard</a> | <a href="register.html">Belum punya akun? Daftar</a></p>
+    <p><a href="register.html">Belum punya akun? Daftar</a></p>
   </main>
 </body>
 </html>

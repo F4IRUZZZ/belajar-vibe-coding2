@@ -7,7 +7,7 @@ const token = window.localStorage.getItem('token');
 const res = getProfile(token);
 
 if (res.code === 200) {
-  info.textContent = 'Email: ' + res.data.email + ' (' + res.data.role + ')';
+  info.textContent = 'Username: ' + (res.data.username || res.data.email) + ' (' + res.data.role + ')';
 } else {
   // 401 = tanpa token / palsu / hangus -> redirect ke login
   info.textContent = 'Belum login, redirect ke halaman login...';
