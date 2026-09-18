@@ -128,6 +128,29 @@ function logout(token) {
   return { data: 'Logout sukses', code: 200 };
 }
 
+// Ubah username milik sendiri. Aturan SAMA kayak daftar: min-3 + unik
+// case-insensitive (f4iruzz vs F4IRUZZ = kembar). Sama dengan milik
+// sendiri -> sukses tanpa ubah (idempoten).
+function updateUsername(token, usernameBaru) {
+  if (!token || !sessions[token]) {
+    return { error: 'Unauthorized', code: 401 };
+  }
+  const user = users.find(function(u) { return u.id === sessions[token]; });
+  const nama = String(usernameBaru || '').trim();
+  if (nama.length < 3) {
+    return { error: 'Username wajib min 3 karakter', code: 400 };
+  }
+  const kembar = users.some(function(u) {
+    return u.id !== user.id && String(u.username).toLowerCase() === nama.toLowerCase();
+  });
+  if (kembar) {
+    return { error: 'Username sudah dipakai', code: 400 };
+  }
+  user.username = nama;
+  saveDB();
+  return { data: { id: user.id, email: user.email, username: user.username, role: user.role }, code: 200 };
+}
+
 async function main() {
   console.log('----- REGISTER pribadi -----');
   console.log(await register('aku@mail.com', 'Aku', '1234', 'pribadi'));
