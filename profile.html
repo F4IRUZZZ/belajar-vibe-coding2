@@ -6,6 +6,7 @@
   <title>Profile - Catatan Keuangan Keluarga</title>
   <meta name="description" content="Profil akun dan keluar">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:,">
   <script src="js/auth.js" defer></script>
   <script src="js/profile.js" defer></script>
 </head>
@@ -13,6 +14,17 @@
   <main class="card">
     <h1>Profile</h1>
     <p id="info">Loading...</p>
+    <hr>
+    <h2>Ubah Username</h2>
+    <form id="form-username">
+      <div class="field">
+        <label for="username-baru">Username baru (min 3, unik):</label>
+        <input type="text" id="username-baru" placeholder="contoh: Akun Keluarga">
+      </div>
+      <button type="submit" id="btn-username" class="btn">Simpan</button>
+    </form>
+    <p id="hasil-username"></p>
+    <hr>
     <button id="btn-logout">Logout</button>
     <p id="hasil"></p>
     <p><a href="index.html">Dashboard</a> | <a href="transaksi.html">Transaksi</a> | <a href="produk.html">Produk</a> | <a href="profile.html">Profile</a></p>
