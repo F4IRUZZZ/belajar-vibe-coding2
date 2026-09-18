@@ -125,7 +125,70 @@ function tampil() {
       } else {
         daftar.forEach(function(c) {
           const item = document.createElement('li');
-          item.textContent = c.isi;
+          item.appendChild(document.createTextNode(c.isi + ' '));
+
+          const btnUbahC = document.createElement('button');
+          btnUbahC.textContent = 'Ubah';
+          btnUbahC.addEventListener('click', function() {
+            // Mode edit inline (tanpa prompt): input isi baru + Simpan/Batal
+            item.innerHTML = '';
+            const inputUbah = document.createElement('input');
+            inputUbah.type = 'text';
+            inputUbah.value = c.isi;
+
+            const btnSimpanU = document.createElement('button');
+            btnSimpanU.textContent = 'Simpan';
+            btnSimpanU.addEventListener('click', function() {
+              const baru = inputUbah.value.trim();
+              if (!baru) return; // kosong = abaikan diam-diam
+              const out = updateCatatan(c.id, baru, userId);
+              if (!out) {
+                hasil.textContent = 'Gagal: catatan tidak ditemukan.';
+                tampil();
+                return;
+              }
+              if (out.error) {
+                hasil.textContent = 'Gagal (' + out.code + '): ' + out.error;
+                return;
+              }
+              hasil.textContent = 'Catatan diubah.';
+              tampil();
+            });
+
+            const btnBatalU = document.createElement('button');
+            btnBatalU.textContent = 'Batal';
+            btnBatalU.addEventListener('click', function() {
+              tampil();
+            });
+
+            item.appendChild(inputUbah);
+            item.appendChild(document.createTextNode(' '));
+            item.appendChild(btnSimpanU);
+            item.appendChild(document.createTextNode(' '));
+            item.appendChild(btnBatalU);
+          });
+
+          const btnHapusC = document.createElement('button');
+          btnHapusC.textContent = 'Hapus';
+          btnHapusC.addEventListener('click', function() {
+            if (!window.confirm('Hapus catatan ini?')) return;
+            const outDel = deleteCatatan(c.id, userId);
+            if (outDel && outDel.error) {
+              hasil.textContent = 'Gagal (' + outDel.code + '): ' + outDel.error;
+              return;
+            }
+            if (!outDel) {
+              hasil.textContent = 'Gagal: catatan tidak ditemukan.';
+              tampil();
+              return;
+            }
+            hasil.textContent = 'Catatan dihapus.';
+            tampil();
+          });
+
+          item.appendChild(btnUbahC);
+          item.appendChild(document.createTextNode(' '));
+          item.appendChild(btnHapusC);
           ul.appendChild(item);
         });
       }
@@ -140,6 +203,7 @@ function tampil() {
       const btnSimpanCatatan = document.createElement('button');
       btnSimpanCatatan.textContent = 'Simpan';
       btnSimpanCatatan.addEventListener('click', function() {
+        if (!inputCatatan.value.trim()) return; // kosong = abaikan diam-diam
         const res = addCatatan(t.id, inputCatatan.value, userId);
         if (res.code === 201) {
           hasil.textContent = 'Catatan tersimpan.';
@@ -179,12 +243,24 @@ form.addEventListener('submit', function(e) {
   const jenis = document.getElementById('jenis').value;
   const jumlah = parseRupiah(document.getElementById('jumlah').value);
   const tanggal = document.getElementById('tanggal').value;
+  const catatanAwal = document.getElementById('catatan-awal').value;
   btnTambah.textContent = 'Loading...';
   const res = addTransaksi({ userId: userId, jenis: jenis, jumlah: jumlah, tanggal: tanggal });
   btnTambah.textContent = 'Catat';
   if (res.code === 201) {
     document.getElementById('jumlah').value = '';
-    hasil.textContent = res.data.jenis + ' Rp' + formatRupiah(res.data.jumlah) + ' tercatat!';
+    document.getElementById('catatan-awal').value = '';
+    let pesan = res.data.jenis + ' Rp' + formatRupiah(res.data.jumlah) + ' tercatat!';
+    // Catatan opsional: kosong = lewati diam-diam (transaksi tetap sukses)
+    if (catatanAwal.trim()) {
+      const rc = addCatatan(res.data.id, catatanAwal, userId);
+      if (rc.code === 201) {
+        pesan += ' Catatan tersimpan.';
+      } else {
+        pesan += ' (Catatan gagal: ' + rc.error + ')';
+      }
+    }
+    hasil.textContent = pesan;
     tampil();
   } else {
     hasil.textContent = 'Gagal (' + res.code + '): ' + res.error;
