@@ -14,6 +14,19 @@ function validEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim());
 }
 
+// Kebijakan password BARU (min 8 + huruf + angka). Berlaku untuk password
+// baru saja; akun lama (misal '1234') tetap bisa login karena login hanya
+// mencocokkan, tidak menilai. Hashing beneran (bcrypt) menunggu server.
+function validPassword(password) {
+  if (!password || password.length < 8) {
+    return { ok: false, error: 'Password min 8 karakter' };
+  }
+  if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+    return { ok: false, error: 'Password wajib ada huruf dan angka' };
+  }
+  return { ok: true };
+}
+
 // Turunkan username sementara dari email (dipakai migrasi user lama).
 // 'tatata@gmail.com' -> 'Tatata'; tambah angka bila kembar/pendek.
 function turunkanUsername(email, abaikanId) {
@@ -80,8 +93,9 @@ function register(email, username, password, role) {
   if (!username || username.trim().length < 3) {
     return { error: 'Username wajib min 3 karakter', code: 400 };
   }
-  if (!password || password.length < 4) {
-    return { error: 'Password min 4 karakter', code: 400 };
+  const cekPassword = validPassword(password);
+  if (!cekPassword.ok) {
+    return { error: cekPassword.error, code: 400 };
   }
   if (role !== 'pribadi' && role !== 'keluarga') {
     return { error: 'Role harus pribadi/keluarga', code: 400 };
@@ -153,25 +167,30 @@ function updateUsername(token, usernameBaru) {
 
 async function main() {
   console.log('----- REGISTER pribadi -----');
-  console.log(await register('aku@mail.com', 'Aku', '1234', 'pribadi'));
+  console.log(await register('aku@mail.com', 'Aku', 'aku12345', 'pribadi'));
 
   console.log('\n----- REGISTER keluarga -----');
-  console.log(await register('keluarga@mail.com', 'Akun Keluarga', '1234', 'keluarga'));
+  console.log(await register('keluarga@mail.com', 'Akun Keluarga', 'keluarga123', 'keluarga'));
+
+  console.log('\n----- REGISTER password lemah (400) -----');
+  console.log(await register('a@mail.com', 'LemahA', '1234', 'pribadi'));
+  console.log(await register('b@mail.com', 'LemahB', 'password', 'pribadi'));
+  console.log(await register('c@mail.com', 'LemahC', 'abcdefgh', 'pribadi'));
 
   console.log('\n----- REGISTER username pendek (400) -----');
-  console.log(await register('x@mail.com', 'AB', '1234', 'pribadi'));
+  console.log(await register('x@mail.com', 'AB', 'xkuat123', 'pribadi'));
 
   console.log('\n----- REGISTER username kembar beda email (400) -----');
-  console.log(await register('lain@mail.com', 'Aku', '1234', 'pribadi'));
+  console.log(await register('lain@mail.com', 'Aku', 'lain1234', 'pribadi'));
 
   console.log('\n----- REGISTER role salah (400) -----');
-  console.log(await register('x@mail.com', 'Xrole', '1234', 'admin'));
+  console.log(await register('x@mail.com', 'Xrole', 'xkuat123', 'admin'));
 
   console.log('\n----- REGISTER duplikat (400) -----');
-  console.log(await register('aku@mail.com', 'Aku2', '1234', 'pribadi'));
+  console.log(await register('aku@mail.com', 'Aku2', 'aku12345', 'pribadi'));
 
   console.log('\n----- LOGIN + PROFILE (role + username kebawa) -----');
-  const l = await login('keluarga@mail.com', '1234');
+  const l = await login('keluarga@mail.com', 'keluarga123');
   console.log(l);
   console.log(await getProfile(l.data.token));
 }
