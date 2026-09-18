@@ -20,6 +20,7 @@ if (resProfile.code !== 200) {
 }
 
 function tampil() {
+  isiDatalistKategori();
   listEl.innerHTML = '';
   if (produk.length === 0) {
     listEl.innerHTML = '<li>Belum ada produk.</li>';
@@ -90,6 +91,22 @@ function tampil() {
     li.appendChild(document.createTextNode(' '));
     li.appendChild(btnHapus);
     listEl.appendChild(li);
+  });
+}
+
+// Isi datalist kategori dari kategori yang sudah ada (distinct).
+function isiDatalistKategori() {
+  const dl = document.getElementById('daftar-kategori');
+  if (!dl) return;
+  dl.innerHTML = '';
+  const sudah = [];
+  produk.forEach(function(p) {
+    if (sudah.indexOf(p.kategori) === -1) {
+      sudah.push(p.kategori);
+      const opt = document.createElement('option');
+      opt.value = p.kategori;
+      dl.appendChild(opt);
+    }
   });
 }
 
