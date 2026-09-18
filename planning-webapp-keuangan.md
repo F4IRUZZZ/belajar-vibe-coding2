@@ -125,15 +125,19 @@ CATATAN GAP (sadar, bukan lupa):
 - Bicara ke server yang sama (bukan `localStorage` lagi).
 
 ## 10. Riwayat Perubahan
+- 2026-09-17 — model — keuangan.js CRUD + saldo (PR #3)
+- 2026-09-17 — auth+dashboard — role + saldo + guard (PR #5)
 - 2026-09-17 — transaksi — Rupiah input+tampil 2 arah (PR #7)
 - 2026-09-17 — transaksi — otorisasi ubah/hapus 401 (PR #8)
 - 2026-09-17 — produk — halaman CRUD shared (PR #10)
+- 2026-09-17 — hardening — tolak minus + tanggal lokal (PR #11)
 - 2026-09-17 — profile — halaman profil, logout 1 pintu (PR #14)
 - 2026-09-18 — transaksi — catatan inline + cek pemilik (PR #16)
 - 2026-09-18 — produk — kategori custom datalist + normalisasi (PR #18)
 - 2026-09-17 — docs — status backend tuntas + gap sadar (PR #12)
 - 2026-09-18 — produk — dropdown kategori custom milik webapp (PR #20)
 - 2026-09-18 — produk — kapitalisasi kategori + migrasi ejaan (PR #22)
+- 2026-09-18 — docs — catat polish form (PR #23)
 - 2026-09-18 — transaksi — catatan full + cascade (PR #25)
 - 2026-09-18 — polish — nav seragam, center auth, username, validasi (PR #27)
 - 2026-09-18 — profile — ubah username + favicon (PR #29)
