@@ -99,7 +99,9 @@ CATATAN GAP (sadar, bukan lupa):
 - (contoh: kategori custom, grafik per minggu, export CSV, MySQL beneran,
   anggota keluarga terpisah dengan hak akses, dst.)
 - Pengembangan Profile lanjutan (detail menyusul dari Fairuz; versi sekarang cukup).
--
+- Polish form (fase frontend): atribut `autocomplete` (email/current-password/new-password,
+  hilangkan warning Console + aktifkan password manager) + asosiasi `label`
+  untuk input dinamis (hilangkan warning "No label associated").
 
 ## 9. Multi-device & Porting (SETELAH webapp + backend 4.2 lulus total)
 
