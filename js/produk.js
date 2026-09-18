@@ -94,20 +94,26 @@ function tampil() {
   });
 }
 
-// Isi datalist kategori dari kategori yang sudah ada (distinct).
+// Isi datalist kategori: mulai dari default, tambah existing yang belum ada.
+// Banding lowercase di kedua sumber biar tidak dobel (default 'pangan'
+// vs data 'Pangan' tampil 1 opsi).
+const DEFAULT_KATEGORI = ['pangan', 'mandi', 'lainnya'];
+
 function isiDatalistKategori() {
   const dl = document.getElementById('daftar-kategori');
   if (!dl) return;
   dl.innerHTML = '';
   const sudah = [];
-  produk.forEach(function(p) {
-    if (sudah.indexOf(p.kategori) === -1) {
-      sudah.push(p.kategori);
-      const opt = document.createElement('option');
-      opt.value = p.kategori;
-      dl.appendChild(opt);
-    }
-  });
+  function tambahOpsi(nama) {
+    const kunci = String(nama).toLowerCase();
+    if (sudah.indexOf(kunci) !== -1) return;
+    sudah.push(kunci);
+    const opt = document.createElement('option');
+    opt.value = nama;
+    dl.appendChild(opt);
+  }
+  DEFAULT_KATEGORI.forEach(tambahOpsi);
+  produk.forEach(function(p) { tambahOpsi(p.kategori); });
 }
 
 form.addEventListener('submit', function(e) {
