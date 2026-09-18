@@ -6,9 +6,10 @@ formRegister.addEventListener('submit', function(e) {
   e.preventDefault();
   btnRegister.textContent = 'Loading...';
   const email = document.getElementById('reg-email').value;
+  const username = document.getElementById('reg-username').value;
   const password = document.getElementById('reg-password').value;
   const role = document.getElementById('reg-role').value;
-  const res = register(email, password, role);
+  const res = register(email, username, password, role);
   btnRegister.textContent = 'Daftar';
   if (res.code === 201) {
     hasilRegister.textContent = 'Daftar sukses (' + res.data.role + ')! Silakan login.';

@@ -26,7 +26,7 @@ if (resProfile.code !== 200) {
     window.location.href = 'login.html';
   }, 800);
 } else {
-  infoUser.textContent = 'Login sebagai: ' + resProfile.data.email + ' (' + resProfile.data.role + ')';
+  infoUser.textContent = 'Login sebagai: ' + (resProfile.data.username || resProfile.data.email) + ' (' + resProfile.data.role + ')';
   tampil();
 }
 

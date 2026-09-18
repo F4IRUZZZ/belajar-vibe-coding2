@@ -15,7 +15,7 @@ if (resProfile.code !== 200) {
   }, 800);
 } else {
   const user = resProfile.data;
-  infoUser.textContent = 'Login sebagai: ' + user.email + ' (' + user.role + ')';
+  infoUser.textContent = 'Login sebagai: ' + (user.username || user.email) + ' (' + user.role + ')';
   const ringkasan = getSaldo(user.id);
   totalMasuk.textContent = 'Rp' + formatRupiah(ringkasan.masuk);
   totalKeluar.textContent = 'Rp' + formatRupiah(ringkasan.keluar);

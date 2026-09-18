@@ -27,7 +27,7 @@ if (resProfile.code !== 200) {
   }, 800);
 } else {
   userId = resProfile.data.id;
-  infoUser.textContent = 'Login sebagai: ' + resProfile.data.email + ' (' + resProfile.data.role + ')';
+  infoUser.textContent = 'Login sebagai: ' + (resProfile.data.username || resProfile.data.email) + ' (' + resProfile.data.role + ')';
   document.getElementById('tanggal').value = tanggalHariIni(); // lokal, bukan UTC
   tampil();
 }
