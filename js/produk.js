@@ -4,6 +4,14 @@ const btnTambah = document.getElementById('btn-tambah-produk');
 const hasil = document.getElementById('hasil');
 const listEl = document.getElementById('list-produk');
 
+// Semua const getElementById WAJIB di blok atas sebelum guard memanggil
+// tampil() — pelajaran dari 2x bug TDZ (DEFAULT_KATEGORI, ddList).
+const ddTombol = document.getElementById('dropdown-tombol');
+const ddList = document.getElementById('dropdown-list');
+const ddCari = document.getElementById('dropdown-cari');
+const ddOpsi = document.getElementById('dropdown-opsi');
+const ddHidden = document.getElementById('kategori-produk');
+
 // Default kategori (wajib di atas sebelum dipakai tampil() — hindari TDZ).
 const DEFAULT_KATEGORI = ['pangan', 'mandi', 'lainnya'];
 
@@ -23,7 +31,7 @@ if (resProfile.code !== 200) {
 }
 
 function tampil() {
-  isiDatalistKategori();
+  if (!ddList.hidden) renderOpsiDropdown(); // segarkan saran bila dropdown terbuka
   listEl.innerHTML = '';
   if (produk.length === 0) {
     listEl.innerHTML = '<li>Belum ada produk.</li>';
@@ -97,35 +105,105 @@ function tampil() {
   });
 }
 
-// Isi datalist kategori: mulai dari default, tambah existing yang belum ada.
-// Banding lowercase di kedua sumber biar tidak dobel (default 'pangan'
-// vs data 'Pangan' tampil 1 opsi).
-function isiDatalistKategori() {
-  const dl = document.getElementById('daftar-kategori');
-  if (!dl) return;
-  dl.innerHTML = '';
+// Dropdown kategori custom milik webapp (pengganti datalist bawaan browser
+// yang tak bisa di-styling). Opsi = default + existing (distinct, banding
+// lowercase). Ketik yang tak cocok -> baris "+ Tambah" (nama baru lewat
+// normalisasiKategori di addProduk). Nilai terpilih disimpan di hidden input.
+let kategoriTerpilih = '';
+
+function daftarKategoriUnik() {
   const sudah = [];
-  function tambahOpsi(nama) {
+  const hasil = [];
+  function tambah(nama) {
     const kunci = String(nama).toLowerCase();
     if (sudah.indexOf(kunci) !== -1) return;
     sudah.push(kunci);
-    const opt = document.createElement('option');
-    opt.value = nama;
-    dl.appendChild(opt);
+    hasil.push(nama);
   }
-  DEFAULT_KATEGORI.forEach(tambahOpsi);
-  produk.forEach(function(p) { tambahOpsi(p.kategori); });
+  DEFAULT_KATEGORI.forEach(tambah);
+  produk.forEach(function(p) { tambah(p.kategori); });
+  return hasil;
+}
+
+function renderOpsiDropdown() {
+  const filter = ddCari.value.trim().toLowerCase();
+  ddOpsi.innerHTML = '';
+  const semua = daftarKategoriUnik();
+  const cocok = semua.filter(function(nama) {
+    return nama.toLowerCase().indexOf(filter) !== -1;
+  });
+  cocok.forEach(function(nama) {
+    const baris = document.createElement('div');
+    baris.className = 'dropdown-item';
+    baris.textContent = nama;
+    baris.addEventListener('click', function() {
+      pilihKategori(nama);
+    });
+    ddOpsi.appendChild(baris);
+  });
+  const ketik = ddCari.value.trim();
+  const sudahAda = semua.some(function(nama) { return nama.toLowerCase() === ketik.toLowerCase(); });
+  if (ketik && !sudahAda) {
+    const tambah = document.createElement('div');
+    tambah.className = 'dropdown-item dropdown-tambah';
+    tambah.textContent = '+ Tambah "' + ketik + '"';
+    tambah.addEventListener('click', function() {
+      pilihKategori(ketik);
+    });
+    ddOpsi.appendChild(tambah);
+  }
+  if (cocok.length === 0 && !ketik) {
+    const kosong = document.createElement('div');
+    kosong.className = 'dropdown-item dropdown-kosong';
+    kosong.textContent = 'Belum ada kategori. Ketik untuk buat baru.';
+    ddOpsi.appendChild(kosong);
+  }
+}
+
+function pilihKategori(nama) {
+  kategoriTerpilih = nama;
+  ddHidden.value = nama;
+  ddTombol.textContent = nama + ' ▾';
+  ddList.hidden = true;
+}
+
+function bukaDropdown() {
+  ddList.hidden = false;
+  ddCari.value = '';
+  renderOpsiDropdown();
+}
+
+if (ddTombol) {
+  ddTombol.addEventListener('click', function(e) {
+    e.stopPropagation();
+    if (ddList.hidden) {
+      bukaDropdown();
+    } else {
+      ddList.hidden = true;
+    }
+  });
+  ddCari.addEventListener('input', renderOpsiDropdown);
+  ddCari.addEventListener('click', function(e) { e.stopPropagation(); });
+  document.addEventListener('click', function() {
+    ddList.hidden = true;
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') ddList.hidden = true;
+  });
 }
 
 form.addEventListener('submit', function(e) {
   e.preventDefault();
   const nama = document.getElementById('nama-produk').value;
-  const kategori = document.getElementById('kategori-produk').value;
+  const kategori = ddHidden.value; // dari dropdown custom (kosong = 'lainnya' via normalisasi)
   btnTambah.textContent = 'Loading...';
   const res = addProduk(nama, kategori);
   btnTambah.textContent = 'Tambah';
   if (res.code === 201) {
     document.getElementById('nama-produk').value = '';
+    kategoriTerpilih = '';
+    ddHidden.value = '';
+    ddTombol.textContent = 'Pilih kategori ▾'; // reset pilihan
     hasil.textContent = 'Produk "' + res.data.nama + '" ditambah!';
     tampil();
   } else {

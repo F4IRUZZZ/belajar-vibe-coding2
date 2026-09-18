@@ -19,9 +19,15 @@
     <form id="form-produk">
       <label for="nama-produk">Nama:</label>
       <input type="text" id="nama-produk" placeholder="contoh: Beras"><br><br>
-      <label for="kategori-produk">Kategori (pilih atau ketik baru):</label>
-      <input type="text" id="kategori-produk" list="daftar-kategori" placeholder="contoh: pangan">
-      <datalist id="daftar-kategori"></datalist><br><br>
+      <label id="label-kategori">Kategori (pilih atau ketik baru):</label>
+      <div class="dropdown" id="dropdown-kategori">
+        <button type="button" id="dropdown-tombol">Pilih kategori ▾</button>
+        <div class="dropdown-list" id="dropdown-list" hidden>
+          <input type="text" id="dropdown-cari" placeholder="Cari / ketik baru...">
+          <div id="dropdown-opsi"></div>
+        </div>
+      </div>
+      <input type="hidden" id="kategori-produk" value=""><br><br>
       <button type="submit" id="btn-tambah-produk" class="btn">Tambah</button>
     </form>
     <p id="hasil"></p>

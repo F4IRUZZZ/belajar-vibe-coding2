@@ -90,6 +90,54 @@ a {
   color: var(--primary-color);
 }
 
+/* --- Dropdown custom (milik webapp, serasi kartu) --- */
+.dropdown {
+  position: relative;
+  margin-top: 4px;
+}
+
+#dropdown-tombol {
+  width: 100%;
+  text-align: left;
+}
+
+.dropdown-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background-color: var(--card-bg);
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  padding: 8px;
+  z-index: 10;
+}
+
+#dropdown-cari {
+  margin-top: 0;
+}
+
+.dropdown-item {
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.dropdown-item:hover {
+  background-color: #e8eef7;
+}
+
+.dropdown-tambah {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.dropdown-kosong {
+  color: var(--text-muted);
+  cursor: default;
+}
+
 /* --- Responsif --- */
 @media (min-width: 600px) {
   .card { width: 500px; }
