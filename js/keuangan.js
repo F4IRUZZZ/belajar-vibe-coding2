@@ -144,10 +144,13 @@ function deleteTransaksi(id, userId) {
 }
 
 // --- Catatan ---
-function addCatatan(transaksiId, isi) {
+function addCatatan(transaksiId, isi, userId) {
   const ada = transaksi.find(function(t) { return t.id === transaksiId; });
   if (!ada) {
     return { error: 'Transaksi tidak ditemukan', code: 404 };
+  }
+  if (userId !== undefined && ada.userId !== userId) {
+    return { error: 'Bukan milikmu', code: 401 }; // otorisasi: milik user lain
   }
   if (!isi || !isi.trim()) {
     return { error: 'Isi catatan wajib', code: 400 };
