@@ -4,6 +4,14 @@ const btnTambah = document.getElementById('btn-tambah-produk');
 const hasil = document.getElementById('hasil');
 const listEl = document.getElementById('list-produk');
 
+// Semua const getElementById WAJIB di blok atas sebelum guard memanggil
+// tampil() — pelajaran dari 2x bug TDZ (DEFAULT_KATEGORI, ddList).
+const ddTombol = document.getElementById('dropdown-tombol');
+const ddList = document.getElementById('dropdown-list');
+const ddCari = document.getElementById('dropdown-cari');
+const ddOpsi = document.getElementById('dropdown-opsi');
+const ddHidden = document.getElementById('kategori-produk');
+
 // Default kategori (wajib di atas sebelum dipakai tampil() — hindari TDZ).
 const DEFAULT_KATEGORI = ['pangan', 'mandi', 'lainnya'];
 
@@ -102,12 +110,6 @@ function tampil() {
 // lowercase). Ketik yang tak cocok -> baris "+ Tambah" (nama baru lewat
 // normalisasiKategori di addProduk). Nilai terpilih disimpan di hidden input.
 let kategoriTerpilih = '';
-
-const ddTombol = document.getElementById('dropdown-tombol');
-const ddList = document.getElementById('dropdown-list');
-const ddCari = document.getElementById('dropdown-cari');
-const ddOpsi = document.getElementById('dropdown-opsi');
-const ddHidden = document.getElementById('kategori-produk');
 
 function daftarKategoriUnik() {
   const sudah = [];
