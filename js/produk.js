@@ -4,6 +4,9 @@ const btnTambah = document.getElementById('btn-tambah-produk');
 const hasil = document.getElementById('hasil');
 const listEl = document.getElementById('list-produk');
 
+// Default kategori (wajib di atas sebelum dipakai tampil() — hindari TDZ).
+const DEFAULT_KATEGORI = ['pangan', 'mandi', 'lainnya'];
+
 // Guard: harus login — baca token, 401 = redirect ke login.
 // Tahap 1: list produk shared (tanpa cek pemilik), login wajib.
 const token = window.localStorage.getItem('token');
@@ -20,6 +23,7 @@ if (resProfile.code !== 200) {
 }
 
 function tampil() {
+  isiDatalistKategori();
   listEl.innerHTML = '';
   if (produk.length === 0) {
     listEl.innerHTML = '<li>Belum ada produk.</li>';
@@ -91,6 +95,26 @@ function tampil() {
     li.appendChild(btnHapus);
     listEl.appendChild(li);
   });
+}
+
+// Isi datalist kategori: mulai dari default, tambah existing yang belum ada.
+// Banding lowercase di kedua sumber biar tidak dobel (default 'pangan'
+// vs data 'Pangan' tampil 1 opsi).
+function isiDatalistKategori() {
+  const dl = document.getElementById('daftar-kategori');
+  if (!dl) return;
+  dl.innerHTML = '';
+  const sudah = [];
+  function tambahOpsi(nama) {
+    const kunci = String(nama).toLowerCase();
+    if (sudah.indexOf(kunci) !== -1) return;
+    sudah.push(kunci);
+    const opt = document.createElement('option');
+    opt.value = nama;
+    dl.appendChild(opt);
+  }
+  DEFAULT_KATEGORI.forEach(tambahOpsi);
+  produk.forEach(function(p) { tambahOpsi(p.kategori); });
 }
 
 form.addEventListener('submit', function(e) {

@@ -44,12 +44,24 @@ function tanggalHariIni() {
   return d.getFullYear() + '-' + mm + '-' + dd;
 }
 
+// Normalisasi kategori varian A: bandingkan huruf-kecil, simpan casing
+// yang pertama kali muncul. 'pangan' saat 'Pangan' ada -> pakai 'Pangan'
+// (tidak bikin duplikat). Beda kata ('Makanan' vs 'Pangan') TIDAK digabung:
+// itu butuh manajemen kategori (bagian 8 planning).
+function normalisasiKategori(nama) {
+  const bersih = String(nama || '').trim();
+  if (!bersih) return 'lainnya';
+  const ada = produk.find(function(p) { return p.kategori.toLowerCase() === bersih.toLowerCase(); });
+  if (ada) return ada.kategori; // pakai ejaan yang sudah ada
+  return bersih; // kategori benar-benar baru
+}
+
 // --- Produk ---
 function addProduk(nama, kategori) {
   if (!nama || !nama.trim()) {
     return { error: 'Nama produk wajib', code: 400 };
   }
-  const item = { id: nextProdukId++, nama: nama.trim(), kategori: kategori || 'lainnya' };
+  const item = { id: nextProdukId++, nama: nama.trim(), kategori: normalisasiKategori(kategori) };
   produk.push(item);
   saveKeuanganDB();
   return { data: item, code: 201 };
@@ -67,7 +79,7 @@ function updateProduk(id, patch) {
     produk[i].nama = patch.nama.trim();
   }
   if (patch.kategori !== undefined) {
-    produk[i].kategori = patch.kategori;
+    produk[i].kategori = normalisasiKategori(patch.kategori);
   }
   saveKeuanganDB();
   return produk[i];
