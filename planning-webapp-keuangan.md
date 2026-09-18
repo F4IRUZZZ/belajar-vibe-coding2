@@ -99,6 +99,7 @@ CATATAN GAP (sadar, bukan lupa):
 - (contoh: kategori custom, grafik per minggu, export CSV, MySQL beneran,
   anggota keluarga terpisah dengan hak akses, dst.)
 - Pengembangan Profile lanjutan (detail menyusul dari Fairuz; versi sekarang cukup).
+- Ubah username di Profile (input + validasi unik min-3 yang sama; migrasi otomatis hanya isi sementara).
 - Polish form (fase frontend): atribut `autocomplete` (email/current-password/new-password,
   hilangkan warning Console + aktifkan password manager) + asosiasi `label`
   untuk input dinamis (hilangkan warning "No label associated").
