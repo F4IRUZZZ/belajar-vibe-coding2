@@ -91,18 +91,7 @@ btnUnduh.addEventListener('click', function() {
   pesanOk(hasil, 'CSV diunduh.');
 });
 
-// Parse nominal Rupiah versi bulat + allowlist ketat (bukan strip-buta).
-// Lolos: digit + titik ribuan + awalan Rp + spasi. Selain itu -> NaN (400).
-// '20.000' -> 20000; 'Rp 20.000' -> 20000; 'ssss2000sss'/'-5000'/kosong -> NaN.
-function parseRupiah(teks) {
-  let s = String(teks).trim();
-  s = s.replace(/^rp\s*/i, '');
-  s = s.replace(/\s+/g, '');
-  if (!/^[0-9.]+$/.test(s)) return NaN;
-  const digit = s.replace(/\./g, '');
-  if (!digit) return NaN;
-  return Number(digit);
-}
+// parseRupiah pindah ke js/format.js (shared dengan hutang.js).
 
 // Guard: harus login — baca token, 401 = redirect ke login
 const token = window.localStorage.getItem('token');
