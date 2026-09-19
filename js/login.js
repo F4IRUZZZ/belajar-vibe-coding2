@@ -11,11 +11,11 @@ formLogin.addEventListener('submit', function(e) {
   btnLogin.textContent = 'Masuk';
   if (res.code === 200) {
     window.localStorage.setItem('token', res.data.token);
-    hasilLogin.textContent = 'Login sukses! Lanjut ke Dashboard.';
+    pesanOk(hasilLogin, 'Login sukses! Lanjut ke Dashboard.');
     setTimeout(function() {
       window.location.href = 'index.html';
     }, 800);
   } else {
-    hasilLogin.textContent = 'Gagal (' + res.code + '): ' + res.error;
+    pesanError(hasilLogin, 'Gagal (' + res.code + '): ' + res.error);
   }
 });

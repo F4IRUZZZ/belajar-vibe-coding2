@@ -36,17 +36,17 @@ formRegister.addEventListener('submit', function(e) {
   const password2 = document.getElementById('reg-password2').value;
   const role = document.getElementById('reg-role').value;
   if (password !== password2) {
-    hasilRegister.textContent = 'Gagal (400): Konfirmasi password tidak sama.';
+    pesanError(hasilRegister, 'Gagal (400): Konfirmasi password tidak sama.');
     return;
   }
   const res = register(email, username, password, role);
   btnRegister.textContent = 'Daftar';
   if (res.code === 201) {
-    hasilRegister.textContent = 'Daftar sukses (' + res.data.role + ')! Silakan login.';
+    pesanOk(hasilRegister, 'Daftar sukses (' + res.data.role + ')! Silakan login.');
     setTimeout(function() {
       window.location.href = 'login.html';
     }, 800);
   } else {
-    hasilRegister.textContent = 'Gagal (' + res.code + '): ' + res.error;
+    pesanError(hasilRegister, 'Gagal (' + res.code + '): ' + res.error);
   }
 });

@@ -4,3 +4,17 @@
 function formatRupiah(angka) {
   return String(angka).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
+
+// Pesan semantik terpusat: hijau untuk sukses, merah untuk error.
+// Semua halaman pakai ini (konsisten, tanpa set class manual di tiap file).
+function pesanOk(el, teks) {
+  el.textContent = teks;
+  el.classList.remove('msg-err');
+  el.classList.add('msg-ok');
+}
+
+function pesanError(el, teks) {
+  el.textContent = teks;
+  el.classList.remove('msg-ok');
+  el.classList.add('msg-err');
+}

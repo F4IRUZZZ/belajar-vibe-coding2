@@ -91,11 +91,75 @@ input:focus, select:focus {
   background-color: var(--primary-dark);
 }
 
+/* Varian tombol: bahaya (hapus) + lembut (batal/tutup) */
+.btn-danger {
+  background-color: #dc2626;
+}
+
+.btn-danger:hover {
+  background-color: #b91c1c;
+}
+
+.btn-soft {
+  background-color: #e5e7eb;
+  color: var(--text-main);
+}
+
+.btn-soft:hover {
+  background-color: #d1d5db;
+}
+
 /* --- Teks --- */
-#hasil, #hasil-login, #hasil-register, #info-user, #meter-password {
+#hasil, #hasil-login, #hasil-register, #hasil-username, #info-user, #info, #meter-password {
   margin-top: 12px;
   color: var(--text-muted);
   font-size: 0.9rem;
+}
+
+/* Pesan semantik: sukses hijau, error merah */
+.msg-ok {
+  color: #15803d !important;
+  font-weight: 600;
+}
+
+.msg-err {
+  color: #dc2626 !important;
+  font-weight: 600;
+}
+
+/* Angka hero dashboard: besar + tebal, minus merah */
+.saldo-hero {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.saldo-minus {
+  color: #dc2626 !important;
+}
+
+/* Nav sticky: nempel atas saat scroll daftar panjang */
+.nav-sticky {
+  position: sticky;
+  top: 0;
+  background-color: var(--card-bg);
+  padding: 8px 0;
+  z-index: 5;
+}
+
+/* Ritme vertikal antar blok */
+.card hr {
+  margin: 16px 0;
+  border: none;
+  border-top: 1px solid #e5e7eb;
+}
+
+.card ul {
+  margin: 8px 0 8px 20px;
+}
+
+.card li {
+  margin-bottom: 6px;
 }
 
 a {
