@@ -107,6 +107,7 @@ if (resProfile.code !== 200) {
   userId = resProfile.data.id;
   infoUser.textContent = 'Login sebagai: ' + (resProfile.data.username || resProfile.data.email) + ' (' + resProfile.data.role + ')';
   document.getElementById('tanggal').value = tanggalHariIni(); // lokal, bukan UTC
+  pasangFormatRupiahLive(document.getElementById('jumlah'));
   isiPilihProduk();
   aturUntuk();
   tampil();
@@ -290,7 +291,18 @@ function bangunBaris(tbody, t, nomor) {  const tr = document.createElement('tr')
         wrap.className = 'field';
         const lab = document.createElement('label');
         lab.appendChild(document.createTextNode(labelText + ' '));
-        lab.appendChild(inputEl);
+        if (inputEl.name === 'jumlah-baru') {
+          // Prefix Rp visual + format live (pola form utama)
+          const box = document.createElement('div');
+          box.className = 'input-rp';
+          const rp = document.createElement('span');
+          rp.textContent = 'Rp';
+          box.appendChild(rp);
+          box.appendChild(inputEl);
+          lab.appendChild(box);
+        } else {
+          lab.appendChild(inputEl);
+        }
         wrap.appendChild(lab);
         panel.appendChild(wrap);
         return inputEl;
@@ -310,8 +322,9 @@ function bangunBaris(tbody, t, nomor) {  const tr = document.createElement('tr')
       input.type = 'text';
       input.inputMode = 'numeric';
       input.name = 'jumlah-baru';
-      input.value = formatRupiah(t.jumlah); // tampilkan format 20.000 (parse saat Simpan)
-      fieldEdit('Jumlah baru (Rp):', input);
+      input.value = formatRupiah(t.jumlah); // prefill sudah berformat
+      pasangFormatRupiahLive(input); // format tiap ketikan berikutnya
+      fieldEdit('Jumlah baru:', input);
 
       // Kategori hanya relevan untuk pengeluaran (pemasukan tetap sederhana)
       let inputKat = null;

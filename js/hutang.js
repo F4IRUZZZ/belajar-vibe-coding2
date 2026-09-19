@@ -18,6 +18,7 @@ if (resProfile.code !== 200) {
   userId = resProfile.data.id;
   infoUser.textContent = 'Login sebagai: ' + (resProfile.data.username || resProfile.data.email) + ' (' + resProfile.data.role + ')';
   document.getElementById('tanggal-hutang').value = tanggalHariIni(); // lokal, bukan UTC
+  pasangFormatRupiahLive(document.getElementById('jumlah-hutang'));
   tampil();
 }
 
@@ -139,7 +140,14 @@ function bangunBarisHutang(tbody, h, nomor) {
       inputBayar.name = 'nominal-bayar';
       inputBayar.setAttribute('aria-label', 'Nominal bayar');
       inputBayar.placeholder = 'contoh: 50000';
-      panelTd.appendChild(inputBayar);
+      pasangFormatRupiahLive(inputBayar); // kosong -> tetap kosong (helper aman)
+      const boxBayar = document.createElement('div');
+      boxBayar.className = 'input-rp';
+      const rpBayar = document.createElement('span');
+      rpBayar.textContent = 'Rp';
+      boxBayar.appendChild(rpBayar);
+      boxBayar.appendChild(inputBayar);
+      panelTd.appendChild(boxBayar);
       panelTd.appendChild(document.createTextNode(' '));
 
       const btnSimpanB = document.createElement('button');

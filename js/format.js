@@ -18,6 +18,17 @@ function parseRupiah(teks) {
   return Number(digit);
 }
 
+// Format Rupiah LIVE saat mengetik: buang non-digit -> formatRupiah.
+// '5000' -> '5.000' (tiap keystroke), hapus habis -> kosong (bukan '0').
+// Keterbatasan sadar: kursor lompat ke akhir (caret-preserving = polish lanjutan).
+// parseRupiah existing sudah terima titik, jadi submit tidak perlu berubah.
+function pasangFormatRupiahLive(inputEl) {
+  inputEl.addEventListener('input', function() {
+    const digit = inputEl.value.replace(/[^0-9]/g, '');
+    inputEl.value = digit ? formatRupiah(Number(digit)) : '';
+  });
+}
+
 // Pesan semantik terpusat: hijau untuk sukses, merah untuk error.
 // Semua halaman pakai ini (konsisten, tanpa set class manual di tiap file).
 function pesanOk(el, teks) {
