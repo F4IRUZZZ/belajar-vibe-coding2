@@ -6,6 +6,11 @@ const listEl = document.getElementById('list-transaksi');
 const bulkBar = document.getElementById('bulk-bar');
 const bulkCount = document.getElementById('bulk-count');
 const btnBulkHapus = document.getElementById('btn-bulk-hapus');
+const pilihJenis = document.getElementById('jenis');
+const fieldUntuk = document.getElementById('field-untuk');
+const pilihProduk = document.getElementById('untuk-produk');
+const fieldKategoriBebas = document.getElementById('field-kategori-bebas');
+const inputKategoriBebas = document.getElementById('kategori-bebas');
 
 // Bulk: id terpilih lintas render ulang. Reset tiap tampil() (predictable).
 const terpilih = new Set();
@@ -113,8 +118,44 @@ if (resProfile.code !== 200) {
   userId = resProfile.data.id;
   infoUser.textContent = 'Login sebagai: ' + (resProfile.data.username || resProfile.data.email) + ' (' + resProfile.data.role + ')';
   document.getElementById('tanggal').value = tanggalHariIni(); // lokal, bukan UTC
+  isiPilihProduk();
+  aturUntuk();
   tampil();
 }
+
+// Isi dropdown produk + opsi tulis-sendiri. Dipanggil tiap tampil()
+// agar produk baru langsung muncul tanpa refresh halaman.
+function isiPilihProduk() {
+  const simpan = pilihProduk.value;
+  pilihProduk.innerHTML = '';
+  const kosong = document.createElement('option');
+  kosong.value = '';
+  kosong.textContent = '— Pilih —';
+  pilihProduk.appendChild(kosong);
+  produk.forEach(function(p) {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.nama + ' (' + p.kategori + ')';
+    pilihProduk.appendChild(opt);
+  });
+  const baru = document.createElement('option');
+  baru.value = '__baru__';
+  baru.textContent = 'Tulis sendiri...';
+  pilihProduk.appendChild(baru);
+  pilihProduk.value = simpan;
+  aturUntuk();
+}
+
+// Seksi "Untuk apa?" hanya untuk pengeluaran; input bebas hanya bila
+// pilih "Tulis sendiri...". Pemasukan sembunyikan (tetap sederhana).
+function aturUntuk() {
+  const isKeluar = pilihJenis.value === 'keluar';
+  fieldUntuk.hidden = !isKeluar;
+  fieldKategoriBebas.hidden = !isKeluar || pilihProduk.value !== '__baru__';
+}
+
+pilihJenis.addEventListener('change', aturUntuk);
+pilihProduk.addEventListener('change', aturUntuk);
 
 function tampil() {
   const data = transaksi.filter(function(t) { return t.userId === userId; });
@@ -200,8 +241,18 @@ function renderSeksi(judul, rows) {
   listEl.appendChild(table);
 }
 
-function bangunBaris(tbody, t, nomor) {
-  const tr = document.createElement('tr');
+// Akordeon: tutup SEMUA panel (edit + catatan) di SELURUH list (semua
+// seksi/tbody) — bukan cuma tbody sendiri. Dipanggil tiap handler SEBELUM
+// toggle milik sendiri: maksimal 1 panel hidup per saat, lintas seksi.
+// querySelectorAll = snapshot (bukan live list), aman dihapus dalam loop.
+function tutupSemuaPanel() {
+  const semua = listEl.querySelectorAll('.baris-edit, .baris-catatan');
+  for (let i = 0; i < semua.length; i++) {
+    semua[i].parentNode.removeChild(semua[i]);
+  }
+}
+
+function bangunBaris(tbody, t, nomor) {  const tr = document.createElement('tr');
 
   const tdCek = document.createElement('td');
   const cek = document.createElement('input');
@@ -228,27 +279,69 @@ function bangunBaris(tbody, t, nomor) {
   const btnUbah = document.createElement('button');
   btnUbah.textContent = 'Ubah';
     btnUbah.addEventListener('click', function() {
-      // Mode edit inline (tanpa prompt): sel jumlah jadi input + Simpan/Batal
-      tr.innerHTML = '';
-      const tdNoE = document.createElement('td');
-      tdNoE.textContent = nomor;
-      const tdTglE = document.createElement('td');
-      tdTglE.textContent = t.tanggal;
-      const tdJumlahE = document.createElement('td');
+      // Akordeon per baris: maksimal 1 panel hidup. Klik saat milik sendiri
+      // terbuka = tutup; klik saat panel lain terbuka = ganti.
+      const terbuka = tr.nextSibling;
+      const milikku = terbuka && terbuka.className === 'baris-edit';
+      tutupSemuaPanel();
+      if (milikku) return;
+      // Mode edit = baris panel di bawah baris (pola panel catatan):
+      // baris asli tetap tampil sebagai referensi, form vertikal ber-label.
+      const panelTr = document.createElement('tr');
+      panelTr.className = 'baris-edit';
+      const panelTd = document.createElement('td');
+      panelTd.colSpan = 5;
+      const panel = document.createElement('div');
+      panel.className = 'panel-catatan';
+
+      function fieldEdit(labelText, inputEl) {
+        // Label membungkus input (asosiasi implisit): lolos cek aksesibilitas
+        // tanpa butuh id unik per baris.
+        const wrap = document.createElement('div');
+        wrap.className = 'field';
+        const lab = document.createElement('label');
+        lab.appendChild(document.createTextNode(labelText + ' '));
+        lab.appendChild(inputEl);
+        wrap.appendChild(lab);
+        panel.appendChild(wrap);
+        return inputEl;
+      }
+
+      const infoRef = document.createElement('p');
+      infoRef.textContent = 'Ubah: ' + t.jenis + ' Rp' + formatRupiah(t.jumlah) + ' (' + t.tanggal + ')';
+      panel.appendChild(infoRef);
+
+      const inputTgl = document.createElement('input');
+      inputTgl.type = 'date';
+      inputTgl.name = 'tanggal-baru';
+      inputTgl.value = t.tanggal;
+      fieldEdit('Tanggal baru:', inputTgl);
+
       const input = document.createElement('input');
       input.type = 'text';
       input.inputMode = 'numeric';
       input.name = 'jumlah-baru';
-      input.setAttribute('aria-label', 'Jumlah baru');
       input.value = formatRupiah(t.jumlah); // tampilkan format 20.000 (parse saat Simpan)
-      tdJumlahE.appendChild(input);
-      const tdAksiE = document.createElement('td');
+      fieldEdit('Jumlah baru (Rp):', input);
+
+      // Kategori hanya relevan untuk pengeluaran (pemasukan tetap sederhana)
+      let inputKat = null;
+      if (t.jenis === 'keluar') {
+        inputKat = document.createElement('input');
+        inputKat.type = 'text';
+        inputKat.name = 'kategori-baru';
+        inputKat.placeholder = 'Kategori';
+        inputKat.value = kategoriOf(t);
+        fieldEdit('Kategori baru:', inputKat);
+      }
 
       const btnSimpan = document.createElement('button');
       btnSimpan.textContent = 'Simpan';
       btnSimpan.addEventListener('click', function() {
         const baru = parseRupiah(input.value);
-        const out = updateTransaksi(t.id, { jumlah: baru }, userId);
+        const patch = { jumlah: baru, tanggal: inputTgl.value };
+        if (inputKat) patch.kategori = inputKat.value;
+        const out = updateTransaksi(t.id, patch, userId);
         if (!out) {
           pesanError(hasil, 'Gagal: transaksi tidak ditemukan.');
           tampil();
@@ -266,16 +359,15 @@ function bangunBaris(tbody, t, nomor) {
       btnBatal.textContent = 'Batal';
       btnBatal.classList.add('btn-soft');
       btnBatal.addEventListener('click', function() {
-        tampil();
+        tbody.removeChild(panelTr);
       });
 
-      tdAksiE.appendChild(btnSimpan);
-      tdAksiE.appendChild(document.createTextNode(' '));
-      tdAksiE.appendChild(btnBatal);
-      tr.appendChild(tdNoE);
-      tr.appendChild(tdTglE);
-      tr.appendChild(tdJumlahE);
-      tr.appendChild(tdAksiE);
+      panel.appendChild(btnSimpan);
+      panel.appendChild(document.createTextNode(' '));
+      panel.appendChild(btnBatal);
+      panelTd.appendChild(panel);
+      panelTr.appendChild(panelTd);
+      tbody.insertBefore(panelTr, tr.nextSibling);
     });
 
     const btnHapus = document.createElement('button');
@@ -300,12 +392,12 @@ function bangunBaris(tbody, t, nomor) {
     const btnCatatan = document.createElement('button');
     btnCatatan.textContent = 'Catatan';
     btnCatatan.addEventListener('click', function() {
-      // Kembangkan/tutup baris panel catatan di bawah baris ini
-      const lama = tr.nextSibling;
-      if (lama && lama.className === 'baris-catatan') {
-        tbody.removeChild(lama);
-        return;
-      }
+      // Akordeon per baris: sama kayak Ubah (lihat atas). Klik saat milik
+      // sendiri terbuka = tutup; klik saat panel lain terbuka = ganti.
+      const terbuka = tr.nextSibling;
+      const milikku = terbuka && terbuka.className === 'baris-catatan';
+      tutupSemuaPanel();
+      if (milikku) return;
       const panelTr = document.createElement('tr');
       panelTr.className = 'baris-catatan';
       const panelTd = document.createElement('td');
@@ -454,12 +546,27 @@ form.addEventListener('submit', function(e) {
   const jumlah = parseRupiah(document.getElementById('jumlah').value);
   const tanggal = document.getElementById('tanggal').value;
   const catatanAwal = document.getElementById('catatan-awal').value;
+  // Untuk apa? (khusus keluar): produk terpilih -> produkId (+kategori
+  // disalin model); tulis-sendiri -> kategori bebas; selain itu null.
+  let produkId = null;
+  let kategori = null;
+  if (jenis === 'keluar') {
+    if (pilihProduk.value === '__baru__') {
+      kategori = inputKategoriBebas.value;
+    } else if (pilihProduk.value !== '') {
+      produkId = Number(pilihProduk.value);
+    }
+  }
   btnTambah.textContent = 'Loading...';
-  const res = addTransaksi({ userId: userId, jenis: jenis, jumlah: jumlah, tanggal: tanggal });
+  const res = addTransaksi({ userId: userId, jenis: jenis, jumlah: jumlah, produkId: produkId, kategori: kategori, tanggal: tanggal });
   btnTambah.textContent = 'Catat';
   if (res.code === 201) {
     document.getElementById('jumlah').value = '';
     document.getElementById('catatan-awal').value = '';
+    inputKategoriBebas.value = '';
+    pilihProduk.value = '';
+    aturUntuk();
+    inputKategoriBebas.value = '';
     let pesan = res.data.jenis + ' Rp' + formatRupiah(res.data.jumlah) + ' tercatat!';
     // Catatan opsional: kosong = lewati diam-diam (transaksi tetap sukses)
     if (catatanAwal.trim()) {

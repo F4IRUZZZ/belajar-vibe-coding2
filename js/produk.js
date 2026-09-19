@@ -45,8 +45,19 @@ function tampil() {
     const btnUbah = document.createElement('button');
     btnUbah.textContent = 'Ubah';
     btnUbah.addEventListener('click', function() {
+      // Akordeon antar-baris: bila baris ini sedang diedit -> tutup;
+      // bila tidak -> render ulang bersih (tutup semua) baru buka yang ini.
+      // Maksimal 1 form edit hidup per saat. (tampil() membuat li BARU,
+      // jadi baris dipegang ulang via children[i], bukan li lama.)
+      if (li.classList.contains('sedang-edit')) {
+        tampil();
+        return;
+      }
+      tampil();
+      const liBaru = listEl.children[i];
       // Mode edit inline (tanpa prompt): input nama baru + Simpan/Batal
-      li.innerHTML = '';
+      liBaru.innerHTML = '';
+      liBaru.classList.add('sedang-edit');
       const input = document.createElement('input');
       input.type = 'text';
       input.name = 'nama-produk-baru';
@@ -79,12 +90,12 @@ function tampil() {
         tampil();
       });
 
-      li.appendChild(document.createTextNode(nomor + '. '));
-      li.appendChild(input);
-      li.appendChild(document.createTextNode(' '));
-      li.appendChild(btnSimpan);
-      li.appendChild(document.createTextNode(' '));
-      li.appendChild(btnBatal);
+      liBaru.appendChild(document.createTextNode(nomor + '. '));
+      liBaru.appendChild(input);
+      liBaru.appendChild(document.createTextNode(' '));
+      liBaru.appendChild(btnSimpan);
+      liBaru.appendChild(document.createTextNode(' '));
+      liBaru.appendChild(btnBatal);
     });
 
     const btnHapus = document.createElement('button');
