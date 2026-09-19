@@ -235,15 +235,52 @@ function deleteCatatan(id, userId) {
 }
 
 // --- Saldo: total masuk - total keluar (Rp) ---
-function getSaldo(userId) {
+// filter opsional {dari, sampai} = string YYYY-MM-DD inklusif.
+// Tanpa filter = perilaku lama (semua waktu), mundur kompatibel.
+function getSaldo(userId, filter) {
   let masuk = 0;
   let keluar = 0;
+  const dari = filter && filter.dari ? filter.dari : null;
+  const sampai = filter && filter.sampai ? filter.sampai : null;
   transaksi.forEach(function(t) {
     if (userId !== undefined && t.userId !== userId) return;
+    if (dari && t.tanggal < dari) return;
+    if (sampai && t.tanggal > sampai) return;
     if (t.jenis === 'masuk') masuk += t.jumlah;
     if (t.jenis === 'keluar') keluar += t.jumlah;
   });
   return { masuk: masuk, keluar: keluar, saldo: masuk - keluar };
+}
+
+// Batas periode versi LOKAL (Senin-Minggu, awal-akhir bulan). YYYY-MM-DD.
+function awalMingguIni() {
+  const d = new Date();
+  const mundur = (d.getDay() + 6) % 7; // Senin=0 ... Minggu=6
+  d.setDate(d.getDate() - mundur);
+  return potongTanggal(d);
+}
+
+function akhirMingguIni() {
+  const d = new Date();
+  const maju = (7 - d.getDay()) % 7; // Minggu=0 sisa
+  d.setDate(d.getDate() + maju);
+  return potongTanggal(d);
+}
+
+function awalBulanIni() {
+  const d = new Date();
+  return potongTanggal(new Date(d.getFullYear(), d.getMonth(), 1));
+}
+
+function akhirBulanIni() {
+  const d = new Date();
+  return potongTanggal(new Date(d.getFullYear(), d.getMonth() + 1, 0));
+}
+
+function potongTanggal(d) {
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return d.getFullYear() + '-' + mm + '-' + dd;
 }
 
 async function main() {

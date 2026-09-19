@@ -16,9 +16,23 @@ if (resProfile.code !== 200) {
 } else {
   const user = resProfile.data;
   infoUser.textContent = 'Login sebagai: ' + (user.username || user.email) + ' (' + user.role + ')';
-  const ringkasan = getSaldo(user.id);
-  totalMasuk.textContent = 'Rp' + formatRupiah(ringkasan.masuk);
-  totalKeluar.textContent = 'Rp' + formatRupiah(ringkasan.keluar);
-  saldoEl.textContent = 'Rp' + formatRupiah(ringkasan.saldo);
-  if (ringkasan.saldo < 0) saldoEl.classList.add('saldo-minus'); // kas minus = merah
+  const pilihPeriode = document.getElementById('periode');
+
+  function muatRingkasan() {
+    let filter = null;
+    if (pilihPeriode.value === 'minggu') {
+      filter = { dari: awalMingguIni(), sampai: akhirMingguIni() };
+    } else if (pilihPeriode.value === 'bulan') {
+      filter = { dari: awalBulanIni(), sampai: akhirBulanIni() };
+    }
+    const ringkasan = getSaldo(user.id, filter);
+    totalMasuk.textContent = 'Rp' + formatRupiah(ringkasan.masuk);
+    totalKeluar.textContent = 'Rp' + formatRupiah(ringkasan.keluar);
+    saldoEl.textContent = 'Rp' + formatRupiah(ringkasan.saldo);
+    saldoEl.classList.remove('saldo-minus');
+    if (ringkasan.saldo < 0) saldoEl.classList.add('saldo-minus'); // kas minus = merah
+  }
+
+  pilihPeriode.addEventListener('change', muatRingkasan);
+  muatRingkasan();
 }
