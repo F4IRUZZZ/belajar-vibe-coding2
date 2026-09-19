@@ -49,6 +49,7 @@ function tampil() {
       li.innerHTML = '';
       const input = document.createElement('input');
       input.type = 'text';
+      input.name = 'nama-produk-baru';
       input.setAttribute('aria-label', 'Nama produk baru');
       input.value = p.nama;
 

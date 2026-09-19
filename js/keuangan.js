@@ -252,6 +252,38 @@ function getSaldo(userId, filter) {
   return { masuk: masuk, keluar: keluar, saldo: masuk - keluar };
 }
 
+// --- Ringkasan pengeluaran per kategori (Rp + persen dari total keluar) ---
+// Ikut filter periode yang sama kayak getSaldo. Kategori dari produk
+// (kapital rapi via normalisasi); tanpa produk -> 'Lainnya'. Urut terbesar.
+function getRingkasanKategori(userId, filter) {
+  const dari = filter && filter.dari ? filter.dari : null;
+  const sampai = filter && filter.sampai ? filter.sampai : null;
+  const total = {};
+  let keluarSemua = 0;
+  transaksi.forEach(function(t) {
+    if (userId !== undefined && t.userId !== userId) return;
+    if (t.jenis !== 'keluar') return;
+    if (dari && t.tanggal < dari) return;
+    if (sampai && t.tanggal > sampai) return;
+    let kat = 'Lainnya';
+    if (t.produkId !== null && t.produkId !== undefined) {
+      const p = produk.find(function(x) { return x.id === t.produkId; });
+      if (p) kat = p.kategori;
+    }
+    total[kat] = (total[kat] || 0) + t.jumlah;
+    keluarSemua += t.jumlah;
+  });
+  const hasil = Object.keys(total).map(function(kat) {
+    return {
+      kategori: kat,
+      total: total[kat],
+      persen: keluarSemua > 0 ? Math.round(total[kat] / keluarSemua * 100) : 0
+    };
+  });
+  hasil.sort(function(a, b) { return b.total - a.total; });
+  return hasil;
+}
+
 // Batas periode versi LOKAL (Senin-Minggu, awal-akhir bulan). YYYY-MM-DD.
 function awalMingguIni() {
   const d = new Date();
