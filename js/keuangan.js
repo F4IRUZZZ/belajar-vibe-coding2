@@ -89,6 +89,12 @@ function addProduk(nama, kategori) {
   if (!nama || !nama.trim()) {
     return { error: 'Nama produk wajib', code: 400 };
   }
+  // Nama tampil = identitas: tolak kembar beda-case beda-kategori.
+  // (Preseden: username + kategori. 'Beras' vs 'beras' = kembar.)
+  const kembar = produk.some(function(p) { return p.nama.toLowerCase() === nama.trim().toLowerCase(); });
+  if (kembar) {
+    return { error: 'Produk sudah ada', code: 400 };
+  }
   const item = { id: nextProdukId++, nama: nama.trim(), kategori: normalisasiKategori(kategori) };
   produk.push(item);
   saveKeuanganDB();
@@ -103,6 +109,12 @@ function updateProduk(id, patch) {
   if (patch.nama !== undefined) {
     if (!patch.nama || !patch.nama.trim()) {
       return { error: 'Nama produk wajib', code: 400 };
+    }
+    const kembarNama = produk.some(function(p) {
+      return p.id !== id && p.nama.toLowerCase() === patch.nama.trim().toLowerCase();
+    });
+    if (kembarNama) {
+      return { error: 'Produk sudah ada', code: 400 };
     }
     produk[i].nama = patch.nama.trim();
   }
