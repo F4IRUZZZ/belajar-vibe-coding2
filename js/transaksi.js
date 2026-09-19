@@ -79,25 +79,92 @@ function tampil() {
   const data = transaksi.filter(function(t) { return t.userId === userId; });
   listEl.innerHTML = '';
   if (data.length === 0) {
-    listEl.innerHTML = '<li>Belum ada transaksi. Yuk catat yang pertama di form atas.</li>';
+    listEl.innerHTML = '<p>Belum ada transaksi. Yuk catat yang pertama di form atas.</p>';
     return;
   }
-  data.forEach(function(t, i) {
-    const nomor = i + 1; // nomor tampil (1,2,3...) — bukan id, rapat otomatis
-    const li = document.createElement('li');
-    li.textContent = nomor + '. ' + t.jenis + ' Rp' + formatRupiah(t.jumlah) + ' (' + t.tanggal + ') ';
+  renderSeksi('Pemasukan', data.filter(function(t) { return t.jenis === 'masuk'; }));
+  renderSeksi('Pengeluaran', data.filter(function(t) { return t.jenis === 'keluar'; }));
+}
 
-    const btnUbah = document.createElement('button');
-    btnUbah.textContent = 'Ubah';
+// Satu seksi = h3 + table beneran (No | Tanggal | Jumlah | Aksi) + subtotal.
+function renderSeksi(judul, rows) {
+  const h3 = document.createElement('h3');
+  h3.textContent = judul;
+  listEl.appendChild(h3);
+
+  if (rows.length === 0) {
+    const kosong = document.createElement('p');
+    kosong.textContent = 'Belum ada ' + judul.toLowerCase() + '.';
+    listEl.appendChild(kosong);
+    return;
+  }
+
+  const table = document.createElement('table');
+  table.className = 'tabel-transaksi';
+  const thead = document.createElement('thead');
+  const trHead = document.createElement('tr');
+  ['No', 'Tanggal', 'Jumlah', 'Aksi'].forEach(function(nama) {
+    const th = document.createElement('th');
+    th.textContent = nama;
+    trHead.appendChild(th);
+  });
+  thead.appendChild(trHead);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  let subtotal = 0;
+  rows.forEach(function(t, i) {
+    subtotal += t.jumlah;
+    tbody.appendChild(bangunBaris(tbody, t, i + 1));
+  });
+  table.appendChild(tbody);
+
+  const tfoot = document.createElement('tfoot');
+  const trFoot = document.createElement('tr');
+  const tdLabel = document.createElement('td');
+  tdLabel.colSpan = 2;
+  tdLabel.textContent = 'Subtotal ' + judul.toLowerCase();
+  const tdTotal = document.createElement('td');
+  tdTotal.textContent = 'Rp' + formatRupiah(subtotal);
+  const tdKosong = document.createElement('td');
+  trFoot.appendChild(tdLabel);
+  trFoot.appendChild(tdTotal);
+  trFoot.appendChild(tdKosong);
+  tfoot.appendChild(trFoot);
+  table.appendChild(tfoot);
+
+  listEl.appendChild(table);
+}
+
+function bangunBaris(tbody, t, nomor) {
+  const tr = document.createElement('tr');
+
+  const tdNo = document.createElement('td');
+  tdNo.textContent = nomor;
+  const tdTanggal = document.createElement('td');
+  tdTanggal.textContent = t.tanggal;
+  const tdJumlah = document.createElement('td');
+  tdJumlah.textContent = 'Rp' + formatRupiah(t.jumlah);
+  const tdAksi = document.createElement('td');
+
+  const btnUbah = document.createElement('button');
+  btnUbah.textContent = 'Ubah';
     btnUbah.addEventListener('click', function() {
-      // Mode edit inline (tanpa prompt): input jumlah baru + Simpan/Batal
-      li.innerHTML = '';
+      // Mode edit inline (tanpa prompt): sel jumlah jadi input + Simpan/Batal
+      tr.innerHTML = '';
+      const tdNoE = document.createElement('td');
+      tdNoE.textContent = nomor;
+      const tdTglE = document.createElement('td');
+      tdTglE.textContent = t.tanggal;
+      const tdJumlahE = document.createElement('td');
       const input = document.createElement('input');
       input.type = 'text';
       input.inputMode = 'numeric';
       input.name = 'jumlah-baru';
       input.setAttribute('aria-label', 'Jumlah baru');
       input.value = formatRupiah(t.jumlah); // tampilkan format 20.000 (parse saat Simpan)
+      tdJumlahE.appendChild(input);
+      const tdAksiE = document.createElement('td');
 
       const btnSimpan = document.createElement('button');
       btnSimpan.textContent = 'Simpan';
@@ -124,12 +191,13 @@ function tampil() {
         tampil();
       });
 
-      li.appendChild(document.createTextNode(nomor + '. ' + t.jenis + ' '));
-      li.appendChild(input);
-      li.appendChild(document.createTextNode(' '));
-      li.appendChild(btnSimpan);
-      li.appendChild(document.createTextNode(' '));
-      li.appendChild(btnBatal);
+      tdAksiE.appendChild(btnSimpan);
+      tdAksiE.appendChild(document.createTextNode(' '));
+      tdAksiE.appendChild(btnBatal);
+      tr.appendChild(tdNoE);
+      tr.appendChild(tdTglE);
+      tr.appendChild(tdJumlahE);
+      tr.appendChild(tdAksiE);
     });
 
     const btnHapus = document.createElement('button');
@@ -154,12 +222,16 @@ function tampil() {
     const btnCatatan = document.createElement('button');
     btnCatatan.textContent = 'Catatan';
     btnCatatan.addEventListener('click', function() {
-      // Kembangkan/tutup panel catatan di bawah baris ini
-      const lama = li.querySelector('.panel-catatan');
-      if (lama) {
-        li.removeChild(lama);
+      // Kembangkan/tutup baris panel catatan di bawah baris ini
+      const lama = tr.nextSibling;
+      if (lama && lama.className === 'baris-catatan') {
+        tbody.removeChild(lama);
         return;
       }
+      const panelTr = document.createElement('tr');
+      panelTr.className = 'baris-catatan';
+      const panelTd = document.createElement('td');
+      panelTd.colSpan = 4;
       const panel = document.createElement('div');
       panel.className = 'panel-catatan';
 
@@ -272,20 +344,25 @@ function tampil() {
       btnTutup.textContent = 'Tutup';
       btnTutup.classList.add('btn-soft');
       btnTutup.addEventListener('click', function() {
-        li.removeChild(panel);
+        tbody.removeChild(panelTr);
       });
       panel.appendChild(btnTutup);
 
-      li.appendChild(panel);
+      panelTd.appendChild(panel);
+      panelTr.appendChild(panelTd);
+      tbody.insertBefore(panelTr, tr.nextSibling);
     });
 
-    li.appendChild(btnUbah);
-    li.appendChild(document.createTextNode(' '));
-    li.appendChild(btnHapus);
-    li.appendChild(document.createTextNode(' '));
-    li.appendChild(btnCatatan);
-    listEl.appendChild(li);
-  });
+    tdAksi.appendChild(btnUbah);
+    tdAksi.appendChild(document.createTextNode(' '));
+    tdAksi.appendChild(btnHapus);
+    tdAksi.appendChild(document.createTextNode(' '));
+    tdAksi.appendChild(btnCatatan);
+    tr.appendChild(tdNo);
+    tr.appendChild(tdTanggal);
+    tr.appendChild(tdJumlah);
+    tr.appendChild(tdAksi);
+    return tr;
 }
 
 form.addEventListener('submit', function(e) {
