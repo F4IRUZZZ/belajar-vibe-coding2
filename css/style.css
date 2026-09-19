@@ -214,6 +214,31 @@ a {
   cursor: default;
 }
 
+/* --- Tabel ringkasan kategori + bar mini (CSS murni, tanpa lib) --- */
+.tabel-kategori {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.tabel-kategori td {
+  padding: 6px 4px;
+  vertical-align: middle;
+}
+
+.bar-mini {
+  background-color: #e5e7eb;
+  border-radius: 6px;
+  height: 10px;
+  min-width: 60px;
+}
+
+.bar-mini-isi {
+  background-color: var(--primary-color);
+  border-radius: 6px;
+  height: 10px;
+}
+
 /* --- Responsif --- */
 @media (min-width: 600px) {
   .card { width: 500px; }
