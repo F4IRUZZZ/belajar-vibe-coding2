@@ -25,6 +25,10 @@ function loadKeuanganDB() {
         produk = db.produk || [];
         saveKeuanganDB(); // simpan hasil migrasi + penanda versi sekaligus
       }
+      if (migrasiKategoriTransaksi(db)) {
+        transaksi = db.transaksi || [];
+        saveKeuanganDB(); // simpan hasil migrasi + penanda versi sekaligus
+      }
     }
   } catch (e) { /* pakai memori default */ }
 }
@@ -34,7 +38,8 @@ function saveKeuanganDB() {
   window.localStorage.setItem('keuanganDB', JSON.stringify({
     produk: produk, transaksi: transaksi, catatan: catatan,
     nextProdukId: nextProdukId, nextTransaksiId: nextTransaksiId, nextCatatanId: nextCatatanId,
-    kategoriCapsV1: true // penanda migrasi kapitalisasi sudah jalan
+    kategoriCapsV1: true, // penanda migrasi kapitalisasi sudah jalan
+    kategoriTxV1: true // penanda migrasi field kategori transaksi sudah jalan
   }));
 }
 
@@ -43,6 +48,20 @@ function kapitalisasi(teks) {
   return String(teks).trim().split(/\s+/).map(function(kata) {
     return kata.charAt(0).toUpperCase() + kata.slice(1).toLowerCase();
   }).join(' ');
+}
+
+// Migrasi 1x: isi field kategori transaksi lama (dari produk / 'Lainnya').
+// Isi lain utuh; bertanda versi agar tidak jalan ulang.
+function migrasiKategoriTransaksi(db) {
+  if (!db || db.kategoriTxV1) return false;
+  let berubah = false;
+  (db.transaksi || []).forEach(function(t) {
+    if (t.kategori === undefined || t.kategori === null) {
+      t.kategori = kategoriDariProduk(t.produkId) || 'Lainnya';
+      berubah = true;
+    }
+  });
+  return berubah;
 }
 
 // Migrasi 1x: rapikan ejaan kategori lama (pangan/MANDI -> Pangan/Mandi).
@@ -136,6 +155,12 @@ function deleteProduk(id) {
 }
 
 // --- Transaksi ---
+// Kategori milik sebuah produk (atau null bila tak ada / tak ketemu).
+function kategoriDariProduk(produkId) {
+  if (produkId === null || produkId === undefined) return null;
+  const p = produk.find(function(x) { return x.id === produkId; });
+  return p ? p.kategori : null;
+}
 function addTransaksi(input) {
   const jenis = input.jenis;
   const jumlah = input.jumlah;
@@ -151,6 +176,12 @@ function addTransaksi(input) {
     jenis: jenis,
     jumlah: jumlah,
     produkId: input.produkId || null,
+    // Snapshot kategori saat dicatat (bukan referensi hidup): histori tidak
+    // ikut berubah bila kategori produk diubah nanti. Bila kosong, salin
+    // dari produk terpilih; bila tetap kosong -> 'Lainnya' saat dibaca.
+    kategori: input.kategori !== undefined && input.kategori !== null
+      ? normalisasiKategori(input.kategori)
+      : kategoriDariProduk(input.produkId),
     tanggal: input.tanggal || tanggalHariIni()
   };
   transaksi.push(item);
@@ -177,6 +208,15 @@ function updateTransaksi(id, patch, userId) {
       return { error: 'Jenis harus masuk/keluar', code: 400 };
     }
     transaksi[i].jenis = patch.jenis;
+  }
+  if (patch.tanggal !== undefined) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(patch.tanggal))) {
+      return { error: 'Tanggal harus YYYY-MM-DD', code: 400 };
+    }
+    transaksi[i].tanggal = patch.tanggal;
+  }
+  if (patch.kategori !== undefined) {
+    transaksi[i].kategori = normalisasiKategori(patch.kategori);
   }
   saveKeuanganDB();
   return transaksi[i];
@@ -277,11 +317,7 @@ function getRingkasanKategori(userId, filter) {
     if (t.jenis !== 'keluar') return;
     if (dari && t.tanggal < dari) return;
     if (sampai && t.tanggal > sampai) return;
-    let kat = 'Lainnya';
-    if (t.produkId !== null && t.produkId !== undefined) {
-      const p = produk.find(function(x) { return x.id === t.produkId; });
-      if (p) kat = p.kategori;
-    }
+    let kat = t.kategori || kategoriDariProduk(t.produkId) || 'Lainnya';
     total[kat] = (total[kat] || 0) + t.jumlah;
     keluarSemua += t.jumlah;
   });

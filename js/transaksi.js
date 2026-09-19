@@ -6,6 +6,11 @@ const listEl = document.getElementById('list-transaksi');
 const bulkBar = document.getElementById('bulk-bar');
 const bulkCount = document.getElementById('bulk-count');
 const btnBulkHapus = document.getElementById('btn-bulk-hapus');
+const pilihJenis = document.getElementById('jenis');
+const fieldUntuk = document.getElementById('field-untuk');
+const pilihProduk = document.getElementById('untuk-produk');
+const fieldKategoriBebas = document.getElementById('field-kategori-bebas');
+const inputKategoriBebas = document.getElementById('kategori-bebas');
 
 // Bulk: id terpilih lintas render ulang. Reset tiap tampil() (predictable).
 const terpilih = new Set();
@@ -113,8 +118,44 @@ if (resProfile.code !== 200) {
   userId = resProfile.data.id;
   infoUser.textContent = 'Login sebagai: ' + (resProfile.data.username || resProfile.data.email) + ' (' + resProfile.data.role + ')';
   document.getElementById('tanggal').value = tanggalHariIni(); // lokal, bukan UTC
+  isiPilihProduk();
+  aturUntuk();
   tampil();
 }
+
+// Isi dropdown produk + opsi tulis-sendiri. Dipanggil tiap tampil()
+// agar produk baru langsung muncul tanpa refresh halaman.
+function isiPilihProduk() {
+  const simpan = pilihProduk.value;
+  pilihProduk.innerHTML = '';
+  const kosong = document.createElement('option');
+  kosong.value = '';
+  kosong.textContent = '— Pilih —';
+  pilihProduk.appendChild(kosong);
+  produk.forEach(function(p) {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.nama + ' (' + p.kategori + ')';
+    pilihProduk.appendChild(opt);
+  });
+  const baru = document.createElement('option');
+  baru.value = '__baru__';
+  baru.textContent = 'Tulis sendiri...';
+  pilihProduk.appendChild(baru);
+  pilihProduk.value = simpan;
+  aturUntuk();
+}
+
+// Seksi "Untuk apa?" hanya untuk pengeluaran; input bebas hanya bila
+// pilih "Tulis sendiri...". Pemasukan sembunyikan (tetap sederhana).
+function aturUntuk() {
+  const isKeluar = pilihJenis.value === 'keluar';
+  fieldUntuk.hidden = !isKeluar;
+  fieldKategoriBebas.hidden = !isKeluar || pilihProduk.value !== '__baru__';
+}
+
+pilihJenis.addEventListener('change', aturUntuk);
+pilihProduk.addEventListener('change', aturUntuk);
 
 function tampil() {
   const data = transaksi.filter(function(t) { return t.userId === userId; });
@@ -228,12 +269,17 @@ function bangunBaris(tbody, t, nomor) {
   const btnUbah = document.createElement('button');
   btnUbah.textContent = 'Ubah';
     btnUbah.addEventListener('click', function() {
-      // Mode edit inline (tanpa prompt): sel jumlah jadi input + Simpan/Batal
+      // Mode edit inline (tanpa prompt): tanggal + jumlah + kategori + Simpan/Batal
       tr.innerHTML = '';
       const tdNoE = document.createElement('td');
       tdNoE.textContent = nomor;
       const tdTglE = document.createElement('td');
-      tdTglE.textContent = t.tanggal;
+      const inputTgl = document.createElement('input');
+      inputTgl.type = 'date';
+      inputTgl.name = 'tanggal-baru';
+      inputTgl.setAttribute('aria-label', 'Tanggal baru');
+      inputTgl.value = t.tanggal;
+      tdTglE.appendChild(inputTgl);
       const tdJumlahE = document.createElement('td');
       const input = document.createElement('input');
       input.type = 'text';
@@ -242,13 +288,26 @@ function bangunBaris(tbody, t, nomor) {
       input.setAttribute('aria-label', 'Jumlah baru');
       input.value = formatRupiah(t.jumlah); // tampilkan format 20.000 (parse saat Simpan)
       tdJumlahE.appendChild(input);
+      // Kategori hanya relevan untuk pengeluaran (pemasukan tetap sederhana)
+      let inputKat = null;
+      if (t.jenis === 'keluar') {
+        inputKat = document.createElement('input');
+        inputKat.type = 'text';
+        inputKat.name = 'kategori-baru';
+        inputKat.setAttribute('aria-label', 'Kategori baru');
+        inputKat.placeholder = 'Kategori';
+        inputKat.value = kategoriOf(t);
+        tdJumlahE.appendChild(inputKat);
+      }
       const tdAksiE = document.createElement('td');
 
       const btnSimpan = document.createElement('button');
       btnSimpan.textContent = 'Simpan';
       btnSimpan.addEventListener('click', function() {
         const baru = parseRupiah(input.value);
-        const out = updateTransaksi(t.id, { jumlah: baru }, userId);
+        const patch = { jumlah: baru, tanggal: inputTgl.value };
+        if (inputKat) patch.kategori = inputKat.value;
+        const out = updateTransaksi(t.id, patch, userId);
         if (!out) {
           pesanError(hasil, 'Gagal: transaksi tidak ditemukan.');
           tampil();
@@ -454,12 +513,27 @@ form.addEventListener('submit', function(e) {
   const jumlah = parseRupiah(document.getElementById('jumlah').value);
   const tanggal = document.getElementById('tanggal').value;
   const catatanAwal = document.getElementById('catatan-awal').value;
+  // Untuk apa? (khusus keluar): produk terpilih -> produkId (+kategori
+  // disalin model); tulis-sendiri -> kategori bebas; selain itu null.
+  let produkId = null;
+  let kategori = null;
+  if (jenis === 'keluar') {
+    if (pilihProduk.value === '__baru__') {
+      kategori = inputKategoriBebas.value;
+    } else if (pilihProduk.value !== '') {
+      produkId = Number(pilihProduk.value);
+    }
+  }
   btnTambah.textContent = 'Loading...';
-  const res = addTransaksi({ userId: userId, jenis: jenis, jumlah: jumlah, tanggal: tanggal });
+  const res = addTransaksi({ userId: userId, jenis: jenis, jumlah: jumlah, produkId: produkId, kategori: kategori, tanggal: tanggal });
   btnTambah.textContent = 'Catat';
   if (res.code === 201) {
     document.getElementById('jumlah').value = '';
     document.getElementById('catatan-awal').value = '';
+    inputKategoriBebas.value = '';
+    pilihProduk.value = '';
+    aturUntuk();
+    inputKategoriBebas.value = '';
     let pesan = res.data.jenis + ' Rp' + formatRupiah(res.data.jumlah) + ' tercatat!';
     // Catatan opsional: kosong = lewati diam-diam (transaksi tetap sukses)
     if (catatanAwal.trim()) {
