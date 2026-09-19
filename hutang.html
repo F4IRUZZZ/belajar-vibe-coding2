@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hutang - Catatan Keuangan Keluarga</title>
+  <meta name="description" content="Catat hutang dan piutang + pelunasan otomatis ke kas">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:,">
+  <script src="js/auth.js" defer></script>
+  <script src="js/keuangan.js" defer></script>
+  <script src="js/format.js" defer></script>
+  <script src="js/hutang.js" defer></script>
+</head>
+<body>
+  <main class="card">
+    <h1>Hutang</h1>
+    <p id="info-user">Loading...</p>
+    <hr>
+    <h2>Catat Baru</h2>
+    <form id="form-hutang">
+      <div class="field">
+        <label for="arah">Jenis:</label>
+        <select id="arah">
+          <option value="hutang">Hutang (saya berutang)</option>
+          <option value="piutang">Piutang (orang berutang ke saya)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="pihak">Pihak:</label>
+        <input type="text" id="pihak" placeholder="contoh: Budi">
+      </div>
+      <div class="field">
+        <label for="jumlah-hutang">Jumlah (Rp):</label>
+        <input type="text" id="jumlah-hutang" inputmode="numeric" placeholder="contoh: 50000">
+      </div>
+      <div class="field">
+        <label for="tanggal-hutang">Tanggal:</label>
+        <input type="date" id="tanggal-hutang">
+      </div>
+      <div class="field">
+        <label for="jatuh-tempo">Jatuh tempo (opsional):</label>
+        <input type="date" id="jatuh-tempo">
+      </div>
+      <div class="field">
+        <label for="keterangan">Keterangan (opsional):</label>
+        <input type="text" id="keterangan" placeholder="contoh: Pinjam hajatan">
+      </div>
+      <button type="submit" id="btn-tambah-hutang" class="btn">Catat</button>
+    </form>
+    <p id="hasil"></p>
+    <hr>
+    <h2>Daftar</h2>
+    <ul id="list-hutang"></ul>
+    <p class="nav-sticky"><a href="index.html">Dashboard</a> | <a href="transaksi.html">Transaksi</a> | <a href="produk.html">Produk</a> | <a href="profile.html">Profile</a> | <a href="hutang.html">Hutang</a></p>
+  </main>
+</body>
+</html>

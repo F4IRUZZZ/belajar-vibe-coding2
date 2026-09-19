@@ -5,9 +5,11 @@
 let produk = [];
 let transaksi = [];
 let catatan = [];
+let hutang = []; // {id, userId, arah: hutang|piutang, pihak, jumlah, tanggal, jatuhTempo, keterangan, status, transaksiIdLunas}
 let nextProdukId = 1;
 let nextTransaksiId = 1;
 let nextCatatanId = 1;
+let nextHutangId = 1;
 
 function loadKeuanganDB() {
   if (typeof window === 'undefined' || !window.localStorage) return;
@@ -18,9 +20,11 @@ function loadKeuanganDB() {
       produk = db.produk || [];
       transaksi = db.transaksi || [];
       catatan = db.catatan || [];
+      hutang = db.hutang || [];
       nextProdukId = db.nextProdukId || 1;
       nextTransaksiId = db.nextTransaksiId || 1;
       nextCatatanId = db.nextCatatanId || 1;
+      nextHutangId = db.nextHutangId || 1;
       if (migrasiKapitalKategori(db)) {
         produk = db.produk || [];
         saveKeuanganDB(); // simpan hasil migrasi + penanda versi sekaligus
@@ -36,8 +40,9 @@ function loadKeuanganDB() {
 function saveKeuanganDB() {
   if (typeof window === 'undefined' || !window.localStorage) return;
   window.localStorage.setItem('keuanganDB', JSON.stringify({
-    produk: produk, transaksi: transaksi, catatan: catatan,
+    produk: produk, transaksi: transaksi, catatan: catatan, hutang: hutang,
     nextProdukId: nextProdukId, nextTransaksiId: nextTransaksiId, nextCatatanId: nextCatatanId,
+    nextHutangId: nextHutangId,
     kategoriCapsV1: true, // penanda migrasi kapitalisasi sudah jalan
     kategoriTxV1: true // penanda migrasi field kategori transaksi sudah jalan
   }));
@@ -282,6 +287,92 @@ function deleteCatatan(id, userId) {
     return { error: 'Bukan milikmu', code: 401 }; // otorisasi via transaksi induk
   }
   catatan.splice(i, 1);
+  saveKeuanganDB();
+  return true;
+}
+
+// --- Hutang-piutang ---
+// arah 'hutang' = kita berutang ke pihak; 'piutang' = pihak berutang ke kita.
+// status 'belum' -> 'lunas'. Pelunasan OTOMATIS catat transaksi kas
+// (hutang->keluar, piutang->masuk) + simpan transaksiIdLunas. Idempoten:
+// yang sudah lunas ditolak. Hapus hanya yang belum lunas (jejak audit).
+function addHutang(input) {
+  const arah = input.arah;
+  const jumlah = input.jumlah;
+  if (arah !== 'hutang' && arah !== 'piutang') {
+    return { error: 'Arah harus hutang/piutang', code: 400 };
+  }
+  if (!input.pihak || !String(input.pihak).trim()) {
+    return { error: 'Pihak wajib diisi', code: 400 };
+  }
+  if (typeof jumlah !== 'number' || !(jumlah > 0)) {
+    return { error: 'Jumlah harus angka > 0 (Rp)', code: 400 };
+  }
+  if (input.jatuhTempo !== undefined && input.jatuhTempo !== null && input.jatuhTempo !== '') {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(input.jatuhTempo))) {
+      return { error: 'Jatuh tempo harus YYYY-MM-DD', code: 400 };
+    }
+  }
+  const item = {
+    id: nextHutangId++,
+    userId: input.userId || 1,
+    arah: arah,
+    pihak: String(input.pihak).trim(),
+    jumlah: jumlah,
+    tanggal: input.tanggal || tanggalHariIni(),
+    jatuhTempo: input.jatuhTempo || null,
+    keterangan: input.keterangan ? String(input.keterangan).trim() : '',
+    status: 'belum',
+    transaksiIdLunas: null
+  };
+  hutang.push(item);
+  saveKeuanganDB();
+  return { data: item, code: 201 };
+}
+
+function lunaskanHutang(id, userId) {
+  const i = hutang.findIndex(function(h) { return h.id === id; });
+  if (i === -1) {
+    return null; // simulasi 404
+  }
+  if (userId !== undefined && hutang[i].userId !== userId) {
+    return { error: 'Bukan milikmu', code: 401 };
+  }
+  if (hutang[i].status === 'lunas') {
+    return { error: 'Sudah lunas', code: 400 }; // idempoten: tolak dobel
+  }
+  const h = hutang[i];
+  const jenisKas = h.arah === 'hutang' ? 'keluar' : 'masuk';
+  const res = addTransaksi({
+    userId: h.userId,
+    jenis: jenisKas,
+    jumlah: h.jumlah,
+    tanggal: tanggalHariIni(),
+    kategori: null
+  });
+  if (res.code !== 201) {
+    return { error: res.error, code: res.code }; // gagal di tengah: jangan tandai lunas
+  }
+  const idCatatan = 'Pelunasan ' + (h.arah === 'hutang' ? 'hutang ke ' : 'piutang ') + h.pihak;
+  addCatatan(res.data.id, idCatatan, h.userId);
+  h.status = 'lunas';
+  h.transaksiIdLunas = res.data.id;
+  saveKeuanganDB();
+  return { data: h, code: 200 };
+}
+
+function deleteHutang(id, userId) {
+  const i = hutang.findIndex(function(h) { return h.id === id; });
+  if (i === -1) {
+    return false; // simulasi 404
+  }
+  if (userId !== undefined && hutang[i].userId !== userId) {
+    return { error: 'Bukan milikmu', code: 401 };
+  }
+  if (hutang[i].status === 'lunas') {
+    return { error: 'Sudah lunas, tidak boleh dihapus', code: 400 }; // jejak audit
+  }
+  hutang.splice(i, 1);
   saveKeuanganDB();
   return true;
 }
