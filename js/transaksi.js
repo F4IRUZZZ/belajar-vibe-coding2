@@ -241,13 +241,14 @@ function renderSeksi(judul, rows) {
   listEl.appendChild(table);
 }
 
-// Akordeon: tutup SEMUA panel (edit + catatan) di tbody. Dipanggil tiap
-// handler SEBELUM toggle milik sendiri — maksimal 1 panel hidup per saat.
+// Akordeon: tutup SEMUA panel (edit + catatan) di SELURUH list (semua
+// seksi/tbody) — bukan cuma tbody sendiri. Dipanggil tiap handler SEBELUM
+// toggle milik sendiri: maksimal 1 panel hidup per saat, lintas seksi.
 // querySelectorAll = snapshot (bukan live list), aman dihapus dalam loop.
-function tutupSemuaPanel(tbody) {
-  const semua = tbody.querySelectorAll('.baris-edit, .baris-catatan');
+function tutupSemuaPanel() {
+  const semua = listEl.querySelectorAll('.baris-edit, .baris-catatan');
   for (let i = 0; i < semua.length; i++) {
-    tbody.removeChild(semua[i]);
+    semua[i].parentNode.removeChild(semua[i]);
   }
 }
 
@@ -282,7 +283,7 @@ function bangunBaris(tbody, t, nomor) {  const tr = document.createElement('tr')
       // terbuka = tutup; klik saat panel lain terbuka = ganti.
       const terbuka = tr.nextSibling;
       const milikku = terbuka && terbuka.className === 'baris-edit';
-      tutupSemuaPanel(tbody);
+      tutupSemuaPanel();
       if (milikku) return;
       // Mode edit = baris panel di bawah baris (pola panel catatan):
       // baris asli tetap tampil sebagai referensi, form vertikal ber-label.
@@ -395,7 +396,7 @@ function bangunBaris(tbody, t, nomor) {  const tr = document.createElement('tr')
       // sendiri terbuka = tutup; klik saat panel lain terbuka = ganti.
       const terbuka = tr.nextSibling;
       const milikku = terbuka && terbuka.className === 'baris-catatan';
-      tutupSemuaPanel(tbody);
+      tutupSemuaPanel();
       if (milikku) return;
       const panelTr = document.createElement('tr');
       panelTr.className = 'baris-catatan';
