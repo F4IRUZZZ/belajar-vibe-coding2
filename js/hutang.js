@@ -37,11 +37,60 @@ function tampil() {
     const li = document.createElement('li');
     let teks = nomor + '. ' + h.arah + ' ' + h.pihak + ' Rp' + formatRupiah(h.jumlah) +
       ' (' + h.tanggal + ')' + (h.jatuhTempo ? ' tempo ' + h.jatuhTempo : '') +
-      (h.keterangan ? ' — ' + h.keterangan : '') + ' [' + h.status + ']';
+      (h.keterangan ? ' — ' + h.keterangan : '') + ' [' + h.status +
+      (h.status === 'belum' ? ', dibayar Rp' + formatRupiah(h.dibayar) + ', sisa Rp' + formatRupiah(h.jumlah - h.dibayar) : '') + ']';
     if (lewatJatuhTempo(h)) teks += ' LEWAT TEMPO!';
     li.textContent = teks + ' ';
 
     if (h.status === 'belum') {
+      const btnBayar = document.createElement('button');
+      btnBayar.textContent = 'Bayar';
+      btnBayar.addEventListener('click', function() {
+        // Mode bayar inline: input nominal + Simpan/Batal
+        li.innerHTML = '';
+        const infoRef = document.createElement('p');
+        infoRef.textContent = 'Bayar: ' + h.arah + ' ' + h.pihak +
+          ' (sisa Rp' + formatRupiah(h.jumlah - h.dibayar) + ')';
+        li.appendChild(infoRef);
+        const inputBayar = document.createElement('input');
+        inputBayar.type = 'text';
+        inputBayar.inputMode = 'numeric';
+        inputBayar.name = 'nominal-bayar';
+        inputBayar.setAttribute('aria-label', 'Nominal bayar');
+        inputBayar.placeholder = 'contoh: 50000';
+        li.appendChild(inputBayar);
+        li.appendChild(document.createTextNode(' '));
+
+        const btnSimpanB = document.createElement('button');
+        btnSimpanB.textContent = 'Simpan';
+        btnSimpanB.addEventListener('click', function() {
+          const out = bayarHutang(h.id, parseRupiah(inputBayar.value), userId);
+          if (!out) {
+            pesanError(hasil, 'Gagal: data tidak ditemukan.');
+            tampil();
+            return;
+          }
+          if (out.error) {
+            pesanError(hasil, 'Gagal (' + out.code + '): ' + out.error);
+            return;
+          }
+          pesanOk(hasil, out.data.status === 'lunas' ? 'Lunas + tercatat di kas.' : 'Bayaran tercatat, sisa Rp' + formatRupiah(out.data.jumlah - out.data.dibayar) + '.');
+          tampil();
+        });
+        li.appendChild(btnSimpanB);
+        li.appendChild(document.createTextNode(' '));
+
+        const btnBatalB = document.createElement('button');
+        btnBatalB.textContent = 'Batal';
+        btnBatalB.classList.add('btn-soft');
+        btnBatalB.addEventListener('click', function() {
+          tampil();
+        });
+        li.appendChild(btnBatalB);
+      });
+      li.appendChild(btnBayar);
+      li.appendChild(document.createTextNode(' '));
+
       const btnLunas = document.createElement('button');
       btnLunas.textContent = 'Lunaskan';
       btnLunas.addEventListener('click', function() {
