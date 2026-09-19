@@ -319,6 +319,7 @@ function addHutang(input) {
     arah: arah,
     pihak: String(input.pihak).trim(),
     jumlah: jumlah,
+    dibayar: 0, // total cicilan masuk (<= jumlah). Lunas saat dibayar >= jumlah.
     tanggal: input.tanggal || tanggalHariIni(),
     jatuhTempo: input.jatuhTempo || null,
     keterangan: input.keterangan ? String(input.keterangan).trim() : '',
@@ -341,22 +342,50 @@ function lunaskanHutang(id, userId) {
   if (hutang[i].status === 'lunas') {
     return { error: 'Sudah lunas', code: 400 }; // idempoten: tolak dobel
   }
+  // Shortcut: lunasi = bayar sisa sekaligus
+  return bayarHutang(id, hutang[i].jumlah - hutang[i].dibayar, userId);
+}
+
+// Cicilan: bayar sebagian/penuh. Nominal > sisa -> 400 (tolak, tanpa
+// kembalian/plus-minus logika). Tiap bayaran auto-catat transaksi kas
+// + catatan (konsisten pelunasan). Lunas otomatis saat dibayar >= jumlah.
+function bayarHutang(id, nominal, userId) {
+  const i = hutang.findIndex(function(h) { return h.id === id; });
+  if (i === -1) {
+    return null; // simulasi 404
+  }
+  if (userId !== undefined && hutang[i].userId !== userId) {
+    return { error: 'Bukan milikmu', code: 401 };
+  }
+  if (hutang[i].status === 'lunas') {
+    return { error: 'Sudah lunas', code: 400 }; // idempoten: tolak dobel
+  }
+  if (typeof nominal !== 'number' || !(nominal > 0)) {
+    return { error: 'Nominal harus angka > 0 (Rp)', code: 400 };
+  }
+  const sisa = hutang[i].jumlah - hutang[i].dibayar;
+  if (nominal > sisa) {
+    return { error: 'Nominal melebihi sisa Rp' + formatRupiah(sisa), code: 400 };
+  }
   const h = hutang[i];
   const jenisKas = h.arah === 'hutang' ? 'keluar' : 'masuk';
   const res = addTransaksi({
     userId: h.userId,
     jenis: jenisKas,
-    jumlah: h.jumlah,
+    jumlah: nominal,
     tanggal: tanggalHariIni(),
     kategori: null
   });
   if (res.code !== 201) {
-    return { error: res.error, code: res.code }; // gagal di tengah: jangan tandai lunas
+    return { error: res.error, code: res.code }; // gagal di tengah: jangan ubah apa pun
   }
-  const idCatatan = 'Pelunasan ' + (h.arah === 'hutang' ? 'hutang ke ' : 'piutang ') + h.pihak;
+  const idCatatan = 'Bayar ' + (h.arah === 'hutang' ? 'hutang ke ' : 'piutang ') + h.pihak + ' Rp' + formatRupiah(nominal);
   addCatatan(res.data.id, idCatatan, h.userId);
-  h.status = 'lunas';
-  h.transaksiIdLunas = res.data.id;
+  h.dibayar += nominal;
+  if (h.dibayar >= h.jumlah) {
+    h.status = 'lunas';
+    h.transaksiIdLunas = res.data.id;
+  }
   saveKeuanganDB();
   return { data: h, code: 200 };
 }
