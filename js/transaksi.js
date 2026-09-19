@@ -118,7 +118,12 @@ if (resProfile.code !== 200) {
 
 function tampil() {
   const data = transaksi.filter(function(t) { return t.userId === userId; });
-  terpilih.clear();
+  // Prune (bukan clear): buang id yang sudah tidak ada, pertahankan pilihan
+  // valid — biar pilih-semua / pilihan satuan selamat dari render ulang.
+  Array.from(terpilih).forEach(function(id) {
+    const masihAda = data.some(function(t) { return t.id === id; });
+    if (!masihAda) terpilih.delete(id);
+  });
   perbaruiBar();
   listEl.innerHTML = '';
   if (data.length === 0) {
