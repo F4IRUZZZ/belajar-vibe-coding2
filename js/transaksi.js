@@ -3,6 +3,47 @@ const form = document.getElementById('form-transaksi');
 const btnTambah = document.getElementById('btn-tambah');
 const hasil = document.getElementById('hasil');
 const listEl = document.getElementById('list-transaksi');
+const bulkBar = document.getElementById('bulk-bar');
+const bulkCount = document.getElementById('bulk-count');
+const btnBulkHapus = document.getElementById('btn-bulk-hapus');
+
+// Bulk: id terpilih lintas render ulang. Reset tiap tampil() (predictable).
+const terpilih = new Set();
+
+function perbaruiBar() {
+  if (terpilih.size === 0) {
+    bulkBar.hidden = true;
+    return;
+  }
+  bulkBar.hidden = false;
+  bulkCount.textContent = terpilih.size + ' terpilih. ';
+}
+
+btnBulkHapus.addEventListener('click', function() {
+  if (terpilih.size === 0) {
+    pesanError(hasil, 'Pilih dulu minimal 1 transaksi.');
+    return;
+  }
+  const n = terpilih.size;
+  if (!window.confirm('Hapus ' + n + ' transaksi terpilih?')) return; // 1x confirm global
+  let ok = 0;
+  const gagal = [];
+  Array.from(terpilih).forEach(function(id) {
+    const out = deleteTransaksi(id, userId); // cascade catatan otomatis
+    if (out === true) {
+      ok++;
+    } else {
+      gagal.push(id);
+    }
+  });
+  terpilih.clear();
+  tampil();
+  if (gagal.length === 0) {
+    pesanOk(hasil, ok + ' transaksi dihapus.');
+  } else {
+    pesanError(hasil, ok + ' dihapus, ' + gagal.length + ' gagal (bukan milikmu/hilang).');
+  }
+});
 const btnUnduh = document.getElementById('btn-unduh');
 
 // CSV: tanggal, jenis, jumlah murni, kategori, catatan gabungan ';'.
@@ -77,6 +118,13 @@ if (resProfile.code !== 200) {
 
 function tampil() {
   const data = transaksi.filter(function(t) { return t.userId === userId; });
+  // Prune (bukan clear): buang id yang sudah tidak ada, pertahankan pilihan
+  // valid — biar pilih-semua / pilihan satuan selamat dari render ulang.
+  Array.from(terpilih).forEach(function(id) {
+    const masihAda = data.some(function(t) { return t.id === id; });
+    if (!masihAda) terpilih.delete(id);
+  });
+  perbaruiBar();
   listEl.innerHTML = '';
   if (data.length === 0) {
     listEl.innerHTML = '<p>Belum ada transaksi. Yuk catat yang pertama di form atas.</p>';
@@ -103,6 +151,22 @@ function renderSeksi(judul, rows) {
   table.className = 'tabel-transaksi';
   const thead = document.createElement('thead');
   const trHead = document.createElement('tr');
+  const thCek = document.createElement('th');
+  const cekSemua = document.createElement('input');
+  cekSemua.type = 'checkbox';
+  cekSemua.setAttribute('aria-label', 'Pilih semua ' + judul.toLowerCase());
+  cekSemua.addEventListener('change', function() {
+    rows.forEach(function(t) {
+      if (cekSemua.checked) {
+        terpilih.add(t.id);
+      } else {
+        terpilih.delete(t.id);
+      }
+    });
+    tampil();
+  });
+  thCek.appendChild(cekSemua);
+  trHead.appendChild(thCek);
   ['No', 'Tanggal', 'Jumlah', 'Aksi'].forEach(function(nama) {
     const th = document.createElement('th');
     th.textContent = nama;
@@ -122,7 +186,7 @@ function renderSeksi(judul, rows) {
   const tfoot = document.createElement('tfoot');
   const trFoot = document.createElement('tr');
   const tdLabel = document.createElement('td');
-  tdLabel.colSpan = 2;
+  tdLabel.colSpan = 3;
   tdLabel.textContent = 'Subtotal ' + judul.toLowerCase();
   const tdTotal = document.createElement('td');
   tdTotal.textContent = 'Rp' + formatRupiah(subtotal);
@@ -139,6 +203,20 @@ function renderSeksi(judul, rows) {
 function bangunBaris(tbody, t, nomor) {
   const tr = document.createElement('tr');
 
+  const tdCek = document.createElement('td');
+  const cek = document.createElement('input');
+  cek.type = 'checkbox';
+  cek.checked = terpilih.has(t.id);
+  cek.setAttribute('aria-label', 'Pilih transaksi Rp' + formatRupiah(t.jumlah));
+  cek.addEventListener('change', function() {
+    if (cek.checked) {
+      terpilih.add(t.id);
+    } else {
+      terpilih.delete(t.id);
+    }
+    perbaruiBar();
+  });
+  tdCek.appendChild(cek);
   const tdNo = document.createElement('td');
   tdNo.textContent = nomor;
   const tdTanggal = document.createElement('td');
@@ -231,7 +309,7 @@ function bangunBaris(tbody, t, nomor) {
       const panelTr = document.createElement('tr');
       panelTr.className = 'baris-catatan';
       const panelTd = document.createElement('td');
-      panelTd.colSpan = 4;
+      panelTd.colSpan = 5;
       const panel = document.createElement('div');
       panel.className = 'panel-catatan';
 
@@ -358,6 +436,7 @@ function bangunBaris(tbody, t, nomor) {
     tdAksi.appendChild(btnHapus);
     tdAksi.appendChild(document.createTextNode(' '));
     tdAksi.appendChild(btnCatatan);
+    tr.appendChild(tdCek);
     tr.appendChild(tdNo);
     tr.appendChild(tdTanggal);
     tr.appendChild(tdJumlah);
