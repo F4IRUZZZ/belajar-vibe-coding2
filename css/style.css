@@ -214,6 +214,41 @@ a {
   cursor: default;
 }
 
+/* --- Tabel transaksi: 2 seksi + subtotal, angka kanan --- */
+.tabel-transaksi {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+}
+
+.tabel-transaksi th,
+.tabel-transaksi td {
+  border: 1px solid #e5e7eb;
+  padding: 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.tabel-transaksi thead th {
+  background-color: #e8eef7;
+}
+
+.tabel-transaksi tbody tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+.tabel-transaksi td:nth-child(3),
+.tabel-transaksi tfoot td:nth-child(2) {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tabel-transaksi tfoot td {
+  font-weight: 700;
+  background-color: #f3f4f6;
+}
+
 /* --- Tabel ringkasan kategori + bar mini (CSS murni, tanpa lib) --- */
 .tabel-kategori {
   width: 100%;
