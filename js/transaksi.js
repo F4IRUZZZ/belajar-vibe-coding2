@@ -241,8 +241,17 @@ function renderSeksi(judul, rows) {
   listEl.appendChild(table);
 }
 
-function bangunBaris(tbody, t, nomor) {
-  const tr = document.createElement('tr');
+// Akordeon: tutup SEMUA panel (edit + catatan) di tbody. Dipanggil tiap
+// handler SEBELUM toggle milik sendiri — maksimal 1 panel hidup per saat.
+// querySelectorAll = snapshot (bukan live list), aman dihapus dalam loop.
+function tutupSemuaPanel(tbody) {
+  const semua = tbody.querySelectorAll('.baris-edit, .baris-catatan');
+  for (let i = 0; i < semua.length; i++) {
+    tbody.removeChild(semua[i]);
+  }
+}
+
+function bangunBaris(tbody, t, nomor) {  const tr = document.createElement('tr');
 
   const tdCek = document.createElement('td');
   const cek = document.createElement('input');
@@ -269,13 +278,14 @@ function bangunBaris(tbody, t, nomor) {
   const btnUbah = document.createElement('button');
   btnUbah.textContent = 'Ubah';
     btnUbah.addEventListener('click', function() {
+      // Akordeon per baris: maksimal 1 panel hidup. Klik saat milik sendiri
+      // terbuka = tutup; klik saat panel lain terbuka = ganti.
+      const terbuka = tr.nextSibling;
+      const milikku = terbuka && terbuka.className === 'baris-edit';
+      tutupSemuaPanel(tbody);
+      if (milikku) return;
       // Mode edit = baris panel di bawah baris (pola panel catatan):
       // baris asli tetap tampil sebagai referensi, form vertikal ber-label.
-      const lama = tr.nextSibling;
-      if (lama && lama.className === 'baris-edit') {
-        tbody.removeChild(lama);
-        return;
-      }
       const panelTr = document.createElement('tr');
       panelTr.className = 'baris-edit';
       const panelTd = document.createElement('td');
@@ -381,12 +391,12 @@ function bangunBaris(tbody, t, nomor) {
     const btnCatatan = document.createElement('button');
     btnCatatan.textContent = 'Catatan';
     btnCatatan.addEventListener('click', function() {
-      // Kembangkan/tutup baris panel catatan di bawah baris ini
-      const lama = tr.nextSibling;
-      if (lama && lama.className === 'baris-catatan') {
-        tbody.removeChild(lama);
-        return;
-      }
+      // Akordeon per baris: sama kayak Ubah (lihat atas). Klik saat milik
+      // sendiri terbuka = tutup; klik saat panel lain terbuka = ganti.
+      const terbuka = tr.nextSibling;
+      const milikku = terbuka && terbuka.className === 'baris-catatan';
+      tutupSemuaPanel(tbody);
+      if (milikku) return;
       const panelTr = document.createElement('tr');
       panelTr.className = 'baris-catatan';
       const panelTd = document.createElement('td');
