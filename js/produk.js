@@ -34,7 +34,7 @@ function tampil() {
   if (!ddList.hidden) renderOpsiDropdown(); // segarkan saran bila dropdown terbuka
   listEl.innerHTML = '';
   if (produk.length === 0) {
-    listEl.innerHTML = '<li>Belum ada produk.</li>';
+    listEl.innerHTML = '<li>Belum ada produk. Yuk tambah kebutuhan pertama di form atas.</li>';
     return;
   }
   produk.forEach(function(p, i) {
@@ -59,20 +59,21 @@ function tampil() {
         if (!baru) return; // kosong = abaikan
         const out = updateProduk(p.id, { nama: baru });
         if (!out) {
-          hasil.textContent = 'Gagal: produk tidak ditemukan.';
+          pesanError(hasil, 'Gagal: produk tidak ditemukan.');
           tampil();
           return;
         }
         if (out.error) {
-          hasil.textContent = 'Gagal (' + out.code + '): ' + out.error;
+          pesanError(hasil, 'Gagal (' + out.code + '): ' + out.error);
           return;
         }
-        hasil.textContent = 'Produk diubah jadi "' + baru + '".';
+        pesanOk(hasil, 'Produk diubah jadi "' + baru + '".');
         tampil();
       });
 
       const btnBatal = document.createElement('button');
       btnBatal.textContent = 'Batal';
+      btnBatal.classList.add('btn-soft');
       btnBatal.addEventListener('click', function() {
         tampil();
       });
@@ -87,15 +88,16 @@ function tampil() {
 
     const btnHapus = document.createElement('button');
     btnHapus.textContent = 'Hapus';
+    btnHapus.classList.add('btn-danger');
     btnHapus.addEventListener('click', function() {
       if (!window.confirm('Hapus produk "' + p.nama + '"?')) return;
       const outDel = deleteProduk(p.id);
       if (!outDel) {
-        hasil.textContent = 'Gagal: produk tidak ditemukan.';
+        pesanError(hasil, 'Gagal: produk tidak ditemukan.');
         tampil();
         return;
       }
-      hasil.textContent = 'Produk "' + p.nama + '" dihapus.';
+      pesanOk(hasil, 'Produk "' + p.nama + '" dihapus.');
       tampil();
     });
 
@@ -205,9 +207,9 @@ form.addEventListener('submit', function(e) {
     kategoriTerpilih = '';
     ddHidden.value = '';
     ddTombol.textContent = 'Pilih kategori ▾'; // reset pilihan
-    hasil.textContent = 'Produk "' + res.data.nama + '" ditambah!';
+    pesanOk(hasil, 'Produk "' + res.data.nama + '" ditambah!');
     tampil();
   } else {
-    hasil.textContent = 'Gagal (' + res.code + '): ' + res.error;
+    pesanError(hasil, 'Gagal (' + res.code + '): ' + res.error);
   }
 });

@@ -20,4 +20,5 @@ if (resProfile.code !== 200) {
   totalMasuk.textContent = 'Rp' + formatRupiah(ringkasan.masuk);
   totalKeluar.textContent = 'Rp' + formatRupiah(ringkasan.keluar);
   saldoEl.textContent = 'Rp' + formatRupiah(ringkasan.saldo);
+  if (ringkasan.saldo < 0) saldoEl.classList.add('saldo-minus'); // kas minus = merah
 }

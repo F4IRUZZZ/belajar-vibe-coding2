@@ -25,12 +25,12 @@ btnLogout.addEventListener('click', function() {
   const out = logout(t);
   if (out.code === 200) {
     window.localStorage.removeItem('token'); // buang token = sesi hangus
-    hasil.textContent = 'Logout sukses! Redirect ke login...';
+    pesanOk(hasil, 'Logout sukses! Redirect ke login...');
     setTimeout(function() {
       window.location.href = 'login.html';
     }, 800);
   } else {
-    hasil.textContent = 'Gagal (' + out.code + '): ' + out.error;
+    pesanError(hasil, 'Gagal (' + out.code + '): ' + out.error);
   }
 });
 
@@ -42,8 +42,8 @@ formUsername.addEventListener('submit', function(e) {
   btnUsername.textContent = 'Simpan';
   if (out.code === 200) {
     info.textContent = 'Username: ' + out.data.username + ' (' + out.data.role + ')';
-    hasilUsername.textContent = 'Username diubah jadi "' + out.data.username + '".';
+    pesanOk(hasilUsername, 'Username diubah jadi "' + out.data.username + '".');
   } else {
-    hasilUsername.textContent = 'Gagal (' + out.code + '): ' + out.error;
+    pesanError(hasilUsername, 'Gagal (' + out.code + '): ' + out.error);
   }
 });
