@@ -274,6 +274,21 @@ a {
   height: 10px;
 }
 
+/* --- Panel inline (catatan + edit): baris khusus di bawah baris induk --- */
+.baris-catatan td,
+.baris-edit td {
+  background-color: #f9fafb;
+}
+
+.panel-catatan .field {
+  margin-bottom: 10px;
+}
+
+.panel-catatan label {
+  display: block;
+  margin-bottom: 2px;
+}
+
 /* --- Responsif --- */
 @media (min-width: 600px) {
   .card { width: 500px; }

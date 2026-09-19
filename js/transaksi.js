@@ -269,37 +269,60 @@ function bangunBaris(tbody, t, nomor) {
   const btnUbah = document.createElement('button');
   btnUbah.textContent = 'Ubah';
     btnUbah.addEventListener('click', function() {
-      // Mode edit inline (tanpa prompt): tanggal + jumlah + kategori + Simpan/Batal
-      tr.innerHTML = '';
-      const tdNoE = document.createElement('td');
-      tdNoE.textContent = nomor;
-      const tdTglE = document.createElement('td');
+      // Mode edit = baris panel di bawah baris (pola panel catatan):
+      // baris asli tetap tampil sebagai referensi, form vertikal ber-label.
+      const lama = tr.nextSibling;
+      if (lama && lama.className === 'baris-edit') {
+        tbody.removeChild(lama);
+        return;
+      }
+      const panelTr = document.createElement('tr');
+      panelTr.className = 'baris-edit';
+      const panelTd = document.createElement('td');
+      panelTd.colSpan = 5;
+      const panel = document.createElement('div');
+      panel.className = 'panel-catatan';
+
+      function fieldEdit(labelText, inputEl) {
+        // Label membungkus input (asosiasi implisit): lolos cek aksesibilitas
+        // tanpa butuh id unik per baris.
+        const wrap = document.createElement('div');
+        wrap.className = 'field';
+        const lab = document.createElement('label');
+        lab.appendChild(document.createTextNode(labelText + ' '));
+        lab.appendChild(inputEl);
+        wrap.appendChild(lab);
+        panel.appendChild(wrap);
+        return inputEl;
+      }
+
+      const infoRef = document.createElement('p');
+      infoRef.textContent = 'Ubah: ' + t.jenis + ' Rp' + formatRupiah(t.jumlah) + ' (' + t.tanggal + ')';
+      panel.appendChild(infoRef);
+
       const inputTgl = document.createElement('input');
       inputTgl.type = 'date';
       inputTgl.name = 'tanggal-baru';
-      inputTgl.setAttribute('aria-label', 'Tanggal baru');
       inputTgl.value = t.tanggal;
-      tdTglE.appendChild(inputTgl);
-      const tdJumlahE = document.createElement('td');
+      fieldEdit('Tanggal baru:', inputTgl);
+
       const input = document.createElement('input');
       input.type = 'text';
       input.inputMode = 'numeric';
       input.name = 'jumlah-baru';
-      input.setAttribute('aria-label', 'Jumlah baru');
       input.value = formatRupiah(t.jumlah); // tampilkan format 20.000 (parse saat Simpan)
-      tdJumlahE.appendChild(input);
+      fieldEdit('Jumlah baru (Rp):', input);
+
       // Kategori hanya relevan untuk pengeluaran (pemasukan tetap sederhana)
       let inputKat = null;
       if (t.jenis === 'keluar') {
         inputKat = document.createElement('input');
         inputKat.type = 'text';
         inputKat.name = 'kategori-baru';
-        inputKat.setAttribute('aria-label', 'Kategori baru');
         inputKat.placeholder = 'Kategori';
         inputKat.value = kategoriOf(t);
-        tdJumlahE.appendChild(inputKat);
+        fieldEdit('Kategori baru:', inputKat);
       }
-      const tdAksiE = document.createElement('td');
 
       const btnSimpan = document.createElement('button');
       btnSimpan.textContent = 'Simpan';
@@ -325,16 +348,15 @@ function bangunBaris(tbody, t, nomor) {
       btnBatal.textContent = 'Batal';
       btnBatal.classList.add('btn-soft');
       btnBatal.addEventListener('click', function() {
-        tampil();
+        tbody.removeChild(panelTr);
       });
 
-      tdAksiE.appendChild(btnSimpan);
-      tdAksiE.appendChild(document.createTextNode(' '));
-      tdAksiE.appendChild(btnBatal);
-      tr.appendChild(tdNoE);
-      tr.appendChild(tdTglE);
-      tr.appendChild(tdJumlahE);
-      tr.appendChild(tdAksiE);
+      panel.appendChild(btnSimpan);
+      panel.appendChild(document.createTextNode(' '));
+      panel.appendChild(btnBatal);
+      panelTd.appendChild(panel);
+      panelTr.appendChild(panelTd);
+      tbody.insertBefore(panelTr, tr.nextSibling);
     });
 
     const btnHapus = document.createElement('button');
