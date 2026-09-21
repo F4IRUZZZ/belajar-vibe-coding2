@@ -314,6 +314,21 @@ a {
   border-radius: 0 6px 6px 0;
 }
 
+/* Tombol mata password menempel di kanan input (reuse .input-rp) */
+.input-rp button {
+  flex-shrink: 0;
+  border-radius: 0 6px 6px 0;
+  padding: 10px 14px;
+}
+
+.input-rp input {
+  border-radius: 0;
+}
+
+.input-rp span + input {
+  border-left: none;
+}
+
 /* --- Responsif --- */
 @media (min-width: 600px) {
   .card { width: 500px; }

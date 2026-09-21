@@ -2,6 +2,8 @@ const formLogin = document.getElementById('form-login');
 const btnLogin = document.getElementById('btn-login');
 const hasilLogin = document.getElementById('hasil-login');
 
+pasangTogglePassword(document.getElementById('password'), document.getElementById('lihat-password'));
+
 formLogin.addEventListener('submit', function(e) {
   e.preventDefault();
   btnLogin.textContent = 'Loading...';

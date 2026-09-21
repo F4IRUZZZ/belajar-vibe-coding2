@@ -2,7 +2,30 @@ const formRegister = document.getElementById('form-register');
 const btnRegister = document.getElementById('btn-register');
 const hasilRegister = document.getElementById('hasil-register');
 const inputPassword = document.getElementById('reg-password');
+const inputPassword2 = document.getElementById('reg-password2');
+const cocokPassword = document.getElementById('konfirmasi-cocok');
 const meterPassword = document.getElementById('meter-password');
+
+pasangTogglePassword(inputPassword, document.getElementById('lihat-reg-password'));
+pasangTogglePassword(inputPassword2, document.getElementById('lihat-reg-password2'));
+
+// Indikator live: kosong = diam, cocok = hijau, beda = merah.
+// Submit tetap divalidasi seperti sekarang (informatif, bukan pengganti cek).
+function perbaruiCocok() {
+  if (!inputPassword.value && !inputPassword2.value) {
+    cocokPassword.textContent = '';
+    cocokPassword.classList.remove('msg-ok', 'msg-err');
+    return;
+  }
+  if (inputPassword.value === inputPassword2.value) {
+    pesanOk(cocokPassword, 'Sudah cocok.');
+  } else {
+    pesanError(cocokPassword, 'Belum cocok.');
+  }
+}
+
+inputPassword2.addEventListener('input', perbaruiCocok);
+inputPassword.addEventListener('input', perbaruiCocok);
 
 // Meter kekuatan informatif (tidak memblokir): Lemah / Sedang / Kuat.
 function skorPassword(pw) {

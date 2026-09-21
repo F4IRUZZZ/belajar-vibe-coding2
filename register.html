@@ -25,12 +25,19 @@
       </div>
       <div class="field">
         <label for="reg-password">Password (min 8 + huruf + angka):</label>
-        <input type="password" id="reg-password" autocomplete="new-password">
+        <div class="input-rp">
+          <input type="password" id="reg-password" autocomplete="new-password">
+          <button type="button" id="lihat-reg-password" aria-label="Tampilkan password">Lihat</button>
+        </div>
         <p id="meter-password"></p>
       </div>
       <div class="field">
         <label for="reg-password2">Ulangi password (harus sama):</label>
-        <input type="password" id="reg-password2" autocomplete="new-password">
+        <div class="input-rp">
+          <input type="password" id="reg-password2" autocomplete="new-password">
+          <button type="button" id="lihat-reg-password2" aria-label="Tampilkan password">Lihat</button>
+        </div>
+        <p id="konfirmasi-cocok"></p>
       </div>
       <div class="field">
         <label for="reg-role">Akun untuk:</label>

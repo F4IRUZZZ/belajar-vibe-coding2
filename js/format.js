@@ -29,6 +29,58 @@ function pasangFormatRupiahLive(inputEl) {
   });
 }
 
+// Toggle intip password: password <-> text. Dipakai login + register.
+// Teks tombol Lihat/Sembunyi (tanpa emoji), aria-label aksesibilitas.
+function pasangTogglePassword(inputEl, tombolEl) {
+  tombolEl.addEventListener('click', function() {
+    const tampil = inputEl.type === 'password';
+    inputEl.type = tampil ? 'text' : 'password';
+    tombolEl.textContent = tampil ? 'Sembunyi' : 'Lihat';
+    tombolEl.setAttribute('aria-label', tampil ? 'Sembunyikan password' : 'Tampilkan password');
+  });
+}
+
+// CSV (shared transaksi + profile): tanggal, jenis, jumlah murni, kategori,
+// catatan gabungan ';'. Quote-wrap (aman koma/quote/enter). userId eksplisit
+// agar tidak bergantung pada global halaman. Pindah dari transaksi.js.
+function selCSV(teks) {
+  return '"' + String(teks).replace(/"/g, '""') + '"';
+}
+
+function kategoriOf(t) {
+  if (t.kategori) return t.kategori;
+  if (t.produkId !== null && t.produkId !== undefined) {
+    const p = produk.find(function(x) { return x.id === t.produkId; });
+    if (p) return p.kategori;
+  }
+  return 'Lainnya';
+}
+
+function bangunCSV(userId) {
+  const baris = ['tanggal,jenis,jumlah,kategori,catatan'];
+  transaksi.forEach(function(t) {
+    if (t.userId !== userId) return;
+    const notes = catatan.filter(function(c) { return c.transaksiId === t.id; })
+      .map(function(c) { return c.isi; }).join('; ');
+    baris.push([
+      selCSV(t.tanggal), selCSV(t.jenis), t.jumlah,
+      selCSV(kategoriOf(t)), selCSV(notes)
+    ].join(','));
+  });
+  return baris.join('\r\n');
+}
+
+function unduhCSV(userId, elHasil) {
+  const csv = bangunCSV(userId);
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'keuangan-' + tanggalHariIni() + '.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  if (elHasil) pesanOk(elHasil, 'CSV diunduh.');
+}
+
 // Pesan semantik terpusat: hijau untuk sukses, merah untuk error.
 // Semua halaman pakai ini (konsisten, tanpa set class manual di tiap file).
 function pesanOk(el, teks) {
