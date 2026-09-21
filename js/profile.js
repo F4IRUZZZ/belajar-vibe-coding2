@@ -12,6 +12,9 @@ const res = getProfile(token);
 if (res.code === 200) {
   info.textContent = 'Username: ' + (res.data.username || res.data.email) + ' (' + res.data.role + ')';
   document.getElementById('username-baru').value = res.data.username || '';
+  document.getElementById('btn-unduh-profile').addEventListener('click', function() {
+    unduhCSV(res.data.id, document.getElementById('hasil-unduh'));
+  });
 } else {
   // 401 = tanpa token / palsu / hangus -> redirect ke login
   info.textContent = 'Belum login, redirect ke halaman login...';

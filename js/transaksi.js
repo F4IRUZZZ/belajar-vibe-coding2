@@ -49,49 +49,7 @@ btnBulkHapus.addEventListener('click', function() {
     pesanError(hasil, ok + ' dihapus, ' + gagal.length + ' gagal (bukan milikmu/hilang).');
   }
 });
-const btnUnduh = document.getElementById('btn-unduh');
-
-// CSV: tanggal, jenis, jumlah murni, kategori, catatan gabungan ';'.
-// Selalu quote-wrap (aman koma/quote/enter). Data milik sendiri saja.
-function selCSV(teks) {
-  return '"' + String(teks).replace(/"/g, '""') + '"';
-}
-
-function kategoriOf(t) {
-  if (t.kategori) return t.kategori;
-  if (t.produkId !== null && t.produkId !== undefined) {
-    const p = produk.find(function(x) { return x.id === t.produkId; });
-    if (p) return p.kategori;
-  }
-  return 'Lainnya';
-}
-
-function bangunCSV() {
-  const baris = ['tanggal,jenis,jumlah,kategori,catatan'];
-  transaksi.forEach(function(t) {
-    if (t.userId !== userId) return;
-    const notes = catatan.filter(function(c) { return c.transaksiId === t.id; })
-      .map(function(c) { return c.isi; }).join('; ');
-    baris.push([
-      selCSV(t.tanggal), selCSV(t.jenis), t.jumlah,
-      selCSV(kategoriOf(t)), selCSV(notes)
-    ].join(','));
-  });
-  return baris.join('\r\n');
-}
-
-btnUnduh.addEventListener('click', function() {
-  const csv = bangunCSV();
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'keuangan-' + tanggalHariIni() + '.csv';
-  a.click();
-  URL.revokeObjectURL(a.href);
-  pesanOk(hasil, 'CSV diunduh.');
-});
-
-// parseRupiah pindah ke js/format.js (shared dengan hutang.js).
+// CSV pindah ke js/format.js + tombol pindah ke profile.html (PR-8).
 
 // Guard: harus login — baca token, 401 = redirect ke login
 const token = window.localStorage.getItem('token');
