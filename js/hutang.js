@@ -117,7 +117,7 @@ function bangunBarisHutang(tbody, h, nomor) {
 
   if (h.status === 'belum') {
     const btnBayar = document.createElement('button');
-    btnBayar.textContent = 'Bayar';
+    pasangIkon(btnBayar, 'bayar', 'Bayar ' + h.pihak);
     btnBayar.addEventListener('click', function() {
       // Panel bayar di bawah baris (pola panel transaksi): baris asli tetap.
       const lama = tr.nextSibling;
@@ -151,7 +151,7 @@ function bangunBarisHutang(tbody, h, nomor) {
       panelTd.appendChild(document.createTextNode(' '));
 
       const btnSimpanB = document.createElement('button');
-      btnSimpanB.textContent = 'Simpan';
+      pasangIkon(btnSimpanB, 'simpan', 'Simpan pembayaran');
       btnSimpanB.addEventListener('click', function() {
         const out = bayarHutang(h.id, parseRupiah(inputBayar.value), userId);
         if (!out) {
@@ -170,7 +170,7 @@ function bangunBarisHutang(tbody, h, nomor) {
       panelTd.appendChild(document.createTextNode(' '));
 
       const btnBatalB = document.createElement('button');
-      btnBatalB.textContent = 'Batal';
+      pasangIkon(btnBatalB, 'batal', 'Batal');
       btnBatalB.classList.add('btn-soft');
       btnBatalB.addEventListener('click', function() {
         tbody.removeChild(panelTr);
@@ -183,7 +183,7 @@ function bangunBarisHutang(tbody, h, nomor) {
     tdAksi.appendChild(document.createTextNode(' '));
 
     const btnLunas = document.createElement('button');
-    btnLunas.textContent = 'Lunaskan';
+    pasangIkon(btnLunas, 'lunas', 'Lunaskan ' + h.pihak);
     btnLunas.addEventListener('click', function() {
       if (!window.confirm('Lunaskan + catat ke kas?')) return;
       const out = lunaskanHutang(h.id, userId);
@@ -207,7 +207,7 @@ function bangunBarisHutang(tbody, h, nomor) {
   // Guard model tetap sebagai pertahanan lapis dua.
   if (h.status === 'belum') {
     const btnHapus = document.createElement('button');
-    btnHapus.textContent = 'Hapus';
+    pasangIkon(btnHapus, 'hapus', 'Hapus ' + h.pihak);
     btnHapus.classList.add('btn-danger');
     btnHapus.addEventListener('click', function() {
       if (!window.confirm('Hapus catatan ini?')) return;

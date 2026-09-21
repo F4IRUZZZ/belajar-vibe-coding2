@@ -224,8 +224,8 @@ function bangunBaris(tbody, t, nomor) {  const tr = document.createElement('tr')
   tdJumlah.textContent = 'Rp' + formatRupiah(t.jumlah);
   const tdAksi = document.createElement('td');
 
-  const btnUbah = document.createElement('button');
-  btnUbah.textContent = 'Ubah';
+    const btnUbah = document.createElement('button');
+    pasangIkon(btnUbah, 'ubah', 'Ubah');
     btnUbah.addEventListener('click', function() {
       // Akordeon per baris: maksimal 1 panel hidup. Klik saat milik sendiri
       // terbuka = tutup; klik saat panel lain terbuka = ganti.
@@ -296,7 +296,7 @@ function bangunBaris(tbody, t, nomor) {  const tr = document.createElement('tr')
       }
 
       const btnSimpan = document.createElement('button');
-      btnSimpan.textContent = 'Simpan';
+      pasangIkon(btnSimpan, 'simpan', 'Simpan');
       btnSimpan.addEventListener('click', function() {
         const baru = parseRupiah(input.value);
         const patch = { jumlah: baru, tanggal: inputTgl.value };
@@ -316,7 +316,7 @@ function bangunBaris(tbody, t, nomor) {  const tr = document.createElement('tr')
       });
 
       const btnBatal = document.createElement('button');
-      btnBatal.textContent = 'Batal';
+      pasangIkon(btnBatal, 'batal', 'Batal');
       btnBatal.classList.add('btn-soft');
       btnBatal.addEventListener('click', function() {
         tbody.removeChild(panelTr);
@@ -331,7 +331,7 @@ function bangunBaris(tbody, t, nomor) {  const tr = document.createElement('tr')
     });
 
     const btnHapus = document.createElement('button');
-    btnHapus.textContent = 'Hapus';
+    pasangIkon(btnHapus, 'hapus', 'Hapus transaksi Rp' + formatRupiah(t.jumlah));
     btnHapus.classList.add('btn-danger');
     btnHapus.addEventListener('click', function() {
       if (!window.confirm('Hapus transaksi Rp' + formatRupiah(t.jumlah) + '?')) return;
@@ -350,7 +350,7 @@ function bangunBaris(tbody, t, nomor) {  const tr = document.createElement('tr')
     });
 
     const btnCatatan = document.createElement('button');
-    btnCatatan.textContent = 'Catatan';
+    pasangIkon(btnCatatan, 'catatan', 'Catatan');
     btnCatatan.addEventListener('click', function() {
       // Akordeon per baris: sama kayak Ubah (lihat atas). Klik saat milik
       // sendiri terbuka = tutup; klik saat panel lain terbuka = ganti.
@@ -377,7 +377,7 @@ function bangunBaris(tbody, t, nomor) {  const tr = document.createElement('tr')
           item.appendChild(document.createTextNode(c.isi + ' '));
 
           const btnUbahC = document.createElement('button');
-          btnUbahC.textContent = 'Ubah';
+          pasangIkon(btnUbahC, 'ubah', 'Ubah catatan');
           btnUbahC.addEventListener('click', function() {
             // Mode edit inline (tanpa prompt): input isi baru + Simpan/Batal
             item.innerHTML = '';
@@ -388,7 +388,7 @@ function bangunBaris(tbody, t, nomor) {  const tr = document.createElement('tr')
             inputUbah.value = c.isi;
 
             const btnSimpanU = document.createElement('button');
-            btnSimpanU.textContent = 'Simpan';
+            pasangIkon(btnSimpanU, 'simpan', 'Simpan catatan');
             btnSimpanU.addEventListener('click', function() {
               const baru = inputUbah.value.trim();
               if (!baru) return; // kosong = abaikan diam-diam
@@ -407,7 +407,7 @@ function bangunBaris(tbody, t, nomor) {  const tr = document.createElement('tr')
             });
 
             const btnBatalU = document.createElement('button');
-            btnBatalU.textContent = 'Batal';
+            pasangIkon(btnBatalU, 'batal', 'Batal');
             btnBatalU.classList.add('btn-soft');
             btnBatalU.addEventListener('click', function() {
               tampil();
@@ -421,7 +421,7 @@ function bangunBaris(tbody, t, nomor) {  const tr = document.createElement('tr')
           });
 
           const btnHapusC = document.createElement('button');
-          btnHapusC.textContent = 'Hapus';
+          pasangIkon(btnHapusC, 'hapus', 'Hapus catatan');
           btnHapusC.classList.add('btn-danger');
           btnHapusC.addEventListener('click', function() {
             if (!window.confirm('Hapus catatan ini?')) return;
@@ -456,7 +456,7 @@ function bangunBaris(tbody, t, nomor) {  const tr = document.createElement('tr')
       panel.appendChild(document.createTextNode(' '));
 
       const btnSimpanCatatan = document.createElement('button');
-      btnSimpanCatatan.textContent = 'Simpan';
+      pasangIkon(btnSimpanCatatan, 'simpan', 'Simpan catatan');
       btnSimpanCatatan.addEventListener('click', function() {
         if (!inputCatatan.value.trim()) return; // kosong = abaikan diam-diam
         const res = addCatatan(t.id, inputCatatan.value, userId);
@@ -471,7 +471,7 @@ function bangunBaris(tbody, t, nomor) {  const tr = document.createElement('tr')
       panel.appendChild(document.createTextNode(' '));
 
       const btnTutup = document.createElement('button');
-      btnTutup.textContent = 'Tutup';
+      pasangIkon(btnTutup, 'batal', 'Tutup');
       btnTutup.classList.add('btn-soft');
       btnTutup.addEventListener('click', function() {
         tbody.removeChild(panelTr);

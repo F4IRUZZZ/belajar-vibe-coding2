@@ -109,6 +109,23 @@ input:focus, select:focus {
   background-color: #d1d5db;
 }
 
+/* Tombol ikon: kotak kecil berisi SVG, teks disembunyikan visual */
+.btn-ikon {
+  padding: 8px 10px;
+  line-height: 0;
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.btn-ikon:hover {
+  background-color: #e5e7eb;
+  color: var(--text-main);
+}
+
+.btn-ikon svg {
+  vertical-align: middle;
+}
+
 /* --- Teks --- */
 #hasil, #hasil-login, #hasil-register, #hasil-username, #info-user, #info, #meter-password {
   margin-top: 12px;

@@ -43,7 +43,7 @@ function tampil() {
     li.textContent = nomor + '. ' + p.nama + ' (' + p.kategori + ') ';
 
     const btnUbah = document.createElement('button');
-    btnUbah.textContent = 'Ubah';
+    pasangIkon(btnUbah, 'ubah', 'Ubah produk');
     btnUbah.addEventListener('click', function() {
       // Akordeon antar-baris: bila baris ini sedang diedit -> tutup;
       // bila tidak -> render ulang bersih (tutup semua) baru buka yang ini.
@@ -65,7 +65,7 @@ function tampil() {
       input.value = p.nama;
 
       const btnSimpan = document.createElement('button');
-      btnSimpan.textContent = 'Simpan';
+      pasangIkon(btnSimpan, 'simpan', 'Simpan produk');
       btnSimpan.addEventListener('click', function() {
         const baru = input.value.trim();
         if (!baru) return; // kosong = abaikan
@@ -84,7 +84,7 @@ function tampil() {
       });
 
       const btnBatal = document.createElement('button');
-      btnBatal.textContent = 'Batal';
+      pasangIkon(btnBatal, 'batal', 'Batal');
       btnBatal.classList.add('btn-soft');
       btnBatal.addEventListener('click', function() {
         tampil();
@@ -99,7 +99,7 @@ function tampil() {
     });
 
     const btnHapus = document.createElement('button');
-    btnHapus.textContent = 'Hapus';
+    pasangIkon(btnHapus, 'hapus', 'Hapus produk ' + p.nama);
     btnHapus.classList.add('btn-danger');
     btnHapus.addEventListener('click', function() {
       if (!window.confirm('Hapus produk "' + p.nama + '"?')) return;

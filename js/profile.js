@@ -4,6 +4,12 @@ const hasil = document.getElementById('hasil');
 const formUsername = document.getElementById('form-username');
 const btnUsername = document.getElementById('btn-username');
 const hasilUsername = document.getElementById('hasil-username');
+const btnEditUsername = document.getElementById('btn-edit-username');
+pasangIkon(btnEditUsername, 'ubah', 'Ubah username');
+
+btnEditUsername.addEventListener('click', function() {
+  formUsername.hidden = !formUsername.hidden;
+});
 
 // Saat halaman dibuka: baca token, minta profile
 const token = window.localStorage.getItem('token');
