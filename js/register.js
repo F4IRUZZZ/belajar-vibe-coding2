@@ -10,6 +10,7 @@ pasangTogglePassword(inputPassword, document.getElementById('lihat-reg-password'
 pasangTogglePassword(inputPassword2, document.getElementById('lihat-reg-password2'));
 document.getElementById('lihat-reg-password').innerHTML = ikon('mata');
 document.getElementById('lihat-reg-password2').innerHTML = ikon('mata');
+pasangToggleTema(); // dark mode ikut sistem, manual menang via localStorage
 
 // Indikator live: kosong = diam, cocok = hijau, beda = merah.
 // Submit tetap divalidasi seperti sekarang (informatif, bukan pengganti cek).

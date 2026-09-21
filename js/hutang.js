@@ -4,6 +4,8 @@ const btnTambah = document.getElementById('btn-tambah-hutang');
 const hasil = document.getElementById('hasil');
 const listEl = document.getElementById('list-hutang');
 
+pasangToggleTema(); // dark mode ikut sistem, manual menang via localStorage
+
 // Guard: harus login — baca token, 401 = redirect ke login
 const token = window.localStorage.getItem('token');
 const resProfile = getProfile(token);
@@ -94,7 +96,10 @@ function renderSeksiHutang(judul, rows) {
   tfoot.appendChild(trFoot);
   table.appendChild(tfoot);
 
-  listEl.appendChild(table);
+  const scroll = document.createElement('div');
+  scroll.className = 'tabel-scroll';
+  scroll.appendChild(table);
+  listEl.appendChild(scroll);
 }
 
 function bangunBarisHutang(tbody, h, nomor) {

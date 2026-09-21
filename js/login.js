@@ -4,6 +4,7 @@ const hasilLogin = document.getElementById('hasil-login');
 
 pasangTogglePassword(document.getElementById('password'), document.getElementById('lihat-password'));
 document.getElementById('lihat-password').innerHTML = ikon('mata');
+pasangToggleTema(); // dark mode ikut sistem, manual menang via localStorage
 
 formLogin.addEventListener('submit', function(e) {
   e.preventDefault();

@@ -66,6 +66,44 @@ function pasangIkon(tombolEl, nama, label) {
   tombolEl.setAttribute('title', label);
 }
 
+// Tema: ikut sistem bila belum ada pilihan; pilihan manual menang.
+// Disimpan di localStorage agar ingat antar halaman + kunjungan.
+function initTema() {
+  const simpan = window.localStorage.getItem('tema');
+  if (simpan === 'dark' || simpan === 'light') {
+    document.documentElement.setAttribute('data-theme', simpan);
+  }
+  // Tanpa pilihan tersimpan: CSS media query yang bicara (ikut OS).
+}
+
+function toggleTema() {
+  const gelap = document.documentElement.getAttribute('data-theme') === 'dark' ||
+    (!document.documentElement.getAttribute('data-theme') &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const berikutnya = gelap ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', berikutnya);
+  window.localStorage.setItem('tema', berikutnya);
+  perbaruiTombolTema();
+}
+
+function perbaruiTombolTema() {
+  const gelap = document.documentElement.getAttribute('data-theme') === 'dark' ||
+    (!document.documentElement.getAttribute('data-theme') &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches);
+  document.querySelectorAll('.btn-tema').forEach(function(t) {
+    t.textContent = gelap ? 'Terang' : 'Gelap';
+    t.setAttribute('aria-label', gelap ? 'Ganti ke tema terang' : 'Ganti ke tema gelap');
+  });
+}
+
+function pasangToggleTema() {
+  initTema();
+  perbaruiTombolTema();
+  document.querySelectorAll('.btn-tema').forEach(function(t) {
+    t.addEventListener('click', toggleTema);
+  });
+}
+
 // CSV (shared transaksi + profile): tanggal, jenis, jumlah murni, kategori,
 // catatan gabungan ';'. Quote-wrap (aman koma/quote/enter). userId eksplisit
 // agar tidak bergantung pada global halaman. Pindah dari transaksi.js.

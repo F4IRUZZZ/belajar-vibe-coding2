@@ -15,6 +15,8 @@ const ddHidden = document.getElementById('kategori-produk');
 // Default kategori (wajib di atas sebelum dipakai tampil() — hindari TDZ).
 const DEFAULT_KATEGORI = ['Pangan', 'Mandi', 'Lainnya'];
 
+pasangToggleTema(); // dark mode ikut sistem, manual menang via localStorage
+
 // Guard: harus login — baca token, 401 = redirect ke login.
 // Tahap 1: list produk shared (tanpa cek pemilik), login wajib.
 const token = window.localStorage.getItem('token');
