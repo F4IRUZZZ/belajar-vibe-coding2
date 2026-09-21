@@ -156,3 +156,4 @@ CATATAN GAP (sadar, bukan lupa):
 - 2026-09-19 — hutang — cicilan bayar sebagian + progress (PR #55)
 - 2026-09-19 — hutang — 2 tabel + subtotal sisa + label (PR #57)
 - 2026-09-19 — input — Rupiah live prefix + auto-format (PR #59)
+- 2026-09-19 — docs — sinkronisasi Riwayat PR #60 (PR #60)
