@@ -346,6 +346,32 @@ a {
   border-left: none;
 }
 
+/* Tombol mata password overlay di dalam input (opsi A) */
+.password-wrap {
+  position: relative;
+  margin-top: 4px;
+}
+
+.password-wrap input {
+  width: 100%;
+  padding-right: 44px;
+}
+
+.password-wrap .btn-ikon {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 6px;
+  background: transparent;
+  border: none;
+}
+
+.password-wrap .btn-ikon:hover {
+  background: transparent;
+  color: var(--primary-color);
+}
+
 /* --- Responsif --- */
 @media (min-width: 600px) {
   .card { width: 500px; }
