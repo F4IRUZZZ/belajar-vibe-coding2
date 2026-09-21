@@ -3,6 +3,7 @@ const btnLogin = document.getElementById('btn-login');
 const hasilLogin = document.getElementById('hasil-login');
 
 pasangTogglePassword(document.getElementById('password'), document.getElementById('lihat-password'));
+document.getElementById('lihat-password').innerHTML = ikon('mata');
 
 formLogin.addEventListener('submit', function(e) {
   e.preventDefault();
