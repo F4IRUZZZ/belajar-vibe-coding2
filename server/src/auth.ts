@@ -37,7 +37,9 @@ export const authRoutes = new Elysia({ prefix: '/api' })
         return status(400, { error: 'Role harus pribadi/keluarga' });
       // UNIQUE ci di MySQL menolak duplikat case-insensitive (banding lowercase).
       try {
-        const hash = await Bun.password.hash(password);
+        // bcrypt cost 8: ~10x lebih ringan dari argon2id default di CPU kecil.
+        // Akun lama (argon2) tetap bisa login — verify deteksi prefix otomatis.
+        const hash = await Bun.password.hash(password, { algorithm: 'bcrypt', cost: 8 });
         const [res] = await pool.query(
           'INSERT INTO users (email, username, password_hash, role) VALUES (?, ?, ?, ?)',
           [email, username, hash, role]
