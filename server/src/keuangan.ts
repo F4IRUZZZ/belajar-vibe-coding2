@@ -16,7 +16,8 @@ async function kategoriDariProduk(produkId: number | null): Promise<string | nul
   if (produkId === null || produkId === undefined) return null;
   const [rows] = await pool.query('SELECT kategori FROM produk WHERE id = ?', [produkId]);
   const data = rows as Array<{ kategori: string }>;
-  return data.length > 0 ? data[0].kategori : null;
+  const d0 = data[0];
+  return d0 ? d0.kategori : null;
 }
 
 // Ejaan ikut yang sudah ada (banding lowercase); benar-benar baru -> kapital.
@@ -27,7 +28,8 @@ async function normalisasiKategori(nama: string | null | undefined): Promise<str
     bersih
   ]);
   const data = rows as Array<{ kategori: string }>;
-  if (data.length > 0) return data[0].kategori;
+  const d1 = data[0];
+  if (d1) return d1.kategori;
   return kapitalisasi(bersih);
 }
 
@@ -92,7 +94,7 @@ export const keuanganRoutes = new Elysia({ prefix: '/api' })
         ]);
       }
       const [rows] = await pool.query('SELECT id, nama, kategori FROM produk WHERE id = ?', [id]);
-      return { data: (rows as Array<object>)[0] };
+      return { data: (rows as Array<object>)[0] ?? null };
     },
     { body: t.Object({ nama: t.Optional(t.String()), kategori: t.Optional(t.String()) }) }
   )
@@ -142,7 +144,7 @@ export const keuanganRoutes = new Elysia({ prefix: '/api' })
       const [rows] = await pool.query('SELECT ' + SEL_TRANSAKSI + ' FROM transaksi WHERE id = ?', [
         id
       ]);
-      return status(201, { data: (rows as Array<object>)[0] });
+      return status(201, { data: (rows as Array<object>)[0] ?? null });
     },
     {
       body: t.Object({
@@ -163,7 +165,7 @@ export const keuanganRoutes = new Elysia({ prefix: '/api' })
       const [ada] = await pool.query('SELECT user_id AS userId FROM transaksi WHERE id = ?', [id]);
       const baris = ada as Array<{ userId: number }>;
       if (baris.length === 0) return status(404, { error: 'Transaksi tidak ditemukan' });
-      if (baris[0].userId !== user.id) return status(401, { error: 'Bukan milikmu' });
+      if (baris[0]!.userId !== user.id) return status(401, { error: 'Bukan milikmu' });
       if (body.jumlah !== undefined && !(Number(body.jumlah) > 0))
         return status(400, { error: 'Jumlah harus angka > 0 (Rp)' });
       if (body.jenis !== undefined && body.jenis !== 'masuk' && body.jenis !== 'keluar')
@@ -195,7 +197,7 @@ export const keuanganRoutes = new Elysia({ prefix: '/api' })
       const [rows] = await pool.query('SELECT ' + SEL_TRANSAKSI + ' FROM transaksi WHERE id = ?', [
         id
       ]);
-      return { data: (rows as Array<object>)[0] };
+      return { data: (rows as Array<object>)[0] ?? null };
     },
     {
       body: t.Object({
@@ -213,7 +215,7 @@ export const keuanganRoutes = new Elysia({ prefix: '/api' })
     const [ada] = await pool.query('SELECT user_id AS userId FROM transaksi WHERE id = ?', [id]);
     const baris = ada as Array<{ userId: number }>;
     if (baris.length === 0) return status(404, { error: 'Transaksi tidak ditemukan' });
-    if (baris[0].userId !== user.id) return status(401, { error: 'Bukan milikmu' });
+    if (baris[0]!.userId !== user.id) return status(401, { error: 'Bukan milikmu' });
     // Cascade catatan via FK ON DELETE CASCADE (anti yatim, mirror filter()).
     await pool.query('DELETE FROM transaksi WHERE id = ?', [id]);
     return { data: true };
@@ -227,7 +229,7 @@ export const keuanganRoutes = new Elysia({ prefix: '/api' })
     const [ada] = await pool.query('SELECT user_id AS userId FROM transaksi WHERE id = ?', [tid]);
     const baris = ada as Array<{ userId: number }>;
     if (baris.length === 0) return status(404, { error: 'Transaksi tidak ditemukan' });
-    if (baris[0].userId !== user.id) return status(401, { error: 'Bukan milikmu' });
+    if (baris[0]!.userId !== user.id) return status(401, { error: 'Bukan milikmu' });
     const [rows] = await pool.query('SELECT id, transaksi_id AS transaksiId, isi FROM catatan WHERE transaksi_id = ? ORDER BY id', [
       tid
     ]);
@@ -242,7 +244,7 @@ export const keuanganRoutes = new Elysia({ prefix: '/api' })
       const [ada] = await pool.query('SELECT user_id AS userId FROM transaksi WHERE id = ?', [tid]);
       const baris = ada as Array<{ userId: number }>;
       if (baris.length === 0) return status(404, { error: 'Transaksi tidak ditemukan' });
-      if (baris[0].userId !== user.id) return status(401, { error: 'Bukan milikmu' });
+      if (baris[0]!.userId !== user.id) return status(401, { error: 'Bukan milikmu' });
       const isi = String(body.isi || '').trim();
       if (!isi) return status(400, { error: 'Isi catatan wajib' });
       const [res] = await pool.query('INSERT INTO catatan (transaksi_id, isi) VALUES (?, ?)', [
@@ -266,7 +268,7 @@ export const keuanganRoutes = new Elysia({ prefix: '/api' })
       );
       const baris = ada as Array<{ userId: number }>;
       if (baris.length === 0) return status(404, { error: 'Catatan tidak ditemukan' });
-      if (baris[0].userId !== user.id) return status(401, { error: 'Bukan milikmu' });
+      if (baris[0]!.userId !== user.id) return status(401, { error: 'Bukan milikmu' });
       const isi = String(body.isi || '').trim();
       if (!isi) return status(400, { error: 'Isi catatan wajib' });
       await pool.query('UPDATE catatan SET isi = ? WHERE id = ?', [isi, id]);
@@ -274,7 +276,7 @@ export const keuanganRoutes = new Elysia({ prefix: '/api' })
         'SELECT id, transaksi_id AS transaksiId, isi FROM catatan WHERE id = ?',
         [id]
       );
-      return { data: (rows as Array<object>)[0] };
+      return { data: (rows as Array<object>)[0] ?? null };
     },
     { body: t.Object({ isi: t.String() }) }
   )
@@ -288,7 +290,7 @@ export const keuanganRoutes = new Elysia({ prefix: '/api' })
     );
     const baris = ada as Array<{ userId: number }>;
     if (baris.length === 0) return status(404, { error: 'Catatan tidak ditemukan' });
-    if (baris[0].userId !== user.id) return status(401, { error: 'Bukan milikmu' });
+    if (baris[0]!.userId !== user.id) return status(401, { error: 'Bukan milikmu' });
     await pool.query('DELETE FROM catatan WHERE id = ?', [id]);
     return { data: true };
   })
@@ -327,7 +329,7 @@ export const keuanganRoutes = new Elysia({ prefix: '/api' })
       );
       const id = (res as { insertId: number }).insertId;
       const [rows] = await pool.query('SELECT ' + SEL_HUTANG + ' FROM hutang WHERE id = ?', [id]);
-      return status(201, { data: (rows as Array<object>)[0] });
+      return status(201, { data: (rows as Array<object>)[0] ?? null });
     },
     {
       body: t.Object({
@@ -365,7 +367,7 @@ export const keuanganRoutes = new Elysia({ prefix: '/api' })
           await conn.rollback();
           return status(404, { error: 'Hutang tidak ditemukan' });
         }
-        const h = baris[0];
+        const h = baris[0]!; // aman: length dicek + FOR UPDATE
         if (h.user_id !== user.id) {
           await conn.rollback();
           return status(401, { error: 'Bukan milikmu' });
@@ -400,7 +402,7 @@ export const keuanganRoutes = new Elysia({ prefix: '/api' })
         }
         await conn.commit();
         const [rows] = await pool.query('SELECT ' + SEL_HUTANG + ' FROM hutang WHERE id = ?', [id]);
-        return { data: (rows as Array<object>)[0] };
+        return { data: (rows as Array<object>)[0] ?? null };
       } catch (e) {
         await conn.rollback();
         throw e;
@@ -419,10 +421,10 @@ export const keuanganRoutes = new Elysia({ prefix: '/api' })
     ]);
     const baris = ada as Array<{ userId: number; jumlah: number; dibayar: number; status: string }>;
     if (baris.length === 0) return status(404, { error: 'Hutang tidak ditemukan' });
-    if (baris[0].userId !== user.id) return status(401, { error: 'Bukan milikmu' });
-    if (baris[0].status === 'lunas') return status(400, { error: 'Sudah lunas' });
+    if (baris[0]!.userId !== user.id) return status(401, { error: 'Bukan milikmu' });
+    if (baris[0]!.status === 'lunas') return status(400, { error: 'Sudah lunas' });
     // Lunasi = bayar sisa sekaligus (transaksional, sama seperti /bayar).
-    const sisa = baris[0].jumlah - baris[0].dibayar;
+    const sisa = baris[0]!.jumlah - baris[0]!.dibayar;
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
@@ -434,7 +436,7 @@ export const keuanganRoutes = new Elysia({ prefix: '/api' })
         jumlah: number;
         dibayar: number;
         status: string;
-      }>)[0];
+      }>)[0]!; // aman: id lolos SELECT awal, pasti ada
       if (h.status === 'lunas') {
         await conn.rollback();
         return status(400, { error: 'Sudah lunas' });
@@ -455,7 +457,7 @@ export const keuanganRoutes = new Elysia({ prefix: '/api' })
       );
       await conn.commit();
       const [rows] = await pool.query('SELECT ' + SEL_HUTANG + ' FROM hutang WHERE id = ?', [id]);
-      return { data: (rows as Array<object>)[0] };
+      return { data: (rows as Array<object>)[0] ?? null };
     } catch (e) {
       await conn.rollback();
       throw e;
@@ -470,8 +472,8 @@ export const keuanganRoutes = new Elysia({ prefix: '/api' })
     const [ada] = await pool.query('SELECT user_id AS userId, status FROM hutang WHERE id = ?', [id]);
     const baris = ada as Array<{ userId: number; status: string }>;
     if (baris.length === 0) return status(404, { error: 'Hutang tidak ditemukan' });
-    if (baris[0].userId !== user.id) return status(401, { error: 'Bukan milikmu' });
-    if (baris[0].status === 'lunas')
+    if (baris[0]!.userId !== user.id) return status(401, { error: 'Bukan milikmu' });
+    if (baris[0]!.status === 'lunas')
       return status(400, { error: 'Sudah lunas, tidak boleh dihapus' }); // jejak audit
     await pool.query('DELETE FROM hutang WHERE id = ?', [id]);
     return { data: true };
@@ -495,7 +497,7 @@ export const keuanganRoutes = new Elysia({ prefix: '/api' })
         cond.join(' AND '),
       val
     );
-    const r = (rows as Array<{ masuk: number; keluar: number }>)[0];
+    const r = (rows as Array<{ masuk: number; keluar: number }>)[0]!; // SUM selalu 1 baris
     const masuk = Number(r.masuk);
     const keluar = Number(r.keluar);
     return { data: { masuk, keluar, saldo: masuk - keluar } };

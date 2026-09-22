@@ -5,7 +5,7 @@ import { pool } from './db';
 export function bacaToken(authHeader: string | undefined): string | null {
   if (!authHeader) return null;
   const m = /^Bearer (.+)$/.exec(authHeader.trim());
-  return m ? m[1] : null;
+  return m ? (m[1] ?? null) : null;
 }
 
 export interface UserSesi {
@@ -22,7 +22,7 @@ export async function userDariToken(token: string | null): Promise<UserSesi | nu
     [token]
   );
   const data = rows as UserSesi[];
-  return data.length > 0 ? data[0] : null;
+  return data.length > 0 ? (data[0] ?? null) : null;
 }
 
 // Tanggal lokal YYYY-MM-DD (mirror tanggalHariIni di keuangan.js,
