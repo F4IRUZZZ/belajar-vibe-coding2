@@ -169,3 +169,4 @@ CATATAN GAP (sadar, bukan lupa):
 - 2026-09-22 — fix — konfirmasi logout + auth kartu tengah (PR #80)
 - 2026-09-22 — hosting — deploy-ready Render+TiDB+Pages + panduan (PR #82)
 - 2026-09-22 — hosting — render.yaml free+singapore+root (PR #84)
+- 2026-09-22 — hosting — backend Koyeb via Dockerfile (PR #86)
