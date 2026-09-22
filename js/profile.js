@@ -13,6 +13,28 @@ btnEditUsername.addEventListener('click', function() {
   formUsername.hidden = !formUsername.hidden;
 });
 
+// Install PWA (Fase C): Chrome Android kirim beforeinstallprompt -> tombol
+// muncul. iOS tidak ada prompt -> tampilkan petunjuk manual. Browser lain
+// yang tak dukung = tombol tetap sembunyi (app web biasa).
+let promptInstall = null;
+const btnInstall = document.getElementById('btn-install');
+const infoInstall = document.getElementById('info-install');
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  promptInstall = e;
+  btnInstall.hidden = false;
+});
+btnInstall.addEventListener('click', async function() {
+  if (!promptInstall) return;
+  promptInstall.prompt();
+  await promptInstall.userChoice;
+  promptInstall = null;
+  btnInstall.hidden = true;
+});
+if (/iphone|ipad|ipod/i.test(window.navigator.userAgent)) {
+  infoInstall.textContent = 'iPhone: buka menu Share > Add to Home Screen untuk install.';
+}
+
 // Saat halaman dibuka: baca token, minta profile (via API Fase A-3)
 const token = window.localStorage.getItem('token');
 
