@@ -166,3 +166,4 @@ CATATAN GAP (sadar, bukan lupa):
 - 2026-09-22 — backend — Elysia + MySQL + Auth API hash password (PR #74)
 - 2026-09-22 — backend — API keuangan + saldo + hutang transaksional (PR #76)
 - 2026-09-22 — frontend — localStorage ke fetch API + CORS (PR #78)
+- 2026-09-22 — fix — konfirmasi logout + auth kartu tengah (PR #80)
