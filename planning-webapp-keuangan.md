@@ -170,3 +170,4 @@ CATATAN GAP (sadar, bukan lupa):
 - 2026-09-22 — hosting — deploy-ready Render+TiDB+Pages + panduan (PR #82)
 - 2026-09-22 — hosting — render.yaml free+singapore+root (PR #84)
 - 2026-09-22 — hosting — backend Koyeb via Dockerfile (PR #86)
+- 2026-09-22 — hosting — panduan Back4app + bind 0.0.0.0 (PR #88)
