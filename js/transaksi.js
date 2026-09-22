@@ -163,7 +163,11 @@ function tampil() {
     renderSeksi('Semua', urut, true);
     return;
   }
-  renderSeksi('Pemasukan', data.filter(function(t) { return t.jenis === 'masuk'; }), false);
+  // Tab tunggal: cukup seksi pilihannya saja (bukan keduanya).
+  if (tabAktif === 'masuk') {
+    renderSeksi('Pemasukan', data.filter(function(t) { return t.jenis === 'masuk'; }), false);
+    return;
+  }
   renderSeksi('Pengeluaran', data.filter(function(t) { return t.jenis === 'keluar'; }), false);
 }
 
