@@ -111,9 +111,12 @@ input[type="text"],
 input[type="number"],
 select {
   width: 100%;
+  min-height: 44px;
   padding: 10px;
-  margin-top: 4px;
+  margin-top: 8px;
   font-size: 0.9rem;
+  line-height: 1.5;
+  font-family: inherit;
   color: var(--text-main);
   background-color: var(--card-bg);
   border: 1px solid var(--input-border);
@@ -245,16 +248,19 @@ a {
 /* --- Dropdown custom (milik webapp, serasi kartu) --- */
 .dropdown {
   position: relative;
-  margin-top: 4px;
+  margin-top: 8px;
 }
 
 #dropdown-tombol {
   position: relative;
   width: 100%;
+  min-height: 44px;
   padding: 10px 36px 10px 10px;
   font-size: 0.9rem;
   font-weight: 400;
+  font-family: inherit;
   text-align: left;
+  line-height: 1.5;
   color: var(--text-main);
   background-color: var(--card-bg);
   border: 1px solid var(--input-border);
@@ -396,7 +402,7 @@ a {
 .input-rp {
   display: flex;
   align-items: stretch;
-  margin-top: 4px;
+  margin-top: 8px;
 }
 
 .input-rp span {
@@ -435,7 +441,7 @@ a {
 /* Tombol mata password overlay di dalam input (opsi A) */
 .password-wrap {
   position: relative;
-  margin-top: 4px;
+  margin-top: 8px;
 }
 
 .password-wrap input {
