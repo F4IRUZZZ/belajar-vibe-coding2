@@ -37,35 +37,68 @@ function tampil() {
   if (!ddList.hidden) renderOpsiDropdown(); // segarkan saran bila dropdown terbuka
   listEl.innerHTML = '';
   if (produk.length === 0) {
-    listEl.innerHTML = '<li>Belum ada produk. Yuk tambah kebutuhan pertama di form atas.</li>';
+    listEl.innerHTML = '<p>Belum ada produk. Yuk tambah kebutuhan pertama di form atas.</p>';
     return;
   }
+  // Daftar = tabel beneran (No | Nama | Kategori | Aksi), reuse gaya transaksi.
+  const table = document.createElement('table');
+  table.className = 'tabel-transaksi';
+  const thead = document.createElement('thead');
+  const trHead = document.createElement('tr');
+  ['No', 'Nama', 'Kategori', 'Aksi'].forEach(function(namaKol) {
+    const th = document.createElement('th');
+    th.textContent = namaKol;
+    trHead.appendChild(th);
+  });
+  thead.appendChild(trHead);
+  table.appendChild(thead);
+  const tbody = document.createElement('tbody');
   produk.forEach(function(p, i) {
-    const nomor = i + 1; // nomor tampil — bukan id
-    const li = document.createElement('li');
-    li.textContent = nomor + '. ' + p.nama + ' (' + p.kategori + ') ';
+    tbody.appendChild(bangunBarisProduk(p, i + 1)); // nomor tampil — bukan id
+  });
+  table.appendChild(tbody);
+  const scroll = document.createElement('div');
+  scroll.className = 'tabel-scroll';
+  scroll.appendChild(table);
+  listEl.appendChild(scroll);
+}
+
+// Satu baris produk + panel edit di bawah baris (maks 1 terbuka).
+function bangunBarisProduk(p, nomor) {
+  const tr = document.createElement('tr');
+  const tdNo = document.createElement('td');
+  tdNo.textContent = nomor;
+  const tdNama = document.createElement('td');
+  tdNama.textContent = p.nama;
+  const tdKat = document.createElement('td');
+  tdKat.textContent = p.kategori;
+  const tdAksi = document.createElement('td');
 
     const btnUbah = document.createElement('button');
     pasangIkon(btnUbah, 'ubah', 'Ubah produk');
     btnUbah.addEventListener('click', function() {
-      // Akordeon antar-baris: bila baris ini sedang diedit -> tutup;
-      // bila tidak -> render ulang bersih (tutup semua) baru buka yang ini.
-      // Maksimal 1 form edit hidup per saat. (tampil() membuat li BARU,
-      // jadi baris dipegang ulang via children[i], bukan li lama.)
-      if (li.classList.contains('sedang-edit')) {
-        tampil();
-        return;
-      }
-      tampil();
-      const liBaru = listEl.children[i];
-      // Mode edit inline (tanpa prompt): input nama baru + Simpan/Batal
-      liBaru.innerHTML = '';
-      liBaru.classList.add('sedang-edit');
+      // Akordeon antar-baris: klik saat panel sendiri terbuka = tutup;
+      // klik saat panel lain terbuka = ganti. Maksimal 1 per saat.
+      const terbuka = tr.nextSibling;
+      const milikku = terbuka && terbuka.className === 'baris-edit';
+      tutupPanelProduk();
+      if (milikku) return;
+      // Mode edit = baris panel di bawah baris (pola transaksi).
+      const panelTr = document.createElement('tr');
+      panelTr.className = 'baris-edit';
+      const panelTd = document.createElement('td');
+      panelTd.colSpan = 4;
+      const panel = document.createElement('div');
+      panel.className = 'panel-catatan';
+      const wrap = document.createElement('div');
+      wrap.className = 'field';
       const input = document.createElement('input');
       input.type = 'text';
       input.name = 'nama-produk-baru';
       input.setAttribute('aria-label', 'Nama produk baru');
       input.value = p.nama;
+      wrap.appendChild(input);
+      panel.appendChild(wrap);
 
       const btnSimpan = document.createElement('button');
       pasangIkon(btnSimpan, 'simpan', 'Simpan produk');
@@ -90,15 +123,15 @@ function tampil() {
       pasangIkon(btnBatal, 'batal', 'Batal');
       btnBatal.classList.add('btn-soft');
       btnBatal.addEventListener('click', function() {
-        tampil();
+        tutupPanelProduk();
       });
 
-      liBaru.appendChild(document.createTextNode(nomor + '. '));
-      liBaru.appendChild(input);
-      liBaru.appendChild(document.createTextNode(' '));
-      liBaru.appendChild(btnSimpan);
-      liBaru.appendChild(document.createTextNode(' '));
-      liBaru.appendChild(btnBatal);
+      panel.appendChild(btnSimpan);
+      panel.appendChild(document.createTextNode(' '));
+      panel.appendChild(btnBatal);
+      panelTd.appendChild(panel);
+      panelTr.appendChild(panelTd);
+      tr.parentNode.insertBefore(panelTr, tr.nextSibling);
     });
 
     const btnHapus = document.createElement('button');
@@ -116,11 +149,22 @@ function tampil() {
       tampil();
     });
 
-    li.appendChild(btnUbah);
-    li.appendChild(document.createTextNode(' '));
-    li.appendChild(btnHapus);
-    listEl.appendChild(li);
-  });
+    tdAksi.appendChild(btnUbah);
+    tdAksi.appendChild(document.createTextNode(' '));
+    tdAksi.appendChild(btnHapus);
+    tr.appendChild(tdNo);
+    tr.appendChild(tdNama);
+    tr.appendChild(tdKat);
+    tr.appendChild(tdAksi);
+    return tr;
+}
+
+// Tutup panel edit produk yang terbuka (maks 1 per saat).
+function tutupPanelProduk() {
+  const terbuka = listEl.querySelectorAll('.baris-edit');
+  for (let i = 0; i < terbuka.length; i++) {
+    terbuka[i].parentNode.removeChild(terbuka[i]);
+  }
 }
 
 // Dropdown kategori custom milik webapp (pengganti datalist bawaan browser

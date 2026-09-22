@@ -28,8 +28,16 @@
     <h1>Dashboard</h1>
     <p id="info-user">Loading...</p>
     <hr>
-    <p>Total masuk: <strong id="total-masuk">Rp0</strong></p>
-    <p>Total keluar: <strong id="total-keluar">Rp0</strong></p>
+    <div class="stat-duo">
+      <div class="stat-card stat-masuk">
+        <span class="stat-label">Total masuk</span>
+        <strong id="total-masuk">Rp0</strong>
+      </div>
+      <div class="stat-card stat-keluar">
+        <span class="stat-label">Total keluar</span>
+        <strong id="total-keluar">Rp0</strong>
+      </div>
+    </div>
     <div class="saldo-hero">
       <span class="saldo-label">Saldo</span>
       <strong id="saldo">Rp0</strong>
@@ -47,11 +55,16 @@
     <div id="ringkasan-kategori"></div>
     <hr>
     <h2>Grafik</h2>
-    <div class="field">
-      <canvas id="grafik-arus" height="220" aria-label="Grafik batang pemasukan versus pengeluaran"></canvas>
-    </div>
-    <div class="field">
-      <canvas id="grafik-kategori" height="220" aria-label="Grafik donat pengeluaran per kategori"></canvas>
+    <div class="grid-grafik">
+      <div class="field">
+        <canvas id="grafik-arus" height="220" aria-label="Grafik batang pemasukan versus pengeluaran"></canvas>
+      </div>
+      <div class="field">
+        <canvas id="grafik-minggu" height="220" aria-label="Grafik batang pemasukan dan pengeluaran per hari Senin sampai Minggu"></canvas>
+      </div>
+      <div class="field field-grafik-penuh">
+        <canvas id="grafik-kategori" height="220" aria-label="Grafik donat pengeluaran per kategori"></canvas>
+      </div>
     </div>
     <p id="info-grafik"></p>
 </main>

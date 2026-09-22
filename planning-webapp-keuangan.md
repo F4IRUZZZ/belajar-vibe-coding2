@@ -162,3 +162,4 @@ CATATAN GAP (sadar, bukan lupa):
 - 2026-09-22 — ui — UI v2 + dark mode + ikon dropdown seragam (PR #66)
 - 2026-09-22 — ui — tema ke Profile + fintech hijau + hero gradient + nav pil (PR #68)
 - 2026-09-22 — dashboard — grafik Chart.js + tombol merah solid + sidebar ikon (PR #70)
+- 2026-09-22 — transaksi — tab Riwayat gabungan + filter + grafik mingguan + landscape (PR #72)

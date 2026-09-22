@@ -18,6 +18,35 @@ pasangIkonMenu(); // ikon SVG di sidebar menu
 // Bulk: id terpilih lintas render ulang. Reset tiap tampil() (predictable).
 const terpilih = new Set();
 
+// Tab Riwayat: semua = gabungan kronologis; masuk/keluar = seksi lama.
+// Filter teks: kategori + isi catatan + tanggal + nominal.
+let tabAktif = 'semua';
+let kataCari = '';
+
+document.querySelectorAll('.tab-riwayat').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    tabAktif = btn.getAttribute('data-tab');
+    document.querySelectorAll('.tab-riwayat').forEach(function(b) {
+      b.classList.toggle('tab-aktif', b === btn);
+    });
+    tampil();
+  });
+});
+
+document.getElementById('cari-riwayat').addEventListener('input', function(e) {
+  kataCari = e.target.value.trim().toLowerCase();
+  tampil(); // input di luar listEl = fokus tidak hilang
+});
+
+function cocokCari(t) {
+  if (!kataCari) return true;
+  const kat = kategoriOf(t).toLowerCase();
+  const notes = catatan.filter(function(c) { return c.transaksiId === t.id; })
+    .map(function(c) { return c.isi.toLowerCase(); }).join(' ');
+  return kat.indexOf(kataCari) !== -1 || notes.indexOf(kataCari) !== -1 ||
+    String(t.jumlah).indexOf(kataCari) !== -1 || t.tanggal.indexOf(kataCari) !== -1;
+}
+
 function perbaruiBar() {
   if (terpilih.size === 0) {
     bulkBar.hidden = true;
@@ -109,7 +138,7 @@ pilihJenis.addEventListener('change', aturUntuk);
 pilihProduk.addEventListener('change', aturUntuk);
 
 function tampil() {
-  const data = transaksi.filter(function(t) { return t.userId === userId; });
+  const data = transaksi.filter(function(t) { return t.userId === userId; }).filter(cocokCari);
   // Prune (bukan clear): buang id yang sudah tidak ada, pertahankan pilihan
   // valid — biar pilih-semua / pilihan satuan selamat dari render ulang.
   Array.from(terpilih).forEach(function(id) {
@@ -119,15 +148,32 @@ function tampil() {
   perbaruiBar();
   listEl.innerHTML = '';
   if (data.length === 0) {
-    listEl.innerHTML = '<p>Belum ada transaksi. Yuk catat yang pertama di form atas.</p>';
+    listEl.innerHTML = kataCari || tabAktif !== 'semua'
+      ? '<p>Tidak ada yang cocok dengan filter.</p>'
+      : '<p>Belum ada transaksi. Yuk catat yang pertama di form atas.</p>';
     return;
   }
-  renderSeksi('Pemasukan', data.filter(function(t) { return t.jenis === 'masuk'; }));
-  renderSeksi('Pengeluaran', data.filter(function(t) { return t.jenis === 'keluar'; }));
+  if (tabAktif === 'semua') {
+    // Riwayat gabungan: terbaru dulu (tanggal desc, id desc).
+    const urut = data.slice().sort(function(a, b) {
+      if (a.tanggal < b.tanggal) return 1;
+      if (a.tanggal > b.tanggal) return -1;
+      return b.id - a.id;
+    });
+    renderSeksi('Semua', urut, true);
+    return;
+  }
+  // Tab tunggal: cukup seksi pilihannya saja (bukan keduanya).
+  if (tabAktif === 'masuk') {
+    renderSeksi('Pemasukan', data.filter(function(t) { return t.jenis === 'masuk'; }), false);
+    return;
+  }
+  renderSeksi('Pengeluaran', data.filter(function(t) { return t.jenis === 'keluar'; }), false);
 }
 
-// Satu seksi = h3 + table beneran (No | Tanggal | Jumlah | Aksi) + subtotal.
-function renderSeksi(judul, rows) {
+// Satu seksi = h3 + table beneran + subtotal. modeSemua = tambah kolom
+// Jenis (badge) + footer selisih (masuk − keluar).
+function renderSeksi(judul, rows, modeSemua) {
   const h3 = document.createElement('h3');
   h3.textContent = judul;
   listEl.appendChild(h3);
@@ -159,7 +205,8 @@ function renderSeksi(judul, rows) {
   });
   thCek.appendChild(cekSemua);
   trHead.appendChild(thCek);
-  ['No', 'Tanggal', 'Jumlah', 'Aksi'].forEach(function(nama) {
+  const kolom = modeSemua ? ['No', 'Tanggal', 'Jenis', 'Jumlah', 'Aksi'] : ['No', 'Tanggal', 'Jumlah', 'Aksi'];
+  kolom.forEach(function(nama) {
     const th = document.createElement('th');
     th.textContent = nama;
     trHead.appendChild(th);
@@ -169,19 +216,26 @@ function renderSeksi(judul, rows) {
 
   const tbody = document.createElement('tbody');
   let subtotal = 0;
+  let totalMasuk = 0;
+  let totalKeluar = 0;
   rows.forEach(function(t, i) {
     subtotal += t.jumlah;
-    tbody.appendChild(bangunBaris(tbody, t, i + 1));
+    if (t.jenis === 'masuk') {
+      totalMasuk += t.jumlah;
+    } else {
+      totalKeluar += t.jumlah;
+    }
+    tbody.appendChild(bangunBaris(tbody, t, i + 1, modeSemua));
   });
   table.appendChild(tbody);
 
   const tfoot = document.createElement('tfoot');
   const trFoot = document.createElement('tr');
   const tdLabel = document.createElement('td');
-  tdLabel.colSpan = 3;
-  tdLabel.textContent = 'Subtotal ' + judul.toLowerCase();
+  tdLabel.colSpan = modeSemua ? 4 : 3;
+  tdLabel.textContent = modeSemua ? 'Selisih (masuk − keluar)' : 'Subtotal ' + judul.toLowerCase();
   const tdTotal = document.createElement('td');
-  tdTotal.textContent = 'Rp' + formatRupiah(subtotal);
+  tdTotal.textContent = 'Rp' + formatRupiah(modeSemua ? totalMasuk - totalKeluar : subtotal);
   const tdKosong = document.createElement('td');
   trFoot.appendChild(tdLabel);
   trFoot.appendChild(tdTotal);
@@ -206,7 +260,7 @@ function tutupSemuaPanel() {
   }
 }
 
-function bangunBaris(tbody, t, nomor) {  const tr = document.createElement('tr');
+function bangunBaris(tbody, t, nomor, modeSemua) {  const tr = document.createElement('tr');
 
   const tdCek = document.createElement('td');
   const cek = document.createElement('input');
@@ -226,6 +280,16 @@ function bangunBaris(tbody, t, nomor) {  const tr = document.createElement('tr')
   tdNo.textContent = nomor;
   const tdTanggal = document.createElement('td');
   tdTanggal.textContent = t.tanggal;
+  // Sel Jenis (modeSemua): dibuat di sini, di-append di blok akhir agar
+  // urutan kolom tetap (appendChild memindah node bila dipanggil 2x).
+  let tdJenis = null;
+  if (modeSemua) {
+    tdJenis = document.createElement('td');
+    const badge = document.createElement('span');
+    badge.className = t.jenis === 'masuk' ? 'badge-masuk' : 'badge-keluar';
+    badge.textContent = t.jenis === 'masuk' ? 'Masuk' : 'Keluar';
+    tdJenis.appendChild(badge);
+  }
   const tdJumlah = document.createElement('td');
   tdJumlah.textContent = 'Rp' + formatRupiah(t.jumlah);
   const tdAksi = document.createElement('td');
@@ -244,7 +308,7 @@ function bangunBaris(tbody, t, nomor) {  const tr = document.createElement('tr')
       const panelTr = document.createElement('tr');
       panelTr.className = 'baris-edit';
       const panelTd = document.createElement('td');
-      panelTd.colSpan = 5;
+      panelTd.colSpan = modeSemua ? 6 : 5;
       const panel = document.createElement('div');
       panel.className = 'panel-catatan';
 
@@ -367,7 +431,7 @@ function bangunBaris(tbody, t, nomor) {  const tr = document.createElement('tr')
       const panelTr = document.createElement('tr');
       panelTr.className = 'baris-catatan';
       const panelTd = document.createElement('td');
-      panelTd.colSpan = 5;
+      panelTd.colSpan = modeSemua ? 6 : 5;
       const panel = document.createElement('div');
       panel.className = 'panel-catatan';
 
@@ -497,6 +561,7 @@ function bangunBaris(tbody, t, nomor) {  const tr = document.createElement('tr')
     tr.appendChild(tdCek);
     tr.appendChild(tdNo);
     tr.appendChild(tdTanggal);
+    if (tdJenis) tr.appendChild(tdJenis);
     tr.appendChild(tdJumlah);
     tr.appendChild(tdAksi);
     return tr;

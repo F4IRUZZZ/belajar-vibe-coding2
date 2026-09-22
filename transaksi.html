@@ -64,6 +64,15 @@
     <p id="hasil"></p>
     <hr>
     <h2>Daftar</h2>
+    <div class="tab-bar" role="tablist" aria-label="Filter daftar transaksi">
+      <button type="button" class="tab-riwayat tab-aktif" data-tab="semua" role="tab">Semua</button>
+      <button type="button" class="tab-riwayat" data-tab="masuk" role="tab">Masuk</button>
+      <button type="button" class="tab-riwayat" data-tab="keluar" role="tab">Keluar</button>
+    </div>
+    <div class="field">
+      <label for="cari-riwayat">Cari (kategori/catatan/tanggal/nominal):</label>
+      <input type="text" id="cari-riwayat" placeholder="contoh: makan / gaji / 2026-09-01">
+    </div>
     <div id="bulk-bar" hidden>
       <span id="bulk-count"></span>
       <button type="button" id="btn-bulk-hapus" class="btn-danger">Hapus terpilih</button>

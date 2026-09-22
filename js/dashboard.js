@@ -41,6 +41,16 @@ if (resProfile.code !== 200) {
 
   let grafikArus = null;
   let grafikKategori = null;
+  let grafikMinggu = null;
+
+  const NAMA_HARI = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+
+  // '2026-09-22' -> indeks Senin=0..Minggu=6 (Date lokal, bukan UTC).
+  function indeksHari(tanggal) {
+    const p = String(tanggal).split('-');
+    const d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+    return (d.getDay() + 6) % 7;
+  }
 
   // Warna grid/label grafik ikut tema (manual menang, default ikut OS).
   function warnaGrafik() {
@@ -66,6 +76,7 @@ if (resProfile.code !== 200) {
     const w = warnaGrafik();
     if (grafikArus) grafikArus.destroy();
     if (grafikKategori) grafikKategori.destroy();
+    if (grafikMinggu) grafikMinggu.destroy();
     grafikArus = new window.Chart(document.getElementById('grafik-arus'), {
       type: 'bar',
       data: {
@@ -79,6 +90,43 @@ if (resProfile.code !== 200) {
       options: {
         plugins: {
           legend: { display: false },
+          tooltip: { callbacks: { label: labelRp } }
+        },
+        scales: {
+          y: { beginAtZero: true, grid: { color: w.grid }, ticks: { color: w.ticks } },
+          x: { grid: { display: false }, ticks: { color: w.ticks } }
+        }
+      }
+    });
+    // Grafik mingguan: agregat per nama hari (Senin..Minggu) dalam filter
+    // periode aktif. Selalu digambar (kosong = batang nol, bukan error).
+    const dari = filter && filter.dari ? filter.dari : null;
+    const sampai = filter && filter.sampai ? filter.sampai : null;
+    const masukHari = [0, 0, 0, 0, 0, 0, 0];
+    const keluarHari = [0, 0, 0, 0, 0, 0, 0];
+    transaksi.forEach(function(t) {
+      if (t.userId !== user.id) return;
+      if (dari && t.tanggal < dari) return;
+      if (sampai && t.tanggal > sampai) return;
+      const i = indeksHari(t.tanggal);
+      if (t.jenis === 'masuk') {
+        masukHari[i] += t.jumlah;
+      } else {
+        keluarHari[i] += t.jumlah;
+      }
+    });
+    grafikMinggu = new window.Chart(document.getElementById('grafik-minggu'), {
+      type: 'bar',
+      data: {
+        labels: NAMA_HARI,
+        datasets: [
+          { label: 'Masuk', data: masukHari, backgroundColor: '#059669', borderRadius: 6 },
+          { label: 'Keluar', data: keluarHari, backgroundColor: '#dc2626', borderRadius: 6 }
+        ]
+      },
+      options: {
+        plugins: {
+          legend: { position: 'bottom', labels: { color: w.ticks, boxWidth: 12 } },
           tooltip: { callbacks: { label: labelRp } }
         },
         scales: {
