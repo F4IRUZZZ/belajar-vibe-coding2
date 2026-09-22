@@ -274,7 +274,7 @@ a {
 
 #dropdown-tombol .dd-chevron {
   position: absolute;
-  right: 10px;
+  right: 14px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-muted);
