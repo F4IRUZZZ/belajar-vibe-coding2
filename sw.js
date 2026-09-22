@@ -2,17 +2,18 @@
 // API (beda origin) + CDN Chart.js = network saja, data wajib segar.
 // Offline = shell tampil, data kosong + pesan 503 existing (jujur).
 // Ganti VERSI tiap ada perubahan shell agar klien update otomatis.
-// Pelajaran PR #94: config.js JANGAN di-precache (URL backend dinamis).
-const VERSI = 'keuangan-v2';
+// v3: URL bersih (tanpa .html) — hindari rantai redirect 308 Cloudflare
+// yang dibunuh middlebox/antivirus (ERR_FAILED intermittent).
+const VERSI = 'keuangan-v3';
 const ASET = [
   '/',
-  'index.html',
-  'login.html',
-  'register.html',
-  'transaksi.html',
-  'produk.html',
-  'hutang.html',
-  'profile.html',
+  'index',
+  'login',
+  'register',
+  'transaksi',
+  'produk',
+  'hutang',
+  'profile',
   'css/style.css',
   'js/api.js',
   'js/format.js',
@@ -72,7 +73,7 @@ self.addEventListener('fetch', function(e) {
         return res;
       }).catch(function() {
         // Offline: halaman -> index (nanti redirect login), aset -> gagal wajar.
-        if (e.request.mode === 'navigate') return caches.match('index.html');
+        if (e.request.mode === 'navigate') return caches.match('index');
         throw new Error('offline');
       });
     })

@@ -54,7 +54,7 @@ async function muatProfil() {
     // 401 = tanpa token / palsu / hangus -> redirect ke login
     info.textContent = 'Belum login, redirect ke halaman login...';
     setTimeout(function() {
-      window.location.href = 'login.html';
+      window.location.href = 'login';
     }, 800);
   }
 }
@@ -68,7 +68,7 @@ btnLogout.addEventListener('click', async function() {
     window.localStorage.removeItem('token'); // buang token = sesi hangus
     pesanOk(hasil, 'Logout sukses! Redirect ke login...');
     setTimeout(function() {
-      window.location.href = 'login.html';
+      window.location.href = 'login';
     }, 800);
   } else {
     pesanError(hasil, 'Gagal (' + out.code + '): ' + out.error);

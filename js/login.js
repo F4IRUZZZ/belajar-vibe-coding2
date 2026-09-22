@@ -17,7 +17,7 @@ formLogin.addEventListener('submit', async function(e) {
     window.localStorage.setItem('token', res.data.token);
     pesanOk(hasilLogin, 'Login sukses! Lanjut ke Dashboard.');
     setTimeout(function() {
-      window.location.href = 'index.html';
+      window.location.href = '/';
     }, 800);
   } else {
     pesanError(hasilLogin, 'Gagal (' + res.code + '): ' + res.error);
