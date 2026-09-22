@@ -681,5 +681,23 @@ a {
 }
 
 @media (min-width: 1024px) {
-  .card { width: 600px; }
+  /* Landscape desktop: konten melebar, sidebar kiri tetap */
+  .card { width: calc(100% - 32px); max-width: 960px; }
+
+  /* Grafik duo berdampingan (arus + mingguan), donat penuh di bawah.
+     HP (<1024px) tetap 1 kolom seperti semula. */
+  .grid-grafik {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 16px;
+    align-items: start;
+  }
+
+  .grid-grafik .field-grafik-penuh {
+    grid-column: 1 / -1;
+    width: 100%;
+    max-width: 560px;
+    margin-left: auto;
+    margin-right: auto;
+  }
 }
