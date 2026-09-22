@@ -339,23 +339,38 @@ input:focus, select:focus, #dropdown-tombol:focus {
 }
 
 @media (min-width: 1024px) {
+  /* Full-bleed desktop: tanpa jeda tepi. HP/tablet (<1024px) tidak
+     tersentuh = padding + radius nyaman tetap seperti semula. */
   body.app {
-    padding-left: 248px;
+    padding: 0 0 0 216px;
   }
 
   .sidebar {
     position: fixed;
-    left: 16px;
-    top: 16px;
-    bottom: 16px;
+    left: 0;
+    top: 0;
+    bottom: 0;
     width: 216px;
     max-width: none;
     margin: 0;
+    border: none;
+    border-right: 1px solid var(--border-color);
+    border-radius: 0;
+    box-shadow: none;
   }
 
   .sidebar-nav {
     flex-direction: column;
     overflow: visible;
+  }
+
+  .card {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    min-height: 100vh;
   }
 }
 
@@ -681,8 +696,7 @@ a {
 }
 
 @media (min-width: 1024px) {
-  /* Landscape desktop: konten melebar, sidebar kiri tetap */
-  .card { width: calc(100% - 32px); max-width: 960px; }
+  /* Ukuran kartu full-bleed diatur blok layout di atas; di sini hanya grid grafik. */
 
   /* Grafik duo berdampingan (arus + mingguan), donat penuh di bawah.
      HP (<1024px) tetap 1 kolom seperti semula. */
