@@ -696,7 +696,9 @@ a {
 }
 
 @media (min-width: 1024px) {
-  /* Ukuran kartu full-bleed diatur blok layout di atas; di sini hanya grid grafik. */
+  /* Ukuran kartu full-bleed diatur blok layout di atas; di sini hanya grid grafik.
+     PENTING: .card fluid didefinisikan ulang di bawah agar menang atas
+     .card 500px dari blok 600px (urutan source = penentu). */
 
   /* Grafik duo berdampingan (arus + mingguan), donat penuh di bawah.
      HP (<1024px) tetap 1 kolom seperti semula. */
@@ -714,4 +716,65 @@ a {
     margin-left: auto;
     margin-right: auto;
   }
+
+  /* Kartu fluid full-bleed: HARUS di bawah blok 600px agar menang cascade.
+     Tanpa ini kolom konten terjepit 500px + void kanan (bug PR #72). */
+  .card {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    min-height: 100vh;
+    padding: 32px;
+  }
+
+  /* Stat duo dashboard: 2 kartu berdampingan memenuhi lebar */
+  .stat-duo {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 12px 0 16px;
+  }
+
+  /* Anti-jepit: anak grid boleh menyusut, canvas ikut kolom */
+  .grid-grafik > .field {
+    min-width: 0;
+  }
+}
+
+/* Stat duo: susun bawah di HP, kartu mini bergaris */
+.stat-duo {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0 16px;
+}
+
+.stat-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  box-shadow: var(--shadow);
+}
+
+.stat-card .stat-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.stat-card strong {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.stat-masuk strong {
+  color: var(--ok-color);
+}
+
+.stat-keluar strong {
+  color: var(--err-color);
 }
