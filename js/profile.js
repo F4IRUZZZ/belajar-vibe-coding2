@@ -39,6 +39,7 @@ async function muatProfil() {
 muatProfil();
 
 btnLogout.addEventListener('click', async function() {
+  if (!window.confirm('Yakin mau logout?')) return; // anti klik tidak sengaja
   const t = window.localStorage.getItem('token');
   const out = await logout(t);
   if (out.code === 200) {
