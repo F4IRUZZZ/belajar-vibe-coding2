@@ -9,28 +9,31 @@ pasangIkonMenu(); // ikon SVG di sidebar menu
 
 // Guard: harus login — baca token, 401 = redirect ke login
 const token = window.localStorage.getItem('token');
-const resProfile = getProfile(token);
 let userId = null;
 
-if (resProfile.code !== 200) {
-  infoUser.textContent = 'Belum login, redirect ke halaman login...';
-  setTimeout(function() {
-    window.location.href = 'login.html';
-  }, 800);
-} else {
+async function init() {
+  const resProfile = await getProfile(token);
+  if (resProfile.code !== 200) {
+    infoUser.textContent = 'Belum login, redirect ke halaman login...';
+    setTimeout(function() {
+      window.location.href = 'login.html';
+    }, 800);
+    return;
+  }
   userId = resProfile.data.id;
   infoUser.textContent = 'Login sebagai: ' + (resProfile.data.username || resProfile.data.email) + ' (' + resProfile.data.role + ')';
   document.getElementById('tanggal-hutang').value = tanggalHariIni(); // lokal, bukan UTC
   pasangFormatRupiahLive(document.getElementById('jumlah-hutang'));
-  tampil();
+  await tampil();
 }
+init();
 
 function lewatJatuhTempo(h) {
   return h.status === 'belum' && h.jatuhTempo && h.jatuhTempo < tanggalHariIni();
 }
 
-function tampil() {
-  const data = hutang.filter(function(h) { return h.userId === userId; });
+async function tampil() {
+  const data = await getHutang(); // milik user (server filter via token)
   listEl.innerHTML = '';
   if (data.length === 0) {
     listEl.innerHTML = '<p>Belum ada hutang/piutang. Yuk catat yang pertama di form atas.</p>';
@@ -158,11 +161,11 @@ function bangunBarisHutang(tbody, h, nomor) {
 
       const btnSimpanB = document.createElement('button');
       pasangIkon(btnSimpanB, 'simpan', 'Simpan pembayaran');
-      btnSimpanB.addEventListener('click', function() {
-        const out = bayarHutang(h.id, parseRupiah(inputBayar.value), userId);
+      btnSimpanB.addEventListener('click', async function() {
+        const out = await bayarHutang(h.id, parseRupiah(inputBayar.value), userId);
         if (!out) {
           pesanError(hasil, 'Gagal: data tidak ditemukan.');
-          tampil();
+          await tampil();
           return;
         }
         if (out.error) {
@@ -170,7 +173,7 @@ function bangunBarisHutang(tbody, h, nomor) {
           return;
         }
         pesanOk(hasil, out.data.status === 'lunas' ? 'Lunas + tercatat di kas.' : 'Bayaran tercatat, sisa Rp' + formatRupiah(out.data.jumlah - out.data.dibayar) + '.');
-        tampil();
+        await tampil();
       });
       panelTd.appendChild(btnSimpanB);
       panelTd.appendChild(document.createTextNode(' '));
@@ -190,12 +193,12 @@ function bangunBarisHutang(tbody, h, nomor) {
 
     const btnLunas = document.createElement('button');
     pasangIkon(btnLunas, 'lunas', 'Lunaskan ' + h.pihak);
-    btnLunas.addEventListener('click', function() {
+    btnLunas.addEventListener('click', async function() {
       if (!window.confirm('Lunaskan + catat ke kas?')) return;
-      const out = lunaskanHutang(h.id, userId);
+      const out = await lunaskanHutang(h.id, userId);
       if (!out) {
         pesanError(hasil, 'Gagal: data tidak ditemukan.');
-        tampil();
+        await tampil();
         return;
       }
       if (out.error) {
@@ -203,7 +206,7 @@ function bangunBarisHutang(tbody, h, nomor) {
         return;
       }
       pesanOk(hasil, 'Lunas + tercatat di kas.');
-      tampil();
+      await tampil();
     });
     tdAksi.appendChild(btnLunas);
     tdAksi.appendChild(document.createTextNode(' '));
@@ -215,20 +218,20 @@ function bangunBarisHutang(tbody, h, nomor) {
     const btnHapus = document.createElement('button');
     pasangIkon(btnHapus, 'hapus', 'Hapus ' + h.pihak);
     btnHapus.classList.add('btn-danger');
-    btnHapus.addEventListener('click', function() {
+    btnHapus.addEventListener('click', async function() {
       if (!window.confirm('Hapus catatan ini?')) return;
-      const outDel = deleteHutang(h.id, userId);
+      const outDel = await deleteHutang(h.id, userId);
       if (outDel && outDel.error) {
         pesanError(hasil, 'Gagal (' + outDel.code + '): ' + outDel.error);
         return;
       }
       if (!outDel) {
         pesanError(hasil, 'Gagal: data tidak ditemukan.');
-        tampil();
+        await tampil();
         return;
       }
       pesanOk(hasil, 'Catatan dihapus.');
-      tampil();
+      await tampil();
     });
     tdAksi.appendChild(btnHapus);
   }
@@ -242,13 +245,13 @@ function bangunBarisHutang(tbody, h, nomor) {
     return tr;
 }
 
-form.addEventListener('submit', function(e) {
+form.addEventListener('submit', async function(e) {
   e.preventDefault();
   if (!userId) {
     pesanError(hasil, 'Belum login. Redirect ke halaman login...');
     return;
   }
-  const res = addHutang({
+  const res = await addHutang({
     userId: userId,
     arah: document.getElementById('arah').value,
     pihak: document.getElementById('pihak').value,
@@ -263,7 +266,7 @@ form.addEventListener('submit', function(e) {
     document.getElementById('jatuh-tempo').value = '';
     document.getElementById('keterangan').value = '';
     pesanOk(hasil, res.data.arah + ' ' + res.data.pihak + ' Rp' + formatRupiah(res.data.jumlah) + ' tercatat!');
-    tampil();
+    await tampil();
   } else {
     pesanError(hasil, 'Gagal (' + res.code + '): ' + res.error);
   }

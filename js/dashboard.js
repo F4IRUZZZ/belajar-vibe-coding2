@@ -10,33 +10,36 @@ pasangIkonMenu(); // ikon SVG di sidebar menu
 // Guard: harus login — baca token, 401 = redirect ke login.
 // (Logout hanya ada di profile.html — dashboard fokus angka.)
 const token = window.localStorage.getItem('token');
-const resProfile = getProfile(token);
+let user = null;
 
-if (resProfile.code !== 200) {
-  infoUser.textContent = 'Belum login, redirect ke halaman login...';
-  setTimeout(function() {
-    window.location.href = 'login.html';
-  }, 800);
-} else {
-  const user = resProfile.data;
+async function init() {
+  const resProfile = await getProfile(token);
+  if (resProfile.code !== 200) {
+    infoUser.textContent = 'Belum login, redirect ke halaman login...';
+    setTimeout(function() {
+      window.location.href = 'login.html';
+    }, 800);
+    return;
+  }
+  user = resProfile.data;
   infoUser.textContent = 'Login sebagai: ' + (user.username || user.email) + ' (' + user.role + ')';
   const pilihPeriode = document.getElementById('periode');
 
-  function muatRingkasan() {
+  async function muatRingkasan() {
     let filter = null;
     if (pilihPeriode.value === 'minggu') {
       filter = { dari: awalMingguIni(), sampai: akhirMingguIni() };
     } else if (pilihPeriode.value === 'bulan') {
       filter = { dari: awalBulanIni(), sampai: akhirBulanIni() };
     }
-    const ringkasan = getSaldo(user.id, filter);
+    const ringkasan = await getSaldo(user.id, filter); // via API (Fase A-3)
     totalMasuk.textContent = 'Rp' + formatRupiah(ringkasan.masuk);
     totalKeluar.textContent = 'Rp' + formatRupiah(ringkasan.keluar);
     saldoEl.textContent = 'Rp' + formatRupiah(ringkasan.saldo);
     saldoEl.classList.remove('saldo-minus');
     if (ringkasan.saldo < 0) saldoEl.classList.add('saldo-minus'); // kas minus = merah
-    muatKategori(filter);
-    gambarGrafik(ringkasan, filter);
+    await muatKategori(filter);
+    await gambarGrafik(ringkasan, filter);
   }
 
   let grafikArus = null;
@@ -66,7 +69,7 @@ if (resProfile.code !== 200) {
 
   // Grafik Chart.js (CDN): batang masuk-vs-keluar + donat kategori.
   // CDN gagal (offline) = grafik dilewati, angka + tabel tetap jalan.
-  function gambarGrafik(ringkasan, filter) {
+  async function gambarGrafik(ringkasan, filter) {
     const infoGrafik = document.getElementById('info-grafik');
     if (typeof window.Chart === 'undefined') {
       if (infoGrafik) infoGrafik.textContent = 'Grafik butuh internet (CDN Chart.js). Angka di atas tetap akurat.';
@@ -104,8 +107,8 @@ if (resProfile.code !== 200) {
     const sampai = filter && filter.sampai ? filter.sampai : null;
     const masukHari = [0, 0, 0, 0, 0, 0, 0];
     const keluarHari = [0, 0, 0, 0, 0, 0, 0];
-    transaksi.forEach(function(t) {
-      if (t.userId !== user.id) return;
+    const daftar = await getTransaksi(); // milik user (Fase A-3)
+    daftar.forEach(function(t) {
       if (dari && t.tanggal < dari) return;
       if (sampai && t.tanggal > sampai) return;
       const i = indeksHari(t.tanggal);
@@ -135,7 +138,7 @@ if (resProfile.code !== 200) {
         }
       }
     });
-    const dataKat = getRingkasanKategori(user.id, filter);
+    const dataKat = await getRingkasanKategori(user.id, filter);
     if (dataKat.length === 0) return; // pesan kosong sudah di tabel kategori
     const palet = ['#059669', '#10b981', '#34d399', '#f59e0b', '#fbbf24', '#0d9488', '#3b82f6', '#a78bfa'];
     grafikKategori = new window.Chart(document.getElementById('grafik-kategori'), {
@@ -156,8 +159,8 @@ if (resProfile.code !== 200) {
     });
   }
 
-  function muatKategori(filter) {
-    const data = getRingkasanKategori(user.id, filter);
+  async function muatKategori(filter) {
+    const data = await getRingkasanKategori(user.id, filter);
     boxKategori.innerHTML = '';
     if (data.length === 0) {
       boxKategori.textContent = 'Belum ada pengeluaran pada periode ini.';
@@ -187,6 +190,7 @@ if (resProfile.code !== 200) {
     boxKategori.appendChild(table);
   }
 
-  pilihPeriode.addEventListener('change', muatRingkasan);
-  muatRingkasan();
+  pilihPeriode.addEventListener('change', async function() { await muatRingkasan(); });
+  await muatRingkasan();
 }
+init();
