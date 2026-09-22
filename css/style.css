@@ -190,22 +190,28 @@ input:focus, select:focus, #dropdown-tombol:focus {
   box-shadow: none;
 }
 
-/* Varian tombol: bahaya (hapus) + lembut (batal/tutup) */
+/* Varian tombol: bahaya (hapus) + lembut (batal/tutup).
+   background-image: none = matikan gradasi hijau agar identitas
+   warna solid terjaga (merah = destruktif, abu = sekunder). */
 .btn-danger {
   background-color: var(--err-color);
+  background-image: none;
 }
 
 .btn-danger:hover {
   background-color: var(--danger-hover);
+  background-image: none;
 }
 
 .btn-soft {
   background-color: var(--border-color);
+  background-image: none;
   color: var(--text-main);
 }
 
 .btn-soft:hover {
   background-color: var(--input-border);
+  background-image: none;
 }
 
 /* Tombol ikon: kotak kecil berisi SVG, teks disembunyikan visual */
@@ -350,12 +356,14 @@ a {
   line-height: 1.5;
   color: var(--text-main);
   background-color: var(--card-bg);
+  background-image: none;
   border: 1px solid var(--input-border);
   border-radius: 6px;
 }
 
 #dropdown-tombol:hover {
   background-color: var(--card-bg);
+  background-image: none;
   border-color: var(--primary-color);
 }
 
