@@ -70,7 +70,7 @@ formRegister.addEventListener('submit', async function(e) {
   if (res.code === 201) {
     pesanOk(hasilRegister, 'Daftar sukses (' + res.data.role + ')! Silakan login.');
     setTimeout(function() {
-      window.location.href = 'login.html';
+      window.location.href = 'login';
     }, 800);
   } else {
     pesanError(hasilRegister, 'Gagal (' + res.code + '): ' + res.error);

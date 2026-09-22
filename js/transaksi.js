@@ -97,7 +97,7 @@ async function init() {
   if (resProfile.code !== 200) {
     infoUser.textContent = 'Belum login, redirect ke halaman login...';
     setTimeout(function() {
-      window.location.href = 'login.html';
+      window.location.href = 'login';
     }, 800);
     return;
   }
