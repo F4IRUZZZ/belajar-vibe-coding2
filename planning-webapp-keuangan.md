@@ -157,3 +157,7 @@ CATATAN GAP (sadar, bukan lupa):
 - 2026-09-19 — hutang — 2 tabel + subtotal sisa + label (PR #57)
 - 2026-09-19 — input — Rupiah live prefix + auto-format (PR #59)
 - 2026-09-19 — docs — sinkronisasi Riwayat PR #60 (PR #60)
+- 2026-09-20 — polish — mata password + indikator + CSV konsisten (PR #62)
+- 2026-09-21 — polish — ikon aksi SVG + toggle Profile + mata pindah (PR #64)
+- 2026-09-22 — ui — UI v2 + dark mode + ikon dropdown seragam (PR #66)
+- 2026-09-22 — ui — tema ke Profile + fintech hijau + hero gradient + nav pil (PR #68)
