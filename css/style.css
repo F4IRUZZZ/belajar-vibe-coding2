@@ -380,6 +380,13 @@ input:focus, select:focus, #dropdown-tombol:focus {
   font-weight: 400;
 }
 
+/* Judul seksi non-field (pengganti label telanjang agar Console bersih) */
+.label-teks {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 2px;
+}
+
 /* Tab Riwayat (Semua/Masuk/Keluar): pil netral, aktif hijau gradient */
 .tab-bar {
   display: flex;
