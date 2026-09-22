@@ -172,3 +172,4 @@ CATATAN GAP (sadar, bukan lupa):
 - 2026-09-22 — hosting — backend Koyeb via Dockerfile (PR #86)
 - 2026-09-22 — hosting — panduan Back4app + bind 0.0.0.0 (PR #88)
 - 2026-09-22 — perf — bcrypt + warmup + catatan/semua + paralel (PR #91)
+- 2026-09-22 — pwa — manifest + service worker + tombol install (PR #93)
