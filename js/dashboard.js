@@ -36,14 +36,19 @@ async function init() {
     } else if (pilihPeriode.value === 'bulan') {
       filter = { dari: awalBulanIni(), sampai: akhirBulanIni() };
     }
-    const ringkasan = await getSaldo(user.id, filter); // via API (Fase A-3)
+    // Paralel: 3 request jalan bareng (±1x RTT, bukan 3x).
+    const [ringkasan, dataKat, daftar] = await Promise.all([
+      getSaldo(user.id, filter),
+      getRingkasanKategori(user.id, filter),
+      getTransaksi()
+    ]);
     totalMasuk.textContent = 'Rp' + formatRupiah(ringkasan.masuk);
     totalKeluar.textContent = 'Rp' + formatRupiah(ringkasan.keluar);
     saldoEl.textContent = 'Rp' + formatRupiah(ringkasan.saldo);
     saldoEl.classList.remove('saldo-minus');
     if (ringkasan.saldo < 0) saldoEl.classList.add('saldo-minus'); // kas minus = merah
-    await muatKategori(filter);
-    await gambarGrafik(ringkasan, filter);
+    muatKategori(dataKat);
+    await gambarGrafik(ringkasan, filter, dataKat, daftar);
   }
 
   let grafikArus = null;
@@ -73,7 +78,7 @@ async function init() {
 
   // Grafik Chart.js (CDN): batang masuk-vs-keluar + donat kategori.
   // CDN gagal (offline) = grafik dilewati, angka + tabel tetap jalan.
-  async function gambarGrafik(ringkasan, filter) {
+  async function gambarGrafik(ringkasan, filter, dataKat, daftar) {
     const infoGrafik = document.getElementById('info-grafik');
     if (typeof window.Chart === 'undefined') {
       if (infoGrafik) infoGrafik.textContent = 'Grafik butuh internet (CDN Chart.js). Angka di atas tetap akurat.';
@@ -111,8 +116,7 @@ async function init() {
     const sampai = filter && filter.sampai ? filter.sampai : null;
     const masukHari = [0, 0, 0, 0, 0, 0, 0];
     const keluarHari = [0, 0, 0, 0, 0, 0, 0];
-    const daftar = await getTransaksi(); // milik user (Fase A-3)
-    daftar.forEach(function(t) {
+    daftar.forEach(function(t) { // dari Promise.all di muatRingkasan
       if (dari && t.tanggal < dari) return;
       if (sampai && t.tanggal > sampai) return;
       const i = indeksHari(t.tanggal);
@@ -142,7 +146,6 @@ async function init() {
         }
       }
     });
-    const dataKat = await getRingkasanKategori(user.id, filter);
     if (dataKat.length === 0) return; // pesan kosong sudah di tabel kategori
     const palet = ['#059669', '#10b981', '#34d399', '#f59e0b', '#fbbf24', '#0d9488', '#3b82f6', '#a78bfa'];
     grafikKategori = new window.Chart(document.getElementById('grafik-kategori'), {
@@ -163,8 +166,7 @@ async function init() {
     });
   }
 
-  async function muatKategori(filter) {
-    const data = await getRingkasanKategori(user.id, filter);
+  function muatKategori(data) {
     boxKategori.innerHTML = '';
     if (data.length === 0) {
       boxKategori.textContent = 'Belum ada pengeluaran pada periode ini.';
