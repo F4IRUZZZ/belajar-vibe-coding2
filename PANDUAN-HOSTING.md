@@ -22,7 +22,7 @@
 
 ## 2. Backend — Render (gratis, Bun native)
 
-1. Daftar di https://render.com (lanjutkan dengan GitHub) → **New → Blueprint** → pilih repo `belajar-vibe-coding2` (file `server/render.yaml` otomatis terdeteksi).
+1. Daftar di https://render.com (lanjutkan dengan GitHub) → **New → Blueprint** → pilih repo `belajar-vibe-coding2` (file `render.yaml` di root terdeteksi otomatis; paket `free`, region `singapore` sudah terkunci di file).
 2. Isi env var (dashboard Render → service `keuangan-api` → Environment):
    - `DATABASE_URL` = connection string TiDB langkah 1
    - `DB_SSL` = `true`

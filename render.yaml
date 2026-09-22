@@ -1,10 +1,15 @@
 # Blueprint Render Fase B: backend Bun + Elysia (free tier).
-# Cara pakai: dashboard Render -> New -> Blueprint -> pilih repo ini.
+# Cara pakai: dashboard Render -> New -> Blueprint -> pilih repo ini
+# (file ini di root jadi terdeteksi otomatis).
 # Env var wajib diisi di dashboard: DATABASE_URL, DB_SSL, FRONTEND_URL.
+# plan: free = eksplisit (default Render = berbayar!).
+# region: singapore = dekat Indonesia (default = oregon/US, lambat).
 services:
   - type: web
     name: keuangan-api
     runtime: node
+    plan: free
+    region: singapore
     buildCommand: cd server && bun install
     startCommand: cd server && bun run index.ts
     healthCheckPath: /kesehatan
