@@ -4,6 +4,7 @@
 // di tabel sessions (1x login = 1x sesi, logout = sesi hangus).
 import { Elysia, t } from 'elysia';
 import { pool } from './db';
+import { bacaToken, userDariToken } from './guard';
 
 function validEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -17,22 +18,6 @@ function cekPassword(pw: string): string | null {
 
 function tokenBaru(): string {
   return crypto.randomUUID().replace(/-/g, '') + Date.now().toString(36);
-}
-
-function bacaToken(authHeader: string | undefined): string | null {
-  if (!authHeader) return null;
-  const m = /^Bearer (.+)$/.exec(authHeader.trim());
-  return m ? m[1] : null;
-}
-
-async function userDariToken(token: string | null) {
-  if (!token) return null;
-  const [rows] = await pool.query(
-    'SELECT u.id, u.email, u.username, u.role FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token = ?',
-    [token]
-  );
-  const data = rows as Array<{ id: number; email: string; username: string; role: string }>;
-  return data.length > 0 ? data[0] : null;
 }
 
 export const authRoutes = new Elysia({ prefix: '/api' })

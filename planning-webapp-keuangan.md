@@ -164,3 +164,4 @@ CATATAN GAP (sadar, bukan lupa):
 - 2026-09-22 — dashboard — grafik Chart.js + tombol merah solid + sidebar ikon (PR #70)
 - 2026-09-22 — transaksi — tab Riwayat gabungan + filter + grafik mingguan + landscape (PR #72)
 - 2026-09-22 — backend — Elysia + MySQL + Auth API hash password (PR #74)
+- 2026-09-22 — backend — API keuangan + saldo + hutang transaksional (PR #76)
