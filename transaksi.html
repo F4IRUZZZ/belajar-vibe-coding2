@@ -12,7 +12,17 @@
   <script src="js/format.js" defer></script>
   <script src="js/transaksi.js" defer></script>
 </head>
-<body>
+<body class="app">
+  <aside class="sidebar">
+    <p class="sidebar-brand">Keuangan</p>
+    <nav class="sidebar-nav">
+      <a href="index.html" data-ikon="dashboard">Dashboard</a>
+      <a href="transaksi.html" data-ikon="transaksi" class="nav-aktif">Transaksi</a>
+      <a href="produk.html" data-ikon="produk">Produk</a>
+      <a href="hutang.html" data-ikon="hutang">Hutang</a>
+      <a href="profile.html" data-ikon="profile">Profile</a>
+    </nav>
+  </aside>
   <main class="card">
     <h1>Transaksi</h1>
     <p id="info-user">Loading...</p>
@@ -59,7 +69,6 @@
       <button type="button" id="btn-bulk-hapus" class="btn-danger">Hapus terpilih</button>
     </div>
     <div id="list-transaksi"></div>
-    <p class="nav-sticky"><a href="index.html">Dashboard</a><a href="transaksi.html" class="nav-aktif">Transaksi</a><a href="produk.html">Produk</a><a href="hutang.html">Hutang</a><a href="profile.html">Profile</a></p>
   </main>
 </body>
 </html>

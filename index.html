@@ -12,7 +12,17 @@
   <script src="js/format.js" defer></script>
   <script src="js/dashboard.js" defer></script>
 </head>
-<body>
+<body class="app">
+  <aside class="sidebar">
+    <p class="sidebar-brand">Keuangan</p>
+    <nav class="sidebar-nav">
+      <a href="index.html" data-ikon="dashboard" class="nav-aktif">Dashboard</a>
+      <a href="transaksi.html" data-ikon="transaksi">Transaksi</a>
+      <a href="produk.html" data-ikon="produk">Produk</a>
+      <a href="hutang.html" data-ikon="hutang">Hutang</a>
+      <a href="profile.html" data-ikon="profile">Profile</a>
+    </nav>
+  </aside>
   <main class="card">
     <h1>Dashboard</h1>
     <p id="info-user">Loading...</p>
@@ -34,7 +44,6 @@
     <hr>
     <h2>Keluar per Kategori</h2>
     <div id="ringkasan-kategori"></div>
-    <p class="nav-sticky"><a href="index.html" class="nav-aktif">Dashboard</a><a href="transaksi.html">Transaksi</a><a href="produk.html">Produk</a><a href="hutang.html">Hutang</a><a href="profile.html">Profile</a></p>
-  </main>
+</main>
 </body>
 </html>

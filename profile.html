@@ -12,7 +12,17 @@
   <script src="js/format.js" defer></script>
   <script src="js/profile.js" defer></script>
 </head>
-<body>
+<body class="app">
+  <aside class="sidebar">
+    <p class="sidebar-brand">Keuangan</p>
+    <nav class="sidebar-nav">
+      <a href="index.html" data-ikon="dashboard">Dashboard</a>
+      <a href="transaksi.html" data-ikon="transaksi">Transaksi</a>
+      <a href="produk.html" data-ikon="produk">Produk</a>
+      <a href="hutang.html" data-ikon="hutang">Hutang</a>
+      <a href="profile.html" data-ikon="profile" class="nav-aktif">Profile</a>
+    </nav>
+  </aside>
   <main class="card">
     <h1>Profile</h1>
     <p id="info">Loading...</p>
@@ -39,7 +49,6 @@
     <hr>
     <button id="btn-logout">Logout</button>
     <p id="hasil"></p>
-    <p class="nav-sticky"><a href="index.html">Dashboard</a><a href="transaksi.html">Transaksi</a><a href="produk.html">Produk</a><a href="hutang.html">Hutang</a><a href="profile.html" class="nav-aktif">Profile</a></p>
   </main>
 </body>
 </html>

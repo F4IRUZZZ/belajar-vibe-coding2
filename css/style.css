@@ -280,37 +280,83 @@ input:focus, select:focus, #dropdown-tombol:focus {
   color: #fecaca !important;
 }
 
-/* Nav pil: link jadi pil, halaman aktif hijau solid */
-.nav-sticky {
-  position: sticky;
-  top: 0;
+/* Sidebar menu: kiri di laptop (>=1024px), bar atas di HP.
+   Link berikon (SVG via data-ikon), halaman aktif pil hijau solid. */
+.sidebar {
   background-color: var(--card-bg);
-  padding: 8px 0;
-  z-index: 5;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px;
+  width: 90%;
+  max-width: 600px;
+  margin: 16px auto 0;
 }
 
-.nav-sticky a {
-  padding: 6px 14px;
+.sidebar-brand {
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 8px;
+}
+
+.sidebar-nav {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+}
+
+.sidebar-nav a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
   border-radius: 999px;
   text-decoration: none;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-muted);
+  white-space: nowrap;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.nav-sticky a:hover {
+.sidebar-nav a .nav-ikon {
+  line-height: 0;
+}
+
+.sidebar-nav a .nav-ikon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.sidebar-nav a:hover {
   background-color: var(--hover-bg);
   color: var(--text-main);
 }
 
-.nav-sticky a.nav-aktif {
+.sidebar-nav a.nav-aktif {
   background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
   color: #ffffff;
+}
+
+@media (min-width: 1024px) {
+  body.app {
+    padding-left: 248px;
+  }
+
+  .sidebar {
+    position: fixed;
+    left: 16px;
+    top: 16px;
+    bottom: 16px;
+    width: 216px;
+    max-width: none;
+    margin: 0;
+  }
+
+  .sidebar-nav {
+    flex-direction: column;
+    overflow: visible;
+  }
 }
 
 /* Status tema di Profile */

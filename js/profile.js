@@ -7,6 +7,7 @@ const hasilUsername = document.getElementById('hasil-username');
 const btnEditUsername = document.getElementById('btn-edit-username');
 pasangIkon(btnEditUsername, 'ubah', 'Ubah username');
 pasangToggleTema(); // dark mode ikut sistem, manual menang via localStorage
+pasangIkonMenu(); // ikon SVG di sidebar menu
 
 btnEditUsername.addEventListener('click', function() {
   formUsername.hidden = !formUsername.hidden;

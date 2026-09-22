@@ -5,6 +5,7 @@ const hasil = document.getElementById('hasil');
 const listEl = document.getElementById('list-hutang');
 
 pasangToggleTema(); // dark mode ikut sistem, manual menang via localStorage
+pasangIkonMenu(); // ikon SVG di sidebar menu
 
 // Guard: harus login — baca token, 401 = redirect ke login
 const token = window.localStorage.getItem('token');
