@@ -2,7 +2,8 @@
 // API (beda origin) + CDN Chart.js = network saja, data wajib segar.
 // Offline = shell tampil, data kosong + pesan 503 existing (jujur).
 // Ganti VERSI tiap ada perubahan shell agar klien update otomatis.
-const VERSI = 'keuangan-v1';
+// Pelajaran PR #94: config.js JANGAN di-precache (URL backend dinamis).
+const VERSI = 'keuangan-v2';
 const ASET = [
   '/',
   'index.html',
@@ -14,7 +15,6 @@ const ASET = [
   'profile.html',
   'css/style.css',
   'js/api.js',
-  'js/config.js',
   'js/format.js',
   'js/keuangan.js',
   'js/dashboard.js',
@@ -51,6 +51,18 @@ self.addEventListener('fetch', function(e) {
   const url = new URL(e.request.url);
   // Beda origin (API Back4app, CDN) = jangan sentuh, network saja.
   if (url.origin !== self.location.origin) return;
+  // config.js = network-first (URL backend dinamis, wajib segar).
+  // Offline = pakai salinan terakhir bila ada.
+  if (url.pathname.endsWith('js/config.js')) {
+    e.respondWith(
+      fetch(e.request).then(function(res) {
+        const salin = res.clone();
+        caches.open(VERSI).then(function(cache) { cache.put(e.request, salin); });
+        return res;
+      }).catch(function() { return caches.match(e.request); })
+    );
+    return;
+  }
   e.respondWith(
     caches.match(e.request).then(function(cocok) {
       if (cocok) return cocok;
