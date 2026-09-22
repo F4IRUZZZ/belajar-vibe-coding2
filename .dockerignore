@@ -1,0 +1,4 @@
+# Jangan masuk image Docker (rahasia + sampah lokal)
+node_modules
+.env
+*.log
