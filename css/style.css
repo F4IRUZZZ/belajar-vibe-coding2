@@ -588,7 +588,7 @@ a {
 }
 
 /* Grafik dashboard (Chart.js): canvas ikut lebar kartu */
-#grafik-arus, #grafik-kategori {
+#grafik-arus, #grafik-minggu, #grafik-kategori {
   max-width: 100%;
 }
 
