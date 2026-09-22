@@ -16,6 +16,7 @@ const ddHidden = document.getElementById('kategori-produk');
 const DEFAULT_KATEGORI = ['Pangan', 'Mandi', 'Lainnya'];
 
 pasangToggleTema(); // dark mode ikut sistem, manual menang via localStorage
+pasangIkonMenu(); // ikon SVG di sidebar menu
 
 // Guard: harus login — baca token, 401 = redirect ke login.
 // Tahap 1: list produk shared (tanpa cek pemilik), login wajib.

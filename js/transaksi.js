@@ -13,6 +13,7 @@ const fieldKategoriBebas = document.getElementById('field-kategori-bebas');
 const inputKategoriBebas = document.getElementById('kategori-bebas');
 
 pasangToggleTema(); // dark mode ikut sistem, manual menang via localStorage
+pasangIkonMenu(); // ikon SVG di sidebar menu
 
 // Bulk: id terpilih lintas render ulang. Reset tiap tampil() (predictable).
 const terpilih = new Set();

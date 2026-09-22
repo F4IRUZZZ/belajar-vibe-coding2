@@ -10,9 +10,20 @@
   <script src="js/auth.js" defer></script>
   <script src="js/keuangan.js" defer></script>
   <script src="js/format.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
   <script src="js/dashboard.js" defer></script>
 </head>
-<body>
+<body class="app">
+  <aside class="sidebar">
+    <p class="sidebar-brand">Keuangan</p>
+    <nav class="sidebar-nav">
+      <a href="index.html" data-ikon="dashboard" class="nav-aktif">Dashboard</a>
+      <a href="transaksi.html" data-ikon="transaksi">Transaksi</a>
+      <a href="produk.html" data-ikon="produk">Produk</a>
+      <a href="hutang.html" data-ikon="hutang">Hutang</a>
+      <a href="profile.html" data-ikon="profile">Profile</a>
+    </nav>
+  </aside>
   <main class="card">
     <h1>Dashboard</h1>
     <p id="info-user">Loading...</p>
@@ -34,7 +45,15 @@
     <hr>
     <h2>Keluar per Kategori</h2>
     <div id="ringkasan-kategori"></div>
-    <p class="nav-sticky"><a href="index.html" class="nav-aktif">Dashboard</a><a href="transaksi.html">Transaksi</a><a href="produk.html">Produk</a><a href="hutang.html">Hutang</a><a href="profile.html">Profile</a></p>
-  </main>
+    <hr>
+    <h2>Grafik</h2>
+    <div class="field">
+      <canvas id="grafik-arus" height="220" aria-label="Grafik batang pemasukan versus pengeluaran"></canvas>
+    </div>
+    <div class="field">
+      <canvas id="grafik-kategori" height="220" aria-label="Grafik donat pengeluaran per kategori"></canvas>
+    </div>
+    <p id="info-grafik"></p>
+</main>
 </body>
 </html>
