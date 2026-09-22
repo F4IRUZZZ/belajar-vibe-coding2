@@ -108,8 +108,7 @@ label {
 input[type="email"],
 input[type="password"],
 input[type="text"],
-input[type="number"],
-select {
+input[type="number"] {
   width: 100%;
   min-height: 44px;
   padding: 10px;
@@ -121,6 +120,27 @@ select {
   background-color: var(--card-bg);
   border: 1px solid var(--input-border);
   border-radius: 6px;
+}
+
+/* Select native: panah bawaan diganti chevron custom agar identik
+   dengan dropdown produk (posisi + bentuk sama persis) */
+select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 36px 10px 10px;
+  margin-top: 8px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  font-family: inherit;
+  color: var(--text-main);
+  background-color: var(--card-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
 }
 
 input:focus, select:focus {
@@ -278,6 +298,11 @@ a {
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-muted);
+  line-height: 0;
+}
+
+#dropdown-tombol .dd-chevron svg {
+  display: block;
 }
 
 .dropdown-list {
