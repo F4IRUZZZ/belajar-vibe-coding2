@@ -147,9 +147,10 @@ pilihJenis.addEventListener('change', aturUntuk);
 pilihProduk.addEventListener('change', aturUntuk);
 
 async function tampil() {
-  const semua = await getTransaksi(); // milik user (server filter via token)
-  cacheCatatan = await muatSemuaCatatan(); // panel + cari
-  const data = semua.filter(cocokCari);
+  // Paralel: 2 request jalan bareng (±1x RTT, bukan 2x).
+  const [semua, notes] = await Promise.all([getTransaksi(), muatSemuaCatatan()]);
+  cacheCatatan = notes; // panel + cari
+  const data = semua.filter(cocokCari); // server sudah filter milik user
   // Prune (bukan clear): buang id yang sudah tidak ada, pertahankan pilihan
   // valid — biar pilih-semua / pilihan satuan selamat dari render ulang.
   Array.from(terpilih).forEach(function(id) {

@@ -221,6 +221,16 @@ export const keuanganRoutes = new Elysia({ prefix: '/api' })
     return { data: true };
   })
   // --- Catatan (otorisasi via transaksi induk) ---
+  // Semua catatan milik user dalam 1 query (ganti N+1 per transaksi).
+  .get('/catatan/semua', async ({ headers, status }) => {
+    const user = await userDariToken(bacaToken(headers['authorization']));
+    if (!user) return status(401, { error: 'Unauthorized' });
+    const [rows] = await pool.query(
+      'SELECT c.id, c.transaksi_id AS transaksiId, c.isi FROM catatan c JOIN transaksi t ON t.id = c.transaksi_id WHERE t.user_id = ? ORDER BY c.id',
+      [user.id]
+    );
+    return { data: rows };
+  })
   .get('/catatan', async ({ query, headers, status }) => {
     const user = await userDariToken(bacaToken(headers['authorization']));
     if (!user) return status(401, { error: 'Unauthorized' });

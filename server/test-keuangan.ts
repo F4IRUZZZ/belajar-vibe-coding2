@@ -79,6 +79,11 @@ b = await cek('catatan tambah', 201, await api('/api/transaksi/' + idKeluar + '/
 const idCat = (b?.data as { id: number }).id;
 await cek('catatan list', 200, await api('/api/catatan', 'GET', tokenA, undefined, '?transaksi_id=' + idKeluar));
 await cek('catatan ubah', 200, await api('/api/catatan/' + idCat, 'PUT', tokenA, { isi: 'Makan siang padang' }));
+b = await cek('catatan semua', 200, await api('/api/catatan/semua', 'GET', tokenA));
+const semua = b?.data as Array<{ isi: string }>;
+const semuaOk = Array.isArray(semua) && semua.length === 1 && semua[0]?.isi === 'Makan siang padang';
+console.log((semuaOk ? 'PASS' : 'FAIL') + ' catatan semua 1 query utuh');
+if (!semuaOk) gagal++;
 await cek('trx hapus (cascade)', 200, await api('/api/transaksi/' + idKeluar, 'DELETE', tokenA));
 await cek('catatan ikut hilang (404 induk)', 404, await api('/api/catatan', 'GET', tokenA, undefined, '?transaksi_id=' + idKeluar));
 

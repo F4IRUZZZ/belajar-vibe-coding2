@@ -141,11 +141,17 @@ async function getCatatan(transaksiId) {
   }
 }
 
-// Semua catatan milik user (untuk cari + CSV): paralel per transaksi.
+// Semua catatan milik user dalam 1 request (ganti N+1 per transaksi).
 async function muatSemuaCatatan() {
-  const daftar = await getTransaksi();
-  const hasil = await Promise.all(daftar.map(function(t) { return getCatatan(t.id); }));
-  return hasil.reduce(function(gabung, arr) { return gabung.concat(arr); }, []);
+  try {
+    const res = await fetch(API_BASE + '/api/catatan/semua', { headers: authHeader() });
+    if (res.status !== 200) return [];
+    const body = await res.json();
+    return body.data;
+  } catch (e) {
+    window.__apiGagal = true;
+    return [];
+  }
 }
 
 async function addCatatan(transaksiId, isi, userId) {
