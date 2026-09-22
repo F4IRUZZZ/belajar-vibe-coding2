@@ -180,7 +180,7 @@ function renderOpsiDropdown() {
 function pilihKategori(nama) {
   kategoriTerpilih = nama;
   ddHidden.value = nama;
-  ddTombol.textContent = nama + ' ▾';
+  document.getElementById('dropdown-label').textContent = nama || 'Pilih kategori';
   ddList.hidden = true;
 }
 
@@ -220,7 +220,7 @@ form.addEventListener('submit', function(e) {
     document.getElementById('nama-produk').value = '';
     kategoriTerpilih = '';
     ddHidden.value = '';
-    ddTombol.textContent = 'Pilih kategori ▾'; // reset pilihan
+    document.getElementById('dropdown-label').textContent = 'Pilih kategori'; // reset pilihan
     pesanOk(hasil, 'Produk "' + res.data.nama + '" ditambah!');
     tampil();
   } else {

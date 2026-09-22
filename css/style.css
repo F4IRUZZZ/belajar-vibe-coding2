@@ -249,8 +249,29 @@ a {
 }
 
 #dropdown-tombol {
+  position: relative;
   width: 100%;
+  padding: 10px 36px 10px 10px;
+  font-size: 0.9rem;
+  font-weight: 400;
   text-align: left;
+  color: var(--text-main);
+  background-color: var(--card-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+}
+
+#dropdown-tombol:hover {
+  background-color: var(--card-bg);
+  border-color: var(--primary-color);
+}
+
+#dropdown-tombol .dd-chevron {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
 }
 
 .dropdown-list {
