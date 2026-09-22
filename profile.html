@@ -6,12 +6,15 @@
   <title>Profile - Catatan Keuangan Keluarga</title>
   <meta name="description" content="Profil akun dan keluar">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#059669">
   <link rel="icon" href="data:,">
   <script src="js/config.js" defer></script>
   <script src="js/api.js" defer></script>
   <script src="js/keuangan.js" defer></script>
   <script src="js/format.js" defer></script>
   <script src="js/profile.js" defer></script>
+  <script src="js/pwa.js" defer></script>
 </head>
 <body class="app">
   <aside class="sidebar">
@@ -46,6 +49,8 @@
     <div class="field">
       <p class="label-teks">Tema aplikasi <span id="info-tema" class="tema-status"></span></p>
       <p><button type="button" class="btn-tema" id="btn-tema-profile">Gelap</button></p>
+      <p><button type="button" id="btn-install" hidden>Install aplikasi</button></p>
+      <p id="info-install" class="tema-status"></p>
     </div>
     <hr>
     <button id="btn-logout">Logout</button>
