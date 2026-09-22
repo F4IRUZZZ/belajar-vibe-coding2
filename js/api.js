@@ -16,11 +16,19 @@ function authHeader(token) {
 }
 
 async function req(path, metode, data, token) {
-  const res = await fetch(API_BASE + path, {
-    method: metode,
-    headers: Object.assign({ 'Content-Type': 'application/json' }, authHeader(token)),
-    ...(data !== undefined ? { body: JSON.stringify(data) } : {})
-  });
+  let res;
+  try {
+    res = await fetch(API_BASE + path, {
+      method: metode,
+      headers: Object.assign({ 'Content-Type': 'application/json' }, authHeader(token)),
+      ...(data !== undefined ? { body: JSON.stringify(data) } : {})
+    });
+  } catch (e) {
+    // Server mati / tidak terjangkau: jangan bisu — kode 503 + pesan jelas.
+    // Halaman menampilkan ini lewat jalur error existing (Gagal (503): ...).
+    window.__apiGagal = true;
+    return { code: 503, body: { error: 'Server tidak terjangkau. Jalankan server: cd server, lalu bun run index.ts (MySQL wajib hidup).' } };
+  }
   let body = null;
   try {
     body = await res.json();
@@ -120,12 +128,17 @@ async function deleteTransaksi(id, userId) {
 
 // --- Catatan ---
 async function getCatatan(transaksiId) {
-  const res = await fetch(API_BASE + '/api/catatan?transaksi_id=' + transaksiId, {
-    headers: authHeader()
-  });
-  if (res.status !== 200) return [];
-  const body = await res.json();
-  return body.data;
+  try {
+    const res = await fetch(API_BASE + '/api/catatan?transaksi_id=' + transaksiId, {
+      headers: authHeader()
+    });
+    if (res.status !== 200) return [];
+    const body = await res.json();
+    return body.data;
+  } catch (e) {
+    window.__apiGagal = true;
+    return [];
+  }
 }
 
 // Semua catatan milik user (untuk cari + CSV): paralel per transaksi.
@@ -181,22 +194,32 @@ async function getSaldo(userId, filter) {
   const q = [];
   if (filter && filter.dari) q.push('dari=' + encodeURIComponent(filter.dari));
   if (filter && filter.sampai) q.push('sampai=' + encodeURIComponent(filter.sampai));
-  const res = await fetch(API_BASE + '/api/saldo' + (q.length ? '?' + q.join('&') : ''), {
-    headers: authHeader()
-  });
-  if (res.status !== 200) return { masuk: 0, keluar: 0, saldo: 0 };
-  const body = await res.json();
-  return body.data;
+  try {
+    const res = await fetch(API_BASE + '/api/saldo' + (q.length ? '?' + q.join('&') : ''), {
+      headers: authHeader()
+    });
+    if (res.status !== 200) return { masuk: 0, keluar: 0, saldo: 0 };
+    const body = await res.json();
+    return body.data;
+  } catch (e) {
+    window.__apiGagal = true;
+    return { masuk: 0, keluar: 0, saldo: 0 };
+  }
 }
 
 async function getRingkasanKategori(userId, filter) {
   const q = [];
   if (filter && filter.dari) q.push('dari=' + encodeURIComponent(filter.dari));
   if (filter && filter.sampai) q.push('sampai=' + encodeURIComponent(filter.sampai));
-  const res = await fetch(API_BASE + '/api/ringkasan-kategori' + (q.length ? '?' + q.join('&') : ''), {
-    headers: authHeader()
-  });
-  if (res.status !== 200) return [];
-  const body = await res.json();
-  return body.data;
+  try {
+    const res = await fetch(API_BASE + '/api/ringkasan-kategori' + (q.length ? '?' + q.join('&') : ''), {
+      headers: authHeader()
+    });
+    if (res.status !== 200) return [];
+    const body = await res.json();
+    return body.data;
+  } catch (e) {
+    window.__apiGagal = true;
+    return [];
+  }
 }

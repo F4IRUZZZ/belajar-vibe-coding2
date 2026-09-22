@@ -18,6 +18,10 @@ const token = window.localStorage.getItem('token');
 
 async function muatProfil() {
   const res = await getProfile(token);
+  if (res.code === 503) {
+    info.textContent = 'Server tidak terjangkau. Jalankan server: cd server, lalu bun run index.ts (MySQL wajib hidup).';
+    return;
+  }
   if (res.code === 200) {
     info.textContent = 'Username: ' + (res.data.username || res.data.email) + ' (' + res.data.role + ')';
     document.getElementById('username-baru').value = res.data.username || '';

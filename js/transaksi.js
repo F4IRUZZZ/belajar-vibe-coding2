@@ -90,6 +90,10 @@ let cacheCatatan = []; // semua catatan milik user (panel + cari)
 
 async function init() {
   const resProfile = await getProfile(token);
+  if (resProfile.code === 503) {
+    infoUser.textContent = 'Server tidak terjangkau. Jalankan server: cd server, lalu bun run index.ts (MySQL wajib hidup).';
+    return;
+  }
   if (resProfile.code !== 200) {
     infoUser.textContent = 'Belum login, redirect ke halaman login...';
     setTimeout(function() {
