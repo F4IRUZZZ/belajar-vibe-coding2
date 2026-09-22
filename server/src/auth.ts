@@ -74,10 +74,11 @@ export const authRoutes = new Elysia({ prefix: '/api' })
         role: string;
       }>;
       if (users.length === 0) return status(401, { error: 'Email/password salah' });
-      const ok = await Bun.password.verify(password, users[0].password_hash);
+      const u0 = users[0]!; // aman: length sudah dicek
+      const ok = await Bun.password.verify(password, u0.password_hash);
       if (!ok) return status(401, { error: 'Email/password salah' });
       const token = tokenBaru();
-      await pool.query('INSERT INTO sessions (token, user_id) VALUES (?, ?)', [token, users[0].id]);
+      await pool.query('INSERT INTO sessions (token, user_id) VALUES (?, ?)', [token, u0.id]);
       return { data: { token } };
     },
     {

@@ -5,8 +5,10 @@ import { cors } from '@elysiajs/cors';
 import { authRoutes } from './src/auth';
 import { keuanganRoutes } from './src/keuangan';
 
+// Produksi: FRONTEND_URL = domain Cloudflare Pages (CORS ketat).
+// Lokal: kosong = terbuka (Live Server port acak tetap bisa).
 const app = new Elysia()
-  .use(cors()) // frontend Live Server (port lain) -> API :3000
+  .use(cors({ origin: process.env.FRONTEND_URL || true }))
   .get('/kesehatan', () => ({ ok: true }))
   .use(authRoutes)
   .use(keuanganRoutes)
