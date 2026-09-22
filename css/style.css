@@ -364,7 +364,8 @@ input:focus, select:focus, #dropdown-tombol:focus {
     overflow: visible;
   }
 
-  .card {
+  /* Khusus halaman app (body.app): auth (center-screen) tidak ikut. */
+  body.app .card {
     width: 100%;
     max-width: none;
     margin: 0;
@@ -724,9 +725,10 @@ a {
     margin-right: auto;
   }
 
-  /* Kartu fluid full-bleed: HARUS di bawah blok 600px agar menang cascade.
+  /* Kartu fluid full-bleed khusus halaman app (body.app): auth tetap kartu
+     tengah. HARUS di bawah blok 600px agar menang cascade.
      Tanpa ini kolom konten terjepit 500px + void kanan (bug PR #72). */
-  .card {
+  body.app .card {
     width: 100%;
     max-width: none;
     margin: 0;
@@ -734,6 +736,11 @@ a {
     box-shadow: none;
     min-height: 100vh;
     padding: 32px;
+  }
+
+  /* Auth (login/register) tetap kartu tengah 600px seperti sebelum Fase A. */
+  body.center-screen .card {
+    width: 600px;
   }
 
   /* Stat duo dashboard: 2 kartu berdampingan memenuhi lebar */
