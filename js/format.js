@@ -94,6 +94,8 @@ function perbaruiTombolTema() {
     t.textContent = gelap ? 'Terang' : 'Gelap';
     t.setAttribute('aria-label', gelap ? 'Ganti ke tema terang' : 'Ganti ke tema gelap');
   });
+  const statusEl = document.getElementById('info-tema');
+  if (statusEl) statusEl.textContent = '(aktif: ' + (gelap ? 'gelap' : 'terang') + ')';
 }
 
 function pasangToggleTema() {
