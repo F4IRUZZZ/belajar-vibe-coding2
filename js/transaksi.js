@@ -12,6 +12,8 @@ const pilihProduk = document.getElementById('untuk-produk');
 const fieldKategoriBebas = document.getElementById('field-kategori-bebas');
 const inputKategoriBebas = document.getElementById('kategori-bebas');
 
+pasangToggleTema(); // dark mode ikut sistem, manual menang via localStorage
+
 // Bulk: id terpilih lintas render ulang. Reset tiap tampil() (predictable).
 const terpilih = new Set();
 
@@ -186,7 +188,10 @@ function renderSeksi(judul, rows) {
   tfoot.appendChild(trFoot);
   table.appendChild(tfoot);
 
-  listEl.appendChild(table);
+  const scroll = document.createElement('div');
+  scroll.className = 'tabel-scroll';
+  scroll.appendChild(table);
+  listEl.appendChild(scroll);
 }
 
 // Akordeon: tutup SEMUA panel (edit + catatan) di SELURUH list (semua

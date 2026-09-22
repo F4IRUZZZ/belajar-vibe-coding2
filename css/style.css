@@ -1,11 +1,60 @@
 :root {
+  color-scheme: light;
   --primary-color: #1a73e8;
   --primary-dark: #1558b0;
   --bg-color: #f3f4f6;
   --card-bg: #ffffff;
   --text-main: #1f2937;
   --text-muted: #6b7280;
+  --border-color: #e5e7eb;
+  --input-border: #ccc;
+  --hover-bg: #e8eef7;
+  --row-alt: #f9fafb;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --ok-color: #15803d;
+  --err-color: #dc2626;
+  --danger-hover: #b91c1c;
   --radius: 12px;
+}
+
+/* Dark mode: ikut sistem (HP/tablet/laptop), primer biru tetap.
+   Pilihan manual (localStorage) menang via atribut data-theme di <html>. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --primary-color: #7aa7f0;
+    --primary-dark: #9dbcf5;
+    --bg-color: #111827;
+    --card-bg: #1f2937;
+    --text-main: #f3f4f6;
+    --text-muted: #9ca3af;
+    --border-color: #374151;
+    --input-border: #4b5563;
+    --hover-bg: #1e3a5f;
+    --row-alt: #1a2639;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+    --ok-color: #4ade80;
+    --err-color: #f87171;
+    --danger-hover: #f87171;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --primary-color: #7aa7f0;
+  --primary-dark: #9dbcf5;
+  --bg-color: #111827;
+  --card-bg: #1f2937;
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  --border-color: #374151;
+  --input-border: #4b5563;
+  --hover-bg: #1e3a5f;
+  --row-alt: #1a2639;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+  --ok-color: #4ade80;
+  --err-color: #f87171;
+  --danger-hover: #f87171;
 }
 
 * {
@@ -34,7 +83,7 @@ body {
 .card {
   background-color: var(--card-bg);
   border-radius: var(--radius);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow);
   padding: 24px;
   width: 90%;
   max-width: 600px;
@@ -59,14 +108,39 @@ label {
 input[type="email"],
 input[type="password"],
 input[type="text"],
-input[type="number"],
+input[type="number"] {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px;
+  margin-top: 8px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  font-family: inherit;
+  color: var(--text-main);
+  background-color: var(--card-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+}
+
+/* Select native: panah bawaan diganti chevron custom agar identik
+   dengan dropdown produk (posisi + bentuk sama persis) */
 select {
   width: 100%;
-  padding: 10px;
-  margin-top: 4px;
+  min-height: 44px;
+  padding: 10px 36px 10px 10px;
+  margin-top: 8px;
   font-size: 0.9rem;
-  border: 1px solid #ccc;
+  line-height: 1.5;
+  font-family: inherit;
+  color: var(--text-main);
+  background-color: var(--card-bg);
+  border: 1px solid var(--input-border);
   border-radius: 6px;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
 }
 
 input:focus, select:focus {
@@ -93,20 +167,20 @@ input:focus, select:focus {
 
 /* Varian tombol: bahaya (hapus) + lembut (batal/tutup) */
 .btn-danger {
-  background-color: #dc2626;
+  background-color: var(--err-color);
 }
 
 .btn-danger:hover {
-  background-color: #b91c1c;
+  background-color: var(--danger-hover);
 }
 
 .btn-soft {
-  background-color: #e5e7eb;
+  background-color: var(--border-color);
   color: var(--text-main);
 }
 
 .btn-soft:hover {
-  background-color: #d1d5db;
+  background-color: var(--input-border);
 }
 
 /* Tombol ikon: kotak kecil berisi SVG, teks disembunyikan visual */
@@ -118,7 +192,7 @@ input:focus, select:focus {
 }
 
 .btn-ikon:hover {
-  background-color: #e5e7eb;
+  background-color: var(--border-color);
   color: var(--text-main);
 }
 
@@ -135,12 +209,12 @@ input:focus, select:focus {
 
 /* Pesan semantik: sukses hijau, error merah */
 .msg-ok {
-  color: #15803d !important;
+  color: var(--ok-color) !important;
   font-weight: 600;
 }
 
 .msg-err {
-  color: #dc2626 !important;
+  color: var(--err-color) !important;
   font-weight: 600;
 }
 
@@ -152,7 +226,7 @@ input:focus, select:focus {
 }
 
 .saldo-minus {
-  color: #dc2626 !important;
+  color: var(--err-color) !important;
 }
 
 /* Nav sticky: nempel atas saat scroll daftar panjang */
@@ -162,13 +236,21 @@ input:focus, select:focus {
   background-color: var(--card-bg);
   padding: 8px 0;
   z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: center;
+}
+
+.nav-sticky .btn-tema {
+  margin-left: auto;
 }
 
 /* Ritme vertikal antar blok */
 .card hr {
   margin: 16px 0;
   border: none;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--border-color);
 }
 
 .card ul {
@@ -186,12 +268,41 @@ a {
 /* --- Dropdown custom (milik webapp, serasi kartu) --- */
 .dropdown {
   position: relative;
-  margin-top: 4px;
+  margin-top: 8px;
 }
 
 #dropdown-tombol {
+  position: relative;
   width: 100%;
+  min-height: 44px;
+  padding: 10px 36px 10px 10px;
+  font-size: 0.9rem;
+  font-weight: 400;
+  font-family: inherit;
   text-align: left;
+  line-height: 1.5;
+  color: var(--text-main);
+  background-color: var(--card-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+}
+
+#dropdown-tombol:hover {
+  background-color: var(--card-bg);
+  border-color: var(--primary-color);
+}
+
+#dropdown-tombol .dd-chevron {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  line-height: 0;
+}
+
+#dropdown-tombol .dd-chevron svg {
+  display: block;
 }
 
 .dropdown-list {
@@ -199,9 +310,9 @@ a {
   left: 0;
   right: 0;
   background-color: var(--card-bg);
-  border: 1px solid #ccc;
+  border: 1px solid var(--input-border);
   border-radius: 6px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow);
   padding: 8px;
   z-index: 10;
 }
@@ -218,7 +329,7 @@ a {
 }
 
 .dropdown-item:hover {
-  background-color: #e8eef7;
+  background-color: var(--hover-bg);
 }
 
 .dropdown-tambah {
@@ -232,27 +343,33 @@ a {
 }
 
 /* --- Tabel transaksi: 2 seksi + subtotal, angka kanan --- */
+/* Scroll horizontal hanya tabel di HP sempit (halaman tidak ikut geser) */
+.tabel-scroll {
+  overflow-x: auto;
+  margin-bottom: 16px;
+}
+
 .tabel-transaksi {
   width: 100%;
+  min-width: 520px;
   border-collapse: collapse;
   font-size: 0.9rem;
-  margin-bottom: 16px;
 }
 
 .tabel-transaksi th,
 .tabel-transaksi td {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border-color);
   padding: 8px;
   text-align: left;
   vertical-align: top;
 }
 
 .tabel-transaksi thead th {
-  background-color: #e8eef7;
+  background-color: var(--hover-bg);
 }
 
 .tabel-transaksi tbody tr:nth-child(even) {
-  background-color: #f9fafb;
+  background-color: var(--row-alt);
 }
 
 .tabel-transaksi td:nth-child(3),
@@ -263,7 +380,7 @@ a {
 
 .tabel-transaksi tfoot td {
   font-weight: 700;
-  background-color: #f3f4f6;
+  background-color: var(--bg-color);
 }
 
 /* --- Tabel ringkasan kategori + bar mini (CSS murni, tanpa lib) --- */
@@ -279,7 +396,7 @@ a {
 }
 
 .bar-mini {
-  background-color: #e5e7eb;
+  background-color: var(--border-color);
   border-radius: 6px;
   height: 10px;
   min-width: 60px;
@@ -294,7 +411,7 @@ a {
 /* --- Panel inline (catatan + edit): baris khusus di bawah baris induk --- */
 .baris-catatan td,
 .baris-edit td {
-  background-color: #f9fafb;
+  background-color: var(--row-alt);
 }
 
 .panel-catatan .field {
@@ -310,7 +427,7 @@ a {
 .input-rp {
   display: flex;
   align-items: stretch;
-  margin-top: 4px;
+  margin-top: 8px;
 }
 
 .input-rp span {
@@ -320,8 +437,8 @@ a {
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-muted);
-  background-color: #f3f4f6;
-  border: 1px solid #ccc;
+  background-color: var(--bg-color);
+  border: 1px solid var(--input-border);
   border-right: none;
   border-radius: 6px 0 0 6px;
 }
@@ -349,12 +466,14 @@ a {
 /* Tombol mata password overlay di dalam input (opsi A) */
 .password-wrap {
   position: relative;
-  margin-top: 4px;
+  margin-top: 8px;
 }
 
 .password-wrap input {
   width: 100%;
   padding-right: 44px;
+  background-color: var(--card-bg);
+  color: var(--text-main);
 }
 
 .password-wrap .btn-ikon {

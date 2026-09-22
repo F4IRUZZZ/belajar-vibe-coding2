@@ -15,6 +15,8 @@ const ddHidden = document.getElementById('kategori-produk');
 // Default kategori (wajib di atas sebelum dipakai tampil() — hindari TDZ).
 const DEFAULT_KATEGORI = ['Pangan', 'Mandi', 'Lainnya'];
 
+pasangToggleTema(); // dark mode ikut sistem, manual menang via localStorage
+
 // Guard: harus login — baca token, 401 = redirect ke login.
 // Tahap 1: list produk shared (tanpa cek pemilik), login wajib.
 const token = window.localStorage.getItem('token');
@@ -178,7 +180,7 @@ function renderOpsiDropdown() {
 function pilihKategori(nama) {
   kategoriTerpilih = nama;
   ddHidden.value = nama;
-  ddTombol.textContent = nama + ' ▾';
+  document.getElementById('dropdown-label').textContent = nama || 'Pilih kategori';
   ddList.hidden = true;
 }
 
@@ -218,7 +220,7 @@ form.addEventListener('submit', function(e) {
     document.getElementById('nama-produk').value = '';
     kategoriTerpilih = '';
     ddHidden.value = '';
-    ddTombol.textContent = 'Pilih kategori ▾'; // reset pilihan
+    document.getElementById('dropdown-label').textContent = 'Pilih kategori'; // reset pilihan
     pesanOk(hasil, 'Produk "' + res.data.nama + '" ditambah!');
     tampil();
   } else {

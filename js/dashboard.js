@@ -4,6 +4,8 @@ const totalKeluar = document.getElementById('total-keluar');
 const saldoEl = document.getElementById('saldo');
 const boxKategori = document.getElementById('ringkasan-kategori');
 
+pasangToggleTema(); // dark mode ikut sistem, manual menang via localStorage
+
 // Guard: harus login — baca token, 401 = redirect ke login.
 // (Logout hanya ada di profile.html — dashboard fokus angka.)
 const token = window.localStorage.getItem('token');
