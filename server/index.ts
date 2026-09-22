@@ -12,6 +12,7 @@ const app = new Elysia()
   .get('/kesehatan', () => ({ ok: true }))
   .use(authRoutes)
   .use(keuanganRoutes)
-  .listen(Number(process.env.PORT || 3000));
+  // hostname 0.0.0.0 = wajib di container (localhost tak terjangkau dari luar).
+  .listen({ port: Number(process.env.PORT || 3000), hostname: '0.0.0.0' });
 
 console.log(`Server jalan di http://localhost:${app.server?.port}`);
