@@ -13,27 +13,34 @@ btnEditUsername.addEventListener('click', function() {
   formUsername.hidden = !formUsername.hidden;
 });
 
-// Saat halaman dibuka: baca token, minta profile
+// Saat halaman dibuka: baca token, minta profile (via API Fase A-3)
 const token = window.localStorage.getItem('token');
-const res = getProfile(token);
 
-if (res.code === 200) {
-  info.textContent = 'Username: ' + (res.data.username || res.data.email) + ' (' + res.data.role + ')';
-  document.getElementById('username-baru').value = res.data.username || '';
-  document.getElementById('btn-unduh-profile').addEventListener('click', function() {
-    unduhCSV(res.data.id, document.getElementById('hasil-unduh'));
-  });
-} else {
-  // 401 = tanpa token / palsu / hangus -> redirect ke login
-  info.textContent = 'Belum login, redirect ke halaman login...';
-  setTimeout(function() {
-    window.location.href = 'login.html';
-  }, 800);
+async function muatProfil() {
+  const res = await getProfile(token);
+  if (res.code === 503) {
+    info.textContent = 'Server tidak terjangkau. Jalankan server: cd server, lalu bun run index.ts (MySQL wajib hidup).';
+    return;
+  }
+  if (res.code === 200) {
+    info.textContent = 'Username: ' + (res.data.username || res.data.email) + ' (' + res.data.role + ')';
+    document.getElementById('username-baru').value = res.data.username || '';
+    document.getElementById('btn-unduh-profile').addEventListener('click', async function() {
+      await unduhCSV(res.data.id, document.getElementById('hasil-unduh'));
+    });
+  } else {
+    // 401 = tanpa token / palsu / hangus -> redirect ke login
+    info.textContent = 'Belum login, redirect ke halaman login...';
+    setTimeout(function() {
+      window.location.href = 'login.html';
+    }, 800);
+  }
 }
+muatProfil();
 
-btnLogout.addEventListener('click', function() {
+btnLogout.addEventListener('click', async function() {
   const t = window.localStorage.getItem('token');
-  const out = logout(t);
+  const out = await logout(t);
   if (out.code === 200) {
     window.localStorage.removeItem('token'); // buang token = sesi hangus
     pesanOk(hasil, 'Logout sukses! Redirect ke login...');
@@ -45,11 +52,11 @@ btnLogout.addEventListener('click', function() {
   }
 });
 
-formUsername.addEventListener('submit', function(e) {
+formUsername.addEventListener('submit', async function(e) {
   e.preventDefault();
   btnUsername.textContent = 'Loading...';
   const baru = document.getElementById('username-baru').value;
-  const out = updateUsername(window.localStorage.getItem('token'), baru);
+  const out = await updateUsername(window.localStorage.getItem('token'), baru);
   btnUsername.textContent = 'Simpan';
   if (out.code === 200) {
     info.textContent = 'Username: ' + out.data.username + ' (' + out.data.role + ')';

@@ -53,7 +53,7 @@ inputPassword.addEventListener('input', function() {
   else meterPassword.textContent = 'Kekuatan: Kuat';
 });
 
-formRegister.addEventListener('submit', function(e) {
+formRegister.addEventListener('submit', async function(e) {
   e.preventDefault();
   btnRegister.textContent = 'Loading...';
   const email = document.getElementById('reg-email').value;
@@ -65,7 +65,7 @@ formRegister.addEventListener('submit', function(e) {
     pesanError(hasilRegister, 'Gagal (400): Konfirmasi password tidak sama.');
     return;
   }
-  const res = register(email, username, password, role);
+  const res = await register(email, username, password, role); // via API (Fase A-3)
   btnRegister.textContent = 'Daftar';
   if (res.code === 201) {
     pesanOk(hasilRegister, 'Daftar sukses (' + res.data.role + ')! Silakan login.');
