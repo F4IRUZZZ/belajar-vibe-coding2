@@ -6,12 +6,12 @@ pasangTogglePassword(document.getElementById('password'), document.getElementByI
 document.getElementById('lihat-password').innerHTML = ikon('mata');
 pasangToggleTema(); // dark mode ikut sistem, manual menang via localStorage
 
-formLogin.addEventListener('submit', function(e) {
+formLogin.addEventListener('submit', async function(e) {
   e.preventDefault();
   btnLogin.textContent = 'Loading...';
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
-  const res = login(email, password);
+  const res = await login(email, password); // via API (Fase A-3)
   btnLogin.textContent = 'Masuk';
   if (res.code === 200) {
     window.localStorage.setItem('token', res.data.token);

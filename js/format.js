@@ -135,17 +135,19 @@ function selCSV(teks) {
 function kategoriOf(t) {
   if (t.kategori) return t.kategori;
   if (t.produkId !== null && t.produkId !== undefined) {
-    const p = produk.find(function(x) { return x.id === t.produkId; });
+    const p = cacheProduk.find(function(x) { return x.id === t.produkId; });
     if (p) return p.kategori;
   }
   return 'Lainnya';
 }
 
-function bangunCSV(userId) {
+async function bangunCSV(userId) {
   const baris = ['tanggal,jenis,jumlah,kategori,catatan'];
-  transaksi.forEach(function(t) {
+  const daftar = await getTransaksi();
+  const semuaCatatan = await muatSemuaCatatan();
+  daftar.forEach(function(t) {
     if (t.userId !== userId) return;
-    const notes = catatan.filter(function(c) { return c.transaksiId === t.id; })
+    const notes = semuaCatatan.filter(function(c) { return c.transaksiId === t.id; })
       .map(function(c) { return c.isi; }).join('; ');
     baris.push([
       selCSV(t.tanggal), selCSV(t.jenis), t.jumlah,
@@ -155,8 +157,8 @@ function bangunCSV(userId) {
   return baris.join('\r\n');
 }
 
-function unduhCSV(userId, elHasil) {
-  const csv = bangunCSV(userId);
+async function unduhCSV(userId, elHasil) {
+  const csv = await bangunCSV(userId);
   const blob = new Blob([csv], { type: 'text/csv' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
