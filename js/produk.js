@@ -21,22 +21,26 @@ pasangIkonMenu(); // ikon SVG di sidebar menu
 // Guard: harus login — baca token, 401 = redirect ke login.
 // Tahap 1: list produk shared (tanpa cek pemilik), login wajib.
 const token = window.localStorage.getItem('token');
-const resProfile = getProfile(token);
 
-if (resProfile.code !== 200) {
-  infoUser.textContent = 'Belum login, redirect ke halaman login...';
-  setTimeout(function() {
-    window.location.href = 'login.html';
-  }, 800);
-} else {
+async function init() {
+  const resProfile = await getProfile(token);
+  if (resProfile.code !== 200) {
+    infoUser.textContent = 'Belum login, redirect ke halaman login...';
+    setTimeout(function() {
+      window.location.href = 'login.html';
+    }, 800);
+    return;
+  }
   infoUser.textContent = 'Login sebagai: ' + (resProfile.data.username || resProfile.data.email) + ' (' + resProfile.data.role + ')';
-  tampil();
+  await tampil();
 }
+init();
 
-function tampil() {
+async function tampil() {
+  await segarkanCacheProduk(); // via API (Fase A-3)
   if (!ddList.hidden) renderOpsiDropdown(); // segarkan saran bila dropdown terbuka
   listEl.innerHTML = '';
-  if (produk.length === 0) {
+  if (cacheProduk.length === 0) {
     listEl.innerHTML = '<p>Belum ada produk. Yuk tambah kebutuhan pertama di form atas.</p>';
     return;
   }
@@ -53,7 +57,7 @@ function tampil() {
   thead.appendChild(trHead);
   table.appendChild(thead);
   const tbody = document.createElement('tbody');
-  produk.forEach(function(p, i) {
+  cacheProduk.forEach(function(p, i) {
     tbody.appendChild(bangunBarisProduk(p, i + 1)); // nomor tampil — bukan id
   });
   table.appendChild(tbody);
@@ -102,13 +106,13 @@ function bangunBarisProduk(p, nomor) {
 
       const btnSimpan = document.createElement('button');
       pasangIkon(btnSimpan, 'simpan', 'Simpan produk');
-      btnSimpan.addEventListener('click', function() {
+      btnSimpan.addEventListener('click', async function() {
         const baru = input.value.trim();
         if (!baru) return; // kosong = abaikan
-        const out = updateProduk(p.id, { nama: baru });
+        const out = await updateProduk(p.id, { nama: baru });
         if (!out) {
           pesanError(hasil, 'Gagal: produk tidak ditemukan.');
-          tampil();
+          await tampil();
           return;
         }
         if (out.error) {
@@ -116,7 +120,7 @@ function bangunBarisProduk(p, nomor) {
           return;
         }
         pesanOk(hasil, 'Produk diubah jadi "' + baru + '".');
-        tampil();
+        await tampil();
       });
 
       const btnBatal = document.createElement('button');
@@ -137,16 +141,16 @@ function bangunBarisProduk(p, nomor) {
     const btnHapus = document.createElement('button');
     pasangIkon(btnHapus, 'hapus', 'Hapus produk ' + p.nama);
     btnHapus.classList.add('btn-danger');
-    btnHapus.addEventListener('click', function() {
+    btnHapus.addEventListener('click', async function() {
       if (!window.confirm('Hapus produk "' + p.nama + '"?')) return;
-      const outDel = deleteProduk(p.id);
+      const outDel = await deleteProduk(p.id);
       if (!outDel) {
         pesanError(hasil, 'Gagal: produk tidak ditemukan.');
-        tampil();
+        await tampil();
         return;
       }
       pesanOk(hasil, 'Produk "' + p.nama + '" dihapus.');
-      tampil();
+      await tampil();
     });
 
     tdAksi.appendChild(btnUbah);
@@ -183,7 +187,7 @@ function daftarKategoriUnik() {
     hasil.push(nama);
   }
   DEFAULT_KATEGORI.forEach(tambah);
-  produk.forEach(function(p) { tambah(p.kategori); });
+  cacheProduk.forEach(function(p) { tambah(p.kategori); });
   return hasil;
 }
 
@@ -254,12 +258,12 @@ if (ddTombol) {
   });
 }
 
-form.addEventListener('submit', function(e) {
+form.addEventListener('submit', async function(e) {
   e.preventDefault();
   const nama = document.getElementById('nama-produk').value;
   const kategori = ddHidden.value; // dari dropdown custom (kosong = 'lainnya' via normalisasi)
   btnTambah.textContent = 'Loading...';
-  const res = addProduk(nama, kategori);
+  const res = await addProduk(nama, kategori);
   btnTambah.textContent = 'Tambah';
   if (res.code === 201) {
     document.getElementById('nama-produk').value = '';
@@ -267,7 +271,7 @@ form.addEventListener('submit', function(e) {
     ddHidden.value = '';
     document.getElementById('dropdown-label').textContent = 'Pilih kategori'; // reset pilihan
     pesanOk(hasil, 'Produk "' + res.data.nama + '" ditambah!');
-    tampil();
+    await tampil();
   } else {
     pesanError(hasil, 'Gagal (' + res.code + '): ' + res.error);
   }

@@ -24,24 +24,24 @@ let tabAktif = 'semua';
 let kataCari = '';
 
 document.querySelectorAll('.tab-riwayat').forEach(function(btn) {
-  btn.addEventListener('click', function() {
+  btn.addEventListener('click', async function() {
     tabAktif = btn.getAttribute('data-tab');
     document.querySelectorAll('.tab-riwayat').forEach(function(b) {
       b.classList.toggle('tab-aktif', b === btn);
     });
-    tampil();
+    await tampil();
   });
 });
 
-document.getElementById('cari-riwayat').addEventListener('input', function(e) {
+document.getElementById('cari-riwayat').addEventListener('input', async function(e) {
   kataCari = e.target.value.trim().toLowerCase();
-  tampil(); // input di luar listEl = fokus tidak hilang
+  await tampil(); // input di luar listEl = fokus tidak hilang
 });
 
 function cocokCari(t) {
   if (!kataCari) return true;
   const kat = kategoriOf(t).toLowerCase();
-  const notes = catatan.filter(function(c) { return c.transaksiId === t.id; })
+  const notes = cacheCatatan.filter(function(c) { return c.transaksiId === t.id; })
     .map(function(c) { return c.isi.toLowerCase(); }).join(' ');
   return kat.indexOf(kataCari) !== -1 || notes.indexOf(kataCari) !== -1 ||
     String(t.jumlah).indexOf(kataCari) !== -1 || t.tanggal.indexOf(kataCari) !== -1;
@@ -56,7 +56,7 @@ function perbaruiBar() {
   bulkCount.textContent = terpilih.size + ' terpilih. ';
 }
 
-btnBulkHapus.addEventListener('click', function() {
+btnBulkHapus.addEventListener('click', async function() {
   if (terpilih.size === 0) {
     pesanError(hasil, 'Pilih dulu minimal 1 transaksi.');
     return;
@@ -65,16 +65,16 @@ btnBulkHapus.addEventListener('click', function() {
   if (!window.confirm('Hapus ' + n + ' transaksi terpilih?')) return; // 1x confirm global
   let ok = 0;
   const gagal = [];
-  Array.from(terpilih).forEach(function(id) {
-    const out = deleteTransaksi(id, userId); // cascade catatan otomatis
+  for (const id of Array.from(terpilih)) {
+    const out = await deleteTransaksi(id, userId); // cascade catatan otomatis
     if (out === true) {
       ok++;
     } else {
       gagal.push(id);
     }
-  });
+  }
   terpilih.clear();
-  tampil();
+  await tampil();
   if (gagal.length === 0) {
     pesanOk(hasil, ok + ' transaksi dihapus.');
   } else {
@@ -85,34 +85,39 @@ btnBulkHapus.addEventListener('click', function() {
 
 // Guard: harus login — baca token, 401 = redirect ke login
 const token = window.localStorage.getItem('token');
-const resProfile = getProfile(token);
 let userId = null;
+let cacheCatatan = []; // semua catatan milik user (panel + cari)
 
-if (resProfile.code !== 200) {
-  infoUser.textContent = 'Belum login, redirect ke halaman login...';
-  setTimeout(function() {
-    window.location.href = 'login.html';
-  }, 800);
-} else {
+async function init() {
+  const resProfile = await getProfile(token);
+  if (resProfile.code !== 200) {
+    infoUser.textContent = 'Belum login, redirect ke halaman login...';
+    setTimeout(function() {
+      window.location.href = 'login.html';
+    }, 800);
+    return;
+  }
   userId = resProfile.data.id;
   infoUser.textContent = 'Login sebagai: ' + (resProfile.data.username || resProfile.data.email) + ' (' + resProfile.data.role + ')';
   document.getElementById('tanggal').value = tanggalHariIni(); // lokal, bukan UTC
   pasangFormatRupiahLive(document.getElementById('jumlah'));
-  isiPilihProduk();
+  await isiPilihProduk();
   aturUntuk();
-  tampil();
+  await tampil();
 }
+init();
 
 // Isi dropdown produk + opsi tulis-sendiri. Dipanggil tiap tampil()
 // agar produk baru langsung muncul tanpa refresh halaman.
-function isiPilihProduk() {
+async function isiPilihProduk() {
+  await segarkanCacheProduk(); // via API (Fase A-3)
   const simpan = pilihProduk.value;
   pilihProduk.innerHTML = '';
   const kosong = document.createElement('option');
   kosong.value = '';
   kosong.textContent = '— Pilih —';
   pilihProduk.appendChild(kosong);
-  produk.forEach(function(p) {
+  cacheProduk.forEach(function(p) {
     const opt = document.createElement('option');
     opt.value = p.id;
     opt.textContent = p.nama + ' (' + p.kategori + ')';
@@ -137,8 +142,10 @@ function aturUntuk() {
 pilihJenis.addEventListener('change', aturUntuk);
 pilihProduk.addEventListener('change', aturUntuk);
 
-function tampil() {
-  const data = transaksi.filter(function(t) { return t.userId === userId; }).filter(cocokCari);
+async function tampil() {
+  const semua = await getTransaksi(); // milik user (server filter via token)
+  cacheCatatan = await muatSemuaCatatan(); // panel + cari
+  const data = semua.filter(cocokCari);
   // Prune (bukan clear): buang id yang sudah tidak ada, pertahankan pilihan
   // valid — biar pilih-semua / pilihan satuan selamat dari render ulang.
   Array.from(terpilih).forEach(function(id) {
@@ -193,7 +200,7 @@ function renderSeksi(judul, rows, modeSemua) {
   const cekSemua = document.createElement('input');
   cekSemua.type = 'checkbox';
   cekSemua.setAttribute('aria-label', 'Pilih semua ' + judul.toLowerCase());
-  cekSemua.addEventListener('change', function() {
+  cekSemua.addEventListener('change', async function() {
     rows.forEach(function(t) {
       if (cekSemua.checked) {
         terpilih.add(t.id);
@@ -201,7 +208,7 @@ function renderSeksi(judul, rows, modeSemua) {
         terpilih.delete(t.id);
       }
     });
-    tampil();
+    await tampil();
   });
   thCek.appendChild(cekSemua);
   trHead.appendChild(thCek);
@@ -367,14 +374,14 @@ function bangunBaris(tbody, t, nomor, modeSemua) {  const tr = document.createEl
 
       const btnSimpan = document.createElement('button');
       pasangIkon(btnSimpan, 'simpan', 'Simpan');
-      btnSimpan.addEventListener('click', function() {
+      btnSimpan.addEventListener('click', async function() {
         const baru = parseRupiah(input.value);
         const patch = { jumlah: baru, tanggal: inputTgl.value };
         if (inputKat) patch.kategori = inputKat.value;
-        const out = updateTransaksi(t.id, patch, userId);
+        const out = await updateTransaksi(t.id, patch, userId);
         if (!out) {
           pesanError(hasil, 'Gagal: transaksi tidak ditemukan.');
-          tampil();
+          await tampil();
           return;
         }
         if (out.error) {
@@ -382,7 +389,7 @@ function bangunBaris(tbody, t, nomor, modeSemua) {  const tr = document.createEl
           return;
         }
         pesanOk(hasil, 'Transaksi diubah jadi Rp' + formatRupiah(baru) + '.');
-        tampil();
+        await tampil();
       });
 
       const btnBatal = document.createElement('button');
@@ -403,20 +410,20 @@ function bangunBaris(tbody, t, nomor, modeSemua) {  const tr = document.createEl
     const btnHapus = document.createElement('button');
     pasangIkon(btnHapus, 'hapus', 'Hapus transaksi Rp' + formatRupiah(t.jumlah));
     btnHapus.classList.add('btn-danger');
-    btnHapus.addEventListener('click', function() {
+    btnHapus.addEventListener('click', async function() {
       if (!window.confirm('Hapus transaksi Rp' + formatRupiah(t.jumlah) + '?')) return;
-      const outDel = deleteTransaksi(t.id, userId);
+      const outDel = await deleteTransaksi(t.id, userId);
       if (outDel && outDel.error) {
         pesanError(hasil, 'Gagal (' + outDel.code + '): ' + outDel.error);
         return;
       }
       if (!outDel) {
         pesanError(hasil, 'Gagal: transaksi tidak ditemukan.');
-        tampil();
+        await tampil();
         return;
       }
       pesanOk(hasil, 'Transaksi Rp' + formatRupiah(t.jumlah) + ' dihapus.');
-      tampil();
+      await tampil();
     });
 
     const btnCatatan = document.createElement('button');
@@ -435,7 +442,7 @@ function bangunBaris(tbody, t, nomor, modeSemua) {  const tr = document.createEl
       const panel = document.createElement('div');
       panel.className = 'panel-catatan';
 
-      const daftar = catatan.filter(function(c) { return c.transaksiId === t.id; });
+      const daftar = cacheCatatan.filter(function(c) { return c.transaksiId === t.id; });
       const ul = document.createElement('ul');
       if (daftar.length === 0) {
         const kosong = document.createElement('li');
@@ -459,13 +466,13 @@ function bangunBaris(tbody, t, nomor, modeSemua) {  const tr = document.createEl
 
             const btnSimpanU = document.createElement('button');
             pasangIkon(btnSimpanU, 'simpan', 'Simpan catatan');
-            btnSimpanU.addEventListener('click', function() {
+            btnSimpanU.addEventListener('click', async function() {
               const baru = inputUbah.value.trim();
               if (!baru) return; // kosong = abaikan diam-diam
-              const out = updateCatatan(c.id, baru, userId);
+              const out = await updateCatatan(c.id, baru, userId);
               if (!out) {
                 pesanError(hasil, 'Gagal: catatan tidak ditemukan.');
-                tampil();
+                await tampil();
                 return;
               }
               if (out.error) {
@@ -473,14 +480,14 @@ function bangunBaris(tbody, t, nomor, modeSemua) {  const tr = document.createEl
                 return;
               }
               pesanOk(hasil, 'Catatan diubah.');
-              tampil();
+              await tampil();
             });
 
             const btnBatalU = document.createElement('button');
             pasangIkon(btnBatalU, 'batal', 'Batal');
             btnBatalU.classList.add('btn-soft');
-            btnBatalU.addEventListener('click', function() {
-              tampil();
+            btnBatalU.addEventListener('click', async function() {
+              await tampil();
             });
 
             item.appendChild(inputUbah);
@@ -493,20 +500,20 @@ function bangunBaris(tbody, t, nomor, modeSemua) {  const tr = document.createEl
           const btnHapusC = document.createElement('button');
           pasangIkon(btnHapusC, 'hapus', 'Hapus catatan');
           btnHapusC.classList.add('btn-danger');
-          btnHapusC.addEventListener('click', function() {
+          btnHapusC.addEventListener('click', async function() {
             if (!window.confirm('Hapus catatan ini?')) return;
-            const outDel = deleteCatatan(c.id, userId);
+            const outDel = await deleteCatatan(c.id, userId);
             if (outDel && outDel.error) {
               pesanError(hasil, 'Gagal (' + outDel.code + '): ' + outDel.error);
               return;
             }
             if (!outDel) {
               pesanError(hasil, 'Gagal: catatan tidak ditemukan.');
-              tampil();
+              await tampil();
               return;
             }
             pesanOk(hasil, 'Catatan dihapus.');
-            tampil();
+            await tampil();
           });
 
           item.appendChild(btnUbahC);
@@ -527,12 +534,12 @@ function bangunBaris(tbody, t, nomor, modeSemua) {  const tr = document.createEl
 
       const btnSimpanCatatan = document.createElement('button');
       pasangIkon(btnSimpanCatatan, 'simpan', 'Simpan catatan');
-      btnSimpanCatatan.addEventListener('click', function() {
+      btnSimpanCatatan.addEventListener('click', async function() {
         if (!inputCatatan.value.trim()) return; // kosong = abaikan diam-diam
-        const res = addCatatan(t.id, inputCatatan.value, userId);
+        const res = await addCatatan(t.id, inputCatatan.value, userId);
         if (res.code === 201) {
           pesanOk(hasil, 'Catatan tersimpan.');
-          tampil();
+          await tampil();
         } else {
           pesanError(hasil, 'Gagal (' + res.code + '): ' + res.error);
         }
@@ -567,7 +574,7 @@ function bangunBaris(tbody, t, nomor, modeSemua) {  const tr = document.createEl
     return tr;
 }
 
-form.addEventListener('submit', function(e) {
+form.addEventListener('submit', async function(e) {
   e.preventDefault();
   if (!userId) {
     pesanError(hasil, 'Belum login. Redirect ke halaman login...');
@@ -589,7 +596,7 @@ form.addEventListener('submit', function(e) {
     }
   }
   btnTambah.textContent = 'Loading...';
-  const res = addTransaksi({ userId: userId, jenis: jenis, jumlah: jumlah, produkId: produkId, kategori: kategori, tanggal: tanggal });
+  const res = await addTransaksi({ userId: userId, jenis: jenis, jumlah: jumlah, produkId: produkId, kategori: kategori, tanggal: tanggal });
   btnTambah.textContent = 'Catat';
   if (res.code === 201) {
     document.getElementById('jumlah').value = '';
@@ -601,7 +608,7 @@ form.addEventListener('submit', function(e) {
     let pesan = res.data.jenis + ' Rp' + formatRupiah(res.data.jumlah) + ' tercatat!';
     // Catatan opsional: kosong = lewati diam-diam (transaksi tetap sukses)
     if (catatanAwal.trim()) {
-      const rc = addCatatan(res.data.id, catatanAwal, userId);
+      const rc = await addCatatan(res.data.id, catatanAwal, userId);
       if (rc.code === 201) {
         pesan += ' Catatan tersimpan.';
       } else {
@@ -609,7 +616,7 @@ form.addEventListener('submit', function(e) {
       }
     }
     pesanOk(hasil, pesan);
-    tampil();
+    await tampil();
   } else {
     pesanError(hasil, 'Gagal (' + res.code + '): ' + res.error);
   }
