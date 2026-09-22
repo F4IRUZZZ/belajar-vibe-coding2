@@ -36,6 +36,76 @@ if (resProfile.code !== 200) {
     saldoEl.classList.remove('saldo-minus');
     if (ringkasan.saldo < 0) saldoEl.classList.add('saldo-minus'); // kas minus = merah
     muatKategori(filter);
+    gambarGrafik(ringkasan, filter);
+  }
+
+  let grafikArus = null;
+  let grafikKategori = null;
+
+  // Warna grid/label grafik ikut tema (manual menang, default ikut OS).
+  function warnaGrafik() {
+    const gelap = document.documentElement.getAttribute('data-theme') === 'dark' ||
+      (!document.documentElement.getAttribute('data-theme') &&
+        window.matchMedia('(prefers-color-scheme: dark)').matches);
+    return { grid: gelap ? '#1e3a2f' : '#d7e5dd', ticks: gelap ? '#93a89e' : '#6b7280' };
+  }
+
+  function labelRp(ctx) {
+    return ' Rp' + formatRupiah(ctx.parsed.y !== undefined ? ctx.parsed.y : ctx.parsed);
+  }
+
+  // Grafik Chart.js (CDN): batang masuk-vs-keluar + donat kategori.
+  // CDN gagal (offline) = grafik dilewati, angka + tabel tetap jalan.
+  function gambarGrafik(ringkasan, filter) {
+    const infoGrafik = document.getElementById('info-grafik');
+    if (typeof window.Chart === 'undefined') {
+      if (infoGrafik) infoGrafik.textContent = 'Grafik butuh internet (CDN Chart.js). Angka di atas tetap akurat.';
+      return;
+    }
+    if (infoGrafik) infoGrafik.textContent = '';
+    const w = warnaGrafik();
+    if (grafikArus) grafikArus.destroy();
+    if (grafikKategori) grafikKategori.destroy();
+    grafikArus = new window.Chart(document.getElementById('grafik-arus'), {
+      type: 'bar',
+      data: {
+        labels: ['Masuk', 'Keluar'],
+        datasets: [{
+          data: [ringkasan.masuk, ringkasan.keluar],
+          backgroundColor: ['#059669', '#dc2626'],
+          borderRadius: 8
+        }]
+      },
+      options: {
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: labelRp } }
+        },
+        scales: {
+          y: { beginAtZero: true, grid: { color: w.grid }, ticks: { color: w.ticks } },
+          x: { grid: { display: false }, ticks: { color: w.ticks } }
+        }
+      }
+    });
+    const dataKat = getRingkasanKategori(user.id, filter);
+    if (dataKat.length === 0) return; // pesan kosong sudah di tabel kategori
+    const palet = ['#059669', '#10b981', '#34d399', '#f59e0b', '#fbbf24', '#0d9488', '#3b82f6', '#a78bfa'];
+    grafikKategori = new window.Chart(document.getElementById('grafik-kategori'), {
+      type: 'doughnut',
+      data: {
+        labels: dataKat.map(function(r) { return r.kategori; }),
+        datasets: [{
+          data: dataKat.map(function(r) { return r.total; }),
+          backgroundColor: dataKat.map(function(_, i) { return palet[i % palet.length]; })
+        }]
+      },
+      options: {
+        plugins: {
+          legend: { position: 'bottom', labels: { color: w.ticks, boxWidth: 12 } },
+          tooltip: { callbacks: { label: labelRp } }
+        }
+      }
+    });
   }
 
   function muatKategori(filter) {

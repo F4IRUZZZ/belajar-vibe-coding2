@@ -529,6 +529,11 @@ a {
   height: 10px;
 }
 
+/* Grafik dashboard (Chart.js): canvas ikut lebar kartu */
+#grafik-arus, #grafik-kategori {
+  max-width: 100%;
+}
+
 /* --- Panel inline (catatan + edit): baris khusus di bawah baris induk --- */
 .baris-catatan td,
 .baris-edit td {

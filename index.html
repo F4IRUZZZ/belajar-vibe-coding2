@@ -10,6 +10,7 @@
   <script src="js/auth.js" defer></script>
   <script src="js/keuangan.js" defer></script>
   <script src="js/format.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
   <script src="js/dashboard.js" defer></script>
 </head>
 <body class="app">
@@ -44,6 +45,15 @@
     <hr>
     <h2>Keluar per Kategori</h2>
     <div id="ringkasan-kategori"></div>
+    <hr>
+    <h2>Grafik</h2>
+    <div class="field">
+      <canvas id="grafik-arus" height="220" aria-label="Grafik batang pemasukan versus pengeluaran"></canvas>
+    </div>
+    <div class="field">
+      <canvas id="grafik-kategori" height="220" aria-label="Grafik donat pengeluaran per kategori"></canvas>
+    </div>
+    <p id="info-grafik"></p>
 </main>
 </body>
 </html>
