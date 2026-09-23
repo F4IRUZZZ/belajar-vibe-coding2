@@ -24,10 +24,11 @@ async function req(path, metode, data, token) {
       ...(data !== undefined ? { body: JSON.stringify(data) } : {})
     });
   } catch (e) {
-    // Server mati / tidak terjangkau: jangan bisu — kode 503 + pesan jelas.
-    // Halaman menampilkan ini lewat jalur error existing (Gagal (503): ...).
+    // Server mati / tidak terjangkau: jangan bisu — kode 503 + pesan ramah user.
+    // Detail dev HANYA ke Console (user HP tak perlu baca perintah server).
     window.__apiGagal = true;
-    return { code: 503, body: { error: 'Server tidak terjangkau. Jalankan server: cd server, lalu bun run index.ts (MySQL wajib hidup).' } };
+    if (window.console && window.console.warn) window.console.warn('DEV: API tak terjangkau (' + API_BASE + '). Lokal? Jalankan: cd server, lalu bun run index.ts (MySQL wajib hidup).');
+    return { code: 503, body: { error: pesanServerMati() } };
   }
   let body = null;
   try {

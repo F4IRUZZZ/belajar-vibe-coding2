@@ -129,11 +129,16 @@ function tampilkanModal(judul, pesan) {
   const btn = document.createElement('button');
   btn.textContent = 'Mengerti';
   btn.addEventListener('click', tutupModal);
+  const btnUlang = document.createElement('button');
+  btnUlang.textContent = 'Coba Lagi';
+  btnUlang.addEventListener('click', function() { window.location.reload(); });
   latar.addEventListener('click', function(e) {
     if (e.target === latar) tutupModal();
   });
   kotak.appendChild(h);
   kotak.appendChild(p);
+  kotak.appendChild(btnUlang);
+  kotak.appendChild(document.createTextNode(' '));
   kotak.appendChild(btn);
   latar.appendChild(kotak);
   document.body.appendChild(latar);
@@ -144,9 +149,15 @@ function tutupModal() {
   if (lama && lama.parentNode) lama.parentNode.removeChild(lama);
 }
 
-// Pesan server-mati standar (1 sumber, dipakai 5 guard + login/register).
+// Pesan server-mati ganda: lokal (dev, Fairuz) = perintah teknis;
+// produksi (HP keluarga) = bahasa user + aksi yang BISA mereka lakukan.
+// Perintah dev tidak boleh tampil di HP (temuan user: membingungkan).
 function pesanServerMati() {
-  return 'Server tidak dapat dijangkau. Data yang dimasukkan saat ini mungkin tidak tersimpan. Jalankan server: cd server, lalu bun run index.ts (MySQL wajib hidup).';
+  const host = window.location.hostname;
+  if (host === 'localhost' || host === '127.0.0.1') {
+    return 'Server tidak terjangkau. Jalankan server: cd server, lalu bun run index.ts (MySQL wajib hidup).';
+  }
+  return 'Server tidak dapat dijangkau. Periksa koneksi internet, tutup-buka aplikasi, lalu coba lagi. Data yang dimasukkan mungkin tidak tersimpan. Bila terus gagal, hubungi admin (Fairuz).';
 }
 // Highlight validasi: tandai field gagal (merah + fokus otomatis),
 // bersihkan tiap submit. .closest = naik ke .field terdekat (aman untuk
