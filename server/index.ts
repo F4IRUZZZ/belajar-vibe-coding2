@@ -10,6 +10,22 @@ import { pool } from './src/db';
 // Lokal: kosong = terbuka (Live Server port acak tetap bisa).
 const app = new Elysia()
   .use(cors({ origin: process.env.FRONTEND_URL || true }))
+  // Error tak terduga (DB mati, typo host, dsb) = JSON {error} agar
+  // frontend bisa menampilkan teks asli (pelajaran: 500 bisu).
+  // Validasi/401/404 eksplisit tidak tersentuh (bukan throw).
+  // Error tak terduga (DB mati, typo host, dsb) = JSON {error} agar
+  // frontend bisa menampilkan teks asli (pelajaran: 500 bisu).
+  // Status HTTP dipertahankan Elysia; return eksplisit status() tak tersentuh.
+  // (Bukti empiris: code = kode asli error, mis. ECONNREFUSED — bukan 500.)
+  .onError(({ error, code }) => {
+    if (code === 'VALIDATION') {
+      const e = error as { summary?: string; message?: string };
+      return { error: e.summary || e.message || 'Data tidak valid' };
+    }
+    const msg =
+      error instanceof Error && error.message ? error.message : String(code || 'Terjadi kesalahan server');
+    return { error: msg };
+  })
   .get('/kesehatan', () => ({ ok: true }))
   .use(authRoutes)
   .use(keuanganRoutes)

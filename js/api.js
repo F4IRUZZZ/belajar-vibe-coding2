@@ -31,8 +31,17 @@ async function req(path, metode, data, token) {
   }
   let body = null;
   try {
-    body = await res.json();
-  } catch (e) { /* non-JSON = null */ }
+    // Baca sebagai teks dulu: JSON diparse, non-JSON (teks error server)
+    // dipakai langsung agar pesan 500 tidak bisu ("Gagal" saja).
+    const teks = await res.text();
+    if (teks) {
+      try {
+        body = JSON.parse(teks);
+      } catch (e) {
+        body = { error: teks.slice(0, 200) };
+      }
+    }
+  } catch (e) { /* body tak terbaca = null */ }
   return { code: res.status, body: body };
 }
 
