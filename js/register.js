@@ -56,12 +56,15 @@ inputPassword.addEventListener('input', function() {
 formRegister.addEventListener('submit', async function(e) {
   e.preventDefault();
   btnRegister.textContent = 'Loading...';
+  bersihkanGagal(formRegister);
   const email = document.getElementById('reg-email').value;
   const username = document.getElementById('reg-username').value;
   const password = document.getElementById('reg-password').value;
   const password2 = document.getElementById('reg-password2').value;
   const role = document.getElementById('reg-role').value;
   if (password !== password2) {
+    tandaiGagal(inputPassword2, true);
+    btnRegister.textContent = 'Daftar';
     pesanError(hasilRegister, 'Gagal (400): Konfirmasi password tidak sama.');
     return;
   }

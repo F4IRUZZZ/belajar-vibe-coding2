@@ -587,7 +587,14 @@ form.addEventListener('submit', async function(e) {
     return;
   }
   const jenis = document.getElementById('jenis').value;
-  const jumlah = parseRupiah(document.getElementById('jumlah').value);
+  bersihkanGagal(form);
+  const elJumlah = document.getElementById('jumlah');
+  const jumlah = parseRupiah(elJumlah.value);
+  if (!(jumlah > 0)) {
+    tandaiGagal(elJumlah, true);
+    pesanError(hasil, 'Gagal (400): Jumlah harus angka > 0 (Rp).');
+    return;
+  }
   const tanggal = document.getElementById('tanggal').value;
   const catatanAwal = document.getElementById('catatan-awal').value;
   // Untuk apa? (khusus keluar): produk terpilih -> produkId (+kategori

@@ -423,6 +423,25 @@ input:focus, select:focus, #dropdown-tombol:focus {
   font-size: 0.9rem;
 }
 
+/* Field gagal validasi: border merah + ring lembut (fokus via JS) */
+.field-error input,
+.field-error select {
+  border-color: var(--err-color);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+
+:root[data-theme="dark"] .field-error input,
+:root[data-theme="dark"] .field-error select {
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .field-error input,
+  :root:not([data-theme="light"]) .field-error select {
+    box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.2);
+  }
+}
+
 /* Tab Riwayat (Semua/Masuk/Keluar): pil netral, aktif hijau gradient */
 .tab-bar {
   display: flex;

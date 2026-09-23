@@ -148,6 +148,21 @@ function tutupModal() {
 function pesanServerMati() {
   return 'Server tidak dapat dijangkau. Data yang dimasukkan saat ini mungkin tidak tersimpan. Jalankan server: cd server, lalu bun run index.ts (MySQL wajib hidup).';
 }
+// Highlight validasi: tandai field gagal (merah + fokus otomatis),
+// bersihkan tiap submit. .closest = naik ke .field terdekat (aman untuk
+// .input-rp/.password-wrap yang bersarang).
+function tandaiGagal(inputEl, gagal) {
+  const field = inputEl.closest('.field');
+  if (field) field.classList.toggle('field-error', !!gagal);
+  if (gagal) inputEl.focus();
+}
+
+function bersihkanGagal(formEl) {
+  formEl.querySelectorAll('.field-error').forEach(function(f) {
+    f.classList.remove('field-error');
+  });
+}
+
 // Ikon menu sidebar: <a data-ikon="dashboard"> -> SVG disisip di depan label.
 // Nav aktif tetap via class di HTML. Idempoten bila dipanggil 1x per halaman.
 function pasangIkonMenu() {
@@ -201,7 +216,7 @@ async function unduhCSV(userId, elHasil) {
   a.download = 'keuangan-' + tanggalHariIni() + '.csv';
   a.click();
   URL.revokeObjectURL(a.href);
-  if (elHasil) pesanOk(elHasil, 'CSV diunduh.');
+  if (elHasil) pesanOk(elHasil, 'CSV diekspor.');
 }
 
 // Pesan semantik terpusat: hijau untuk sukses, merah untuk error.
