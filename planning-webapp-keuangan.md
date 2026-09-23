@@ -174,5 +174,7 @@ CATATAN GAP (sadar, bukan lupa):
 - 2026-09-22 — perf — bcrypt + warmup + catatan/semua + paralel (PR #91)
 - 2026-09-22 — pwa — manifest + service worker + tombol install (PR #93)
 - 2026-09-22 — fix — URL bersih anti-308 + SW v3 (PR #96)
+- 2026-09-23 — dev — server Bun URL bersih :5501 paritas Pages (PR #103)
+- 2026-09-23 — fix — install SW toleran per-file (PR #104)
 - 2026-09-22 — fix — error 500 tampilkan teks server asli (PR #99)
 - 2026-09-23 — batch-a — anti-balapan grafik + modal server + rename + validasi (PR #101)

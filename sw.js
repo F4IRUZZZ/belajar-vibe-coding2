@@ -32,9 +32,15 @@ const ASET = [
 ];
 
 self.addEventListener('install', function(e) {
+  // Install toleran: tiap file di-cache individual. addAll() all-or-nothing
+  // menggagalkan SELURUH install (dan update stuck) bila 1 file apes network.
+  // Yang terlewat dilengkapi otomatis oleh runtime-cache saat navigasi.
   e.waitUntil(
-    caches.open(VERSI).then(function(cache) { return cache.addAll(ASET); })
-      .then(function() { return self.skipWaiting(); })
+    caches.open(VERSI).then(function(cache) {
+      return Promise.all(ASET.map(function(url) {
+        return cache.add(url).catch(function() {});
+      }));
+    }).then(function() { return self.skipWaiting(); })
   );
 });
 
