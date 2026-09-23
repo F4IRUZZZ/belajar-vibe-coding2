@@ -175,3 +175,4 @@ CATATAN GAP (sadar, bukan lupa):
 - 2026-09-22 — pwa — manifest + service worker + tombol install (PR #93)
 - 2026-09-22 — fix — URL bersih anti-308 + SW v3 (PR #96)
 - 2026-09-22 — fix — error 500 tampilkan teks server asli (PR #99)
+- 2026-09-23 — batch-a — anti-balapan grafik + modal server + rename + validasi (PR #101)
