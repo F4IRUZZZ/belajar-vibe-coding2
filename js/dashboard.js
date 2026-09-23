@@ -15,7 +15,8 @@ let user = null;
 async function init() {
   const resProfile = await getProfile(token);
   if (resProfile.code === 503) {
-    infoUser.textContent = 'Server tidak terjangkau. Jalankan server: cd server, lalu bun run index.ts (MySQL wajib hidup).';
+    infoUser.textContent = 'Server tidak terjangkau.';
+    tampilkanModal('Server tidak terjangkau', pesanServerMati());
     return;
   }
   if (resProfile.code !== 200) {
@@ -29,7 +30,12 @@ async function init() {
   infoUser.textContent = 'Login sebagai: ' + (user.username || user.email) + ' (' + user.role + ')';
   const pilihPeriode = document.getElementById('periode');
 
+  // Token anti-balapan: ganti filter cepat 2x -> respons lambat yang datang
+  // belakangan dibuang (chart tak kembali ke data basi).
+  let nomorRequest = 0;
+
   async function muatRingkasan() {
+    const requestKu = ++nomorRequest;
     let filter = null;
     if (pilihPeriode.value === 'minggu') {
       filter = { dari: awalMingguIni(), sampai: akhirMingguIni() };
@@ -42,6 +48,7 @@ async function init() {
       getRingkasanKategori(user.id, filter),
       getTransaksi()
     ]);
+    if (requestKu !== nomorRequest) return; // basi: user sudah ganti filter
     totalMasuk.textContent = 'Rp' + formatRupiah(ringkasan.masuk);
     totalKeluar.textContent = 'Rp' + formatRupiah(ringkasan.keluar);
     saldoEl.textContent = 'Rp' + formatRupiah(ringkasan.saldo);
@@ -78,12 +85,23 @@ async function init() {
 
   // Grafik Chart.js (CDN): batang masuk-vs-keluar + donat kategori.
   // CDN gagal (offline) = grafik dilewati, angka + tabel tetap jalan.
+  // Total nol = grafik disembunyikan + pesan ajakan (bukan kanvas kosong).
   async function gambarGrafik(ringkasan, filter, dataKat, daftar) {
     const infoGrafik = document.getElementById('info-grafik');
+    const blokGrafik = document.getElementById('blok-grafik');
     if (typeof window.Chart === 'undefined') {
       if (infoGrafik) infoGrafik.textContent = 'Grafik butuh internet (CDN Chart.js). Angka di atas tetap akurat.';
       return;
     }
+    if (ringkasan.masuk === 0 && ringkasan.keluar === 0) {
+      if (grafikArus) { grafikArus.destroy(); grafikArus = null; }
+      if (grafikKategori) { grafikKategori.destroy(); grafikKategori = null; }
+      if (grafikMinggu) { grafikMinggu.destroy(); grafikMinggu = null; }
+      if (blokGrafik) blokGrafik.hidden = true;
+      if (infoGrafik) infoGrafik.textContent = 'Silakan input data terlebih dahulu untuk menampilkan grafik.';
+      return;
+    }
+    if (blokGrafik) blokGrafik.hidden = false;
     if (infoGrafik) infoGrafik.textContent = '';
     const w = warnaGrafik();
     if (grafikArus) grafikArus.destroy();

@@ -9,8 +9,25 @@ pasangToggleTema(); // dark mode ikut sistem, manual menang via localStorage
 formLogin.addEventListener('submit', async function(e) {
   e.preventDefault();
   btnLogin.textContent = 'Loading...';
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
+  bersihkanGagal(formLogin);
+  const emailEl = document.getElementById('email');
+  const passEl = document.getElementById('password');
+  let buruk = false;
+  if (!emailEl.value.trim()) {
+    tandaiGagal(emailEl, true);
+    buruk = true;
+  }
+  if (!passEl.value) {
+    tandaiGagal(passEl, true);
+    buruk = true;
+  }
+  if (buruk) {
+    btnLogin.textContent = 'Masuk';
+    pesanError(hasilLogin, 'Gagal (400): Email dan password wajib diisi.');
+    return;
+  }
+  const email = emailEl.value;
+  const password = passEl.value;
   const res = await login(email, password); // via API (Fase A-3)
   btnLogin.textContent = 'Masuk';
   if (res.code === 200) {

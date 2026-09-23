@@ -25,7 +25,8 @@ const token = window.localStorage.getItem('token');
 async function init() {
   const resProfile = await getProfile(token);
   if (resProfile.code === 503) {
-    infoUser.textContent = 'Server tidak terjangkau. Jalankan server: cd server, lalu bun run index.ts (MySQL wajib hidup).';
+    infoUser.textContent = 'Server tidak terjangkau.';
+    tampilkanModal('Server tidak terjangkau', pesanServerMati());
     return;
   }
   if (resProfile.code !== 200) {

@@ -91,7 +91,8 @@ let cacheCatatan = []; // semua catatan milik user (panel + cari)
 async function init() {
   const resProfile = await getProfile(token);
   if (resProfile.code === 503) {
-    infoUser.textContent = 'Server tidak terjangkau. Jalankan server: cd server, lalu bun run index.ts (MySQL wajib hidup).';
+    infoUser.textContent = 'Server tidak terjangkau.';
+    tampilkanModal('Server tidak terjangkau', pesanServerMati());
     return;
   }
   if (resProfile.code !== 200) {
@@ -586,7 +587,14 @@ form.addEventListener('submit', async function(e) {
     return;
   }
   const jenis = document.getElementById('jenis').value;
-  const jumlah = parseRupiah(document.getElementById('jumlah').value);
+  bersihkanGagal(form);
+  const elJumlah = document.getElementById('jumlah');
+  const jumlah = parseRupiah(elJumlah.value);
+  if (!(jumlah > 0)) {
+    tandaiGagal(elJumlah, true);
+    pesanError(hasil, 'Gagal (400): Jumlah harus angka > 0 (Rp).');
+    return;
+  }
   const tanggal = document.getElementById('tanggal').value;
   const catatanAwal = document.getElementById('catatan-awal').value;
   // Untuk apa? (khusus keluar): produk terpilih -> produkId (+kategori
