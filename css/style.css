@@ -388,6 +388,41 @@ input:focus, select:focus, #dropdown-tombol:focus {
   margin-bottom: 2px;
 }
 
+/* Modal peringatan shared (server down, dsb): overlay gelap + kotak kartu.
+   Dibangun via tampilkanModal() agar semua halaman konsisten. */
+.modal-latar {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 100;
+}
+
+.modal-kotak {
+  background-color: var(--card-bg);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.modal-kotak h2 {
+  color: var(--err-color);
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+}
+
+.modal-kotak p {
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+
 /* Tab Riwayat (Semua/Masuk/Keluar): pil netral, aktif hijau gradient */
 .tab-bar {
   display: flex;

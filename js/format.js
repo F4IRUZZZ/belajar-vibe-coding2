@@ -112,6 +112,42 @@ function pasangToggleTema() {
   });
 }
 
+// Modal peringatan shared (server down, dsb). Dibangun via JS agar tanpa
+// ubah HTML. Maks 1 tampil per saat; klik luar/ tombol = tutup.
+function tampilkanModal(judul, pesan) {
+  tutupModal();
+  const latar = document.createElement('div');
+  latar.className = 'modal-latar';
+  latar.id = 'modal-latar';
+  const kotak = document.createElement('div');
+  kotak.className = 'modal-kotak';
+  kotak.setAttribute('role', 'alertdialog');
+  const h = document.createElement('h2');
+  h.textContent = judul;
+  const p = document.createElement('p');
+  p.textContent = pesan;
+  const btn = document.createElement('button');
+  btn.textContent = 'Mengerti';
+  btn.addEventListener('click', tutupModal);
+  latar.addEventListener('click', function(e) {
+    if (e.target === latar) tutupModal();
+  });
+  kotak.appendChild(h);
+  kotak.appendChild(p);
+  kotak.appendChild(btn);
+  latar.appendChild(kotak);
+  document.body.appendChild(latar);
+}
+
+function tutupModal() {
+  const lama = document.getElementById('modal-latar');
+  if (lama && lama.parentNode) lama.parentNode.removeChild(lama);
+}
+
+// Pesan server-mati standar (1 sumber, dipakai 5 guard + login/register).
+function pesanServerMati() {
+  return 'Server tidak dapat dijangkau. Data yang dimasukkan saat ini mungkin tidak tersimpan. Jalankan server: cd server, lalu bun run index.ts (MySQL wajib hidup).';
+}
 // Ikon menu sidebar: <a data-ikon="dashboard"> -> SVG disisip di depan label.
 // Nav aktif tetap via class di HTML. Idempoten bila dipanggil 1x per halaman.
 function pasangIkonMenu() {
