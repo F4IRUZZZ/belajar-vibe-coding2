@@ -1,0 +1,304 @@
+"use client";
+import { Fragment, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowDownRight, ArrowUpRight, MessageSquarePlus, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { createTransaksi, deleteTransaksi, addCatatan, deleteCatatan } from "@/lib/actions/transaksi";
+import { formatRupiah, parseRupiah, todayLocal } from "@/lib/format";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Select } from "@/components/ui/select";
+import { Field } from "@/components/ui/field";
+import { SegmentedControl } from "@/components/ui/segmented";
+import { EmptyState } from "@/components/ui/field";
+import { Expand, ExpandableRow } from "@/components/ui/expand";
+import { Table, TableHead, TableRow, TH, TD } from "@/components/ui/data-table";
+import { cn } from "@/lib/utils";
+
+type Produk = { id: string; nama: string; kategori: string };
+type Cat = { id: string; isi: string };
+type Tx = {
+  id: string; jenis: string; jumlah: number; tanggal: string | Date; kategori: string;
+  produk: Produk | null; catatan: Cat[];
+};
+
+export function TransaksiForm({ produk }: { produk: Produk[] }) {
+  const router = useRouter();
+  const [jenis, setJenis] = useState<"masuk" | "keluar">("keluar");
+  const [jumlahStr, setJumlahStr] = useState("");
+  const [tanggal, setTanggal] = useState(todayLocal());
+  const [produkId, setProdukId] = useState("");
+  const [kategoriBebas, setKategoriBebas] = useState("");
+  const [catatan, setCatatan] = useState("");
+  const [err, setErr] = useState("");
+  const [pending, start] = useTransition();
+  const showKategori = jenis === "masuk" || produkId === "__bebas" || (jenis === "keluar" && !produkId);
+
+  const submit = () =>
+    start(async () => {
+      setErr("");
+      try {
+        const prod = produk.find((x) => x.id === produkId);
+        let kategori = "";
+        if (jenis === "keluar" && prod) kategori = prod.kategori;
+        else kategori = kategoriBebas.trim() || (jenis === "masuk" ? "Lainnya" : "Lainnya");
+        if (jenis === "keluar" && produkId === "__bebas") kategori = kategoriBebas.trim();
+        await createTransaksi({
+          jenis,
+          jumlah: jumlahStr,
+          tanggal,
+          kategori,
+          produkId: prod ? prod.id : undefined,
+          catatan: catatan || undefined,
+        });
+        setJumlahStr(""); setCatatan(""); setKategoriBebas(""); setProdukId("");
+        router.refresh();
+      } catch (e) {
+        setErr(e instanceof Error ? e.message : "Gagal menyimpan");
+      }
+    });
+
+  return (
+    <Card className="mb-4">
+      <CardContent className="space-y-3 p-4">
+        <SegmentedControl
+          id="tx-jenis"
+          ariaLabel="Jenis transaksi"
+          value={jenis}
+          onChange={setJenis}
+          options={[
+            { value: "masuk", label: "Masuk", icon: ArrowUpRight },
+            { value: "keluar", label: "Keluar", icon: ArrowDownRight },
+          ]}
+        />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Jumlah (Rp)" htmlFor="tx-jumlah">
+            <Input
+              id="tx-jumlah"
+              inputMode="numeric"
+              placeholder="50000"
+              value={jumlahStr ? formatRupiah(parseRupiah(jumlahStr)) : ""}
+              onChange={(e) => setJumlahStr(e.target.value)}
+            />
+          </Field>
+          <Field label="Tanggal" htmlFor="tx-tanggal">
+            <Input id="tx-tanggal" type="date" value={tanggal} onChange={(e) => setTanggal(e.target.value)} />
+          </Field>
+        </div>
+        <Expand open={jenis === "keluar"}>
+          <Field label="Produk" htmlFor="tx-produk">
+            <Select
+              id="tx-produk"
+              ariaLabel="Produk"
+              placeholder="Pilih produk…"
+              value={produkId}
+              onChange={setProdukId}
+              options={[
+                ...produk.map((p) => ({ value: p.id, label: `${p.nama} (${p.kategori})` })),
+                { value: "__bebas", label: "Tulis sendiri…" },
+              ]}
+            />
+          </Field>
+        </Expand>
+        <Expand open={showKategori}>
+          <Field label="Kategori" htmlFor="tx-kategori">
+            <Input
+              id="tx-kategori"
+              placeholder={jenis === "masuk" ? "Gajian" : "Pangan"}
+              value={kategoriBebas}
+              onChange={(e) => setKategoriBebas(e.target.value)}
+            />
+          </Field>
+        </Expand>
+        <Field label="Catatan (opsional)" htmlFor="tx-catatan">
+          <Input
+            id="tx-catatan"
+            placeholder="cth: belanja warung"
+            value={catatan}
+            onChange={(e) => setCatatan(e.target.value)}
+          />
+        </Field>
+        {err && <p role="alert" className="text-sm text-bad">{err}</p>}
+        <Button onClick={submit} disabled={pending} className="w-full">
+          {pending ? "Menyimpan…" : "Simpan transaksi"}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function TransaksiList({ initial, tab, search }: { initial: Tx[]; tab: string; search: string }) {
+  const router = useRouter();
+  const [sel, setSel] = useState<string[]>([]);
+  const [pending, start] = useTransition();
+  const [openCat, setOpenCat] = useState<string | null>(null);
+  const [catInput, setCatInput] = useState("");
+
+  const toggle = (id: string) => setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  const toggleAll = () => setSel((s) => (s.length === initial.length ? [] : initial.map((t) => t.id)));
+  const hapus = (ids: string[]) => {
+    if (!confirm(`Hapus ${ids.length} transaksi?`)) return;
+    start(async () => {
+      await deleteTransaksi(ids);
+      setSel([]);
+      router.refresh();
+    });
+  };
+
+  const subMasuk = initial.filter((t) => t.jenis === "masuk").reduce((a, t) => a + t.jumlah, 0);
+  const subKeluar = initial.filter((t) => t.jenis === "keluar").reduce((a, t) => a + t.jumlah, 0);
+
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <form className="mb-3 flex flex-wrap items-center gap-2" action="/transaksi" method="get">
+          {(["semua", "masuk", "keluar"] as const).map((t) => (
+            <button
+              key={t}
+              name="tab"
+              value={t}
+              className={cn(
+                "rounded-md border px-3 py-1.5 font-mono text-[12px] transition-colors",
+                tab === t || (t === "semua" && !tab)
+                  ? "border-glow/40 bg-glow/10 text-glow"
+                  : "border-line text-muted hover:text-ink",
+              )}
+            >
+              {t === "semua" ? "Semua" : t === "masuk" ? "Masuk" : "Keluar"}
+            </button>
+          ))}
+          <div className="relative min-w-40 flex-1">
+            <Search className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
+            <input
+              name="q"
+              defaultValue={search}
+              placeholder="Cari kategori, catatan, tanggal…"
+              aria-label="Cari transaksi"
+              className="h-8 w-full rounded-md border border-line bg-transparent pr-3 pl-8 text-sm outline-none placeholder:text-muted focus:border-muted"
+            />
+          </div>
+          <Button type="submit" variant="secondary" size="sm">Cari</Button>
+        </form>
+        <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[12px] text-muted">
+          <span>Masuk Rp{formatRupiah(subMasuk)}</span>
+          <span aria-hidden>·</span>
+          <span>Keluar Rp{formatRupiah(subKeluar)}</span>
+          <span aria-hidden>·</span>
+          <span>Selisih Rp{formatRupiah(subMasuk - subKeluar)}</span>
+          {sel.length > 0 && (
+            <Button
+              onClick={() => hapus(sel)}
+              disabled={pending}
+              variant="secondary"
+              size="sm"
+              className="ml-auto border-bad/40 text-bad hover:border-bad hover:text-bad"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Hapus {sel.length} terpilih
+            </Button>
+          )}
+        </div>
+        {initial.length === 0 ? (
+          <EmptyState
+            icon={<MessageSquarePlus className="h-5 w-5" />}
+            title="Belum ada transaksi"
+            hint="Catat lewat form di atas untuk mulai."
+          />
+        ) : (
+          <Table>
+            <TableHead>
+              <TH>
+                <input
+                  type="checkbox"
+                  checked={sel.length === initial.length && initial.length > 0}
+                  onChange={toggleAll}
+                  aria-label="Pilih semua"
+                  className="h-3.5 w-3.5 accent-[#5b9cff]"
+                />
+              </TH>
+              <TH>Tanggal</TH>
+              <TH>Jenis</TH>
+              <TH align="right">Jumlah</TH>
+              <TH>Kategori</TH>
+              <TH align="right">Aksi</TH>
+            </TableHead>
+            <tbody>
+              {initial.map((t) => (
+                <Fragment key={t.id}>
+                  <TableRow>
+                    <TD>
+                      <input
+                        type="checkbox"
+                        checked={sel.includes(t.id)}
+                        onChange={() => toggle(t.id)}
+                        aria-label={`Pilih transaksi ${t.kategori}`}
+                        className="h-3.5 w-3.5 accent-[#5b9cff]"
+                      />
+                    </TD>
+                    <TD mono>{new Date(t.tanggal).toISOString().slice(0, 10)}</TD>
+                    <TD><Badge variant={t.jenis === "masuk" ? "ok" : "bad"}>{t.jenis}</Badge></TD>
+                    <TD align="right" className="font-medium">Rp{formatRupiah(t.jumlah)}</TD>
+                    <TD>{t.kategori}{t.produk ? <span className="text-muted"> · {t.produk.nama}</span> : null}</TD>
+                    <TD align="right">
+                      <div className="flex justify-end gap-1">
+                        <button
+                          onClick={() => setOpenCat(openCat === t.id ? null : t.id)}
+                          aria-label={`Catatan transaksi ${t.kategori}`}
+                          title="Catatan"
+                          className="rounded-md border border-line p-1.5 text-muted transition-colors hover:border-muted hover:text-ink"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => hapus([t.id])}
+                          aria-label={`Hapus transaksi ${t.kategori}`}
+                          title="Hapus"
+                          className="rounded-md border border-line p-1.5 text-muted transition-colors hover:border-bad/50 hover:text-bad"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </TD>
+                  </TableRow>
+                  <ExpandableRow open={openCat === t.id} colSpan={6}>
+                    {t.catatan.map((c) => (
+                      <div key={c.id} className="mb-1 flex items-center gap-2 text-[13px]">
+                        <span className="flex-1">• {c.isi}</span>
+                        <button
+                          onClick={() => start(async () => { await deleteCatatan(c.id); router.refresh(); })}
+                          aria-label={`Hapus catatan ${c.isi}`}
+                          className="rounded p-1 text-muted transition-colors hover:text-bad"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                    {t.catatan.length === 0 && (
+                      <p className="mb-1 text-[13px] text-muted">Belum ada catatan.</p>
+                    )}
+                    <div className="mt-2 flex gap-2">
+                      <Input
+                        placeholder="Tambah catatan…"
+                        aria-label="Isi catatan baru"
+                        value={catInput}
+                        onChange={(e) => setCatInput(e.target.value)}
+                      />
+                      <Button
+                        size="icon"
+                        aria-label="Simpan catatan"
+                        onClick={() => start(async () => { if (catInput.trim()) { await addCatatan(t.id, catInput); setCatInput(""); router.refresh(); } })}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </ExpandableRow>
+                </Fragment>
+              ))}
+            </tbody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

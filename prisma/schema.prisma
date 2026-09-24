@@ -1,0 +1,82 @@
+// PostgreSQL untuk dev & produksi (migrasi dari SQLite).
+// Model diadaptasi dari schema.sql + schema-keuangan.sql (MySQL) di repo lama.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum JenisTransaksi {
+  masuk
+  keluar
+}
+
+enum ArahHutang {
+  hutang
+  piutang
+}
+
+enum StatusHutang {
+  belum
+  lunas
+}
+
+model Produk {
+  id        String   @id @default(cuid())
+  nama      String
+  namaLower String   @unique // unik case-insensitive
+  kategori  String   @default("Lainnya")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transaksi Transaksi[]
+}
+
+model Transaksi {
+  id        String         @id @default(cuid())
+  jenis     JenisTransaksi
+  jumlah    Int // Rupiah murni (integer, tanpa sen)
+  tanggal   DateTime
+  kategori  String
+  produkId  String?
+  produk    Produk?        @relation(fields: [produkId], references: [id], onDelete: SetNull)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  catatan Catatan[]
+  hutangLunas Hutang[] @relation("HutangLunas")
+
+  @@index([jenis, tanggal])
+  @@index([kategori])
+}
+
+model Catatan {
+  id          String    @id @default(cuid())
+  transaksiId String
+  transaksi   Transaksi @relation(fields: [transaksiId], references: [id], onDelete: Cascade)
+  isi         String
+  createdAt   DateTime  @default(now())
+
+  @@index([transaksiId])
+}
+
+model Hutang {
+  id               String        @id @default(cuid())
+  arah             ArahHutang
+  pihak            String
+  jumlah           Int
+  dibayar          Int           @default(0)
+  tanggal          DateTime
+  jatuhTempo       DateTime?
+  keterangan       String?
+  status           StatusHutang  @default(belum)
+  transaksiIdLunas String?
+  transaksiLunas   Transaksi?    @relation("HutangLunas", fields: [transaksiIdLunas], references: [id], onDelete: SetNull)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([arah, status])
+}

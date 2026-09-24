@@ -1,0 +1,9 @@
+{
+  "name": "Keuangan Keluarga",
+  "short_name": "Keuangan",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0c0b09",
+  "theme_color": "#059669",
+  "icons": [{ "src": "/icon.png", "sizes": "512x512", "type": "image/png" }]
+}
