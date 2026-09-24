@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "./prisma";
+import type { Prisma } from "@prisma/client";
 import { startOfMonth, startOfWeek } from "./format";
 
 export type Periode = "semua" | "minggu" | "bulan";
@@ -53,21 +54,60 @@ export async function getGrafikHarian() {
   return hari.map((label, i) => ({ label, masuk: masuk[i], keluar: keluar[i] }));
 }
 
-export async function getTransaksi(opts: { jenis?: "masuk" | "keluar"; search?: string } = {}) {
+export const TRANSKASI_PAGE = 50;
+
+export type TransaksiFilter = {
+  jenis?: "masuk" | "keluar";
+  search?: string;
+};
+
+// WHERE dipakai bersama oleh daftar + subtotal agar angkanya konsisten.
+function transaksiWhere(opts: TransaksiFilter): Prisma.TransaksiWhereInput {
+  const where: Prisma.TransaksiWhereInput = { ...(opts.jenis ? { jenis: opts.jenis } : {}) };
+  const q = (opts.search ?? "").trim();
+  if (!q) return where;
+  const or: Prisma.TransaksiWhereInput[] = [
+    { kategori: { contains: q, mode: "insensitive" } },
+    { catatan: { some: { isi: { contains: q, mode: "insensitive" } } } },
+    { produk: { nama: { contains: q, mode: "insensitive" } } },
+  ];
+  if (/^\d+$/.test(q)) or.push({ jumlah: Number(q) });
+  const tgl = /^(\d{4})-(\d{2})-(\d{2})$/.exec(q);
+  if (tgl) {
+    const dari = new Date(Number(tgl[1]), Number(tgl[2]) - 1, Number(tgl[3]));
+    const sampai = new Date(Number(tgl[1]), Number(tgl[2]) - 1, Number(tgl[3]) + 1);
+    or.push({ tanggal: { gte: dari, lt: sampai } });
+  }
+  return { ...where, OR: or };
+}
+
+const transaksiOrder: Prisma.TransaksiOrderByWithRelationInput[] = [{ tanggal: "desc" }, { id: "desc" }];
+
+export async function getTransaksiPage(opts: TransaksiFilter & { cursor?: string; limit?: number } = {}) {
+  const limit = opts.limit ?? TRANSKASI_PAGE;
   const rows = await prisma.transaksi.findMany({
-    where: { ...(opts.jenis ? { jenis: opts.jenis } : {}) },
+    where: transaksiWhere(opts),
     include: { catatan: true, produk: true },
-    orderBy: { tanggal: "desc" },
-    take: 200,
+    orderBy: transaksiOrder,
+    ...(opts.cursor ? { cursor: { id: opts.cursor }, skip: 1 } : {}),
+    take: limit + 1,
   });
-  const q = (opts.search ?? "").toLowerCase().trim();
-  if (!q) return rows;
-  return rows.filter((t) =>
-    [t.kategori, t.jumlah.toString(), new Date(t.tanggal).toISOString().slice(0, 10), ...t.catatan.map((c) => c.isi)]
-      .join(" ")
-      .toLowerCase()
-      .includes(q),
-  );
+  // Row ekstra hanya penanda ada-halaman-berikut; cursor = row terakhir
+  // yang DIKEMBALIKAN agar tidak ada yang terlewat di batas halaman.
+  const hasMore = rows.length > limit;
+  const page = hasMore ? rows.slice(0, limit) : rows;
+  const nextCursor = hasMore ? page[page.length - 1].id : null;
+  return { rows: page, nextCursor };
+}
+
+// Subtotal seluruh hasil filter (bukan cuma halaman yang termuat).
+export async function getTransaksiTotal(opts: TransaksiFilter = {}) {
+  const where = transaksiWhere(opts);
+  const [masuk, keluar] = await Promise.all([
+    prisma.transaksi.aggregate({ _sum: { jumlah: true }, where: { ...where, jenis: "masuk" } }),
+    prisma.transaksi.aggregate({ _sum: { jumlah: true }, where: { ...where, jenis: "keluar" } }),
+  ]);
+  return { masuk: masuk._sum.jumlah ?? 0, keluar: keluar._sum.jumlah ?? 0 };
 }
 
 export async function getProduk() {

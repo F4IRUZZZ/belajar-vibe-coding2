@@ -2,7 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { parseRupiah } from "@/lib/format";
+import { parseRupiah, parseTanggalLokal } from "@/lib/format";
 
 const transaksiSchema = z.object({
   jenis: z.enum(["masuk", "keluar"]),
@@ -17,7 +17,7 @@ export async function createTransaksi(input: z.infer<typeof transaksiSchema>) {
   const p = transaksiSchema.parse(input);
   const jumlah = parseRupiah(p.jumlah);
   if (jumlah <= 0) throw new Error("Jumlah harus > 0");
-  const tanggal = new Date(p.tanggal + "T12:00:00");
+  const tanggal = parseTanggalLokal(p.tanggal);
   const tx = await prisma.transaksi.create({
     data: {
       jenis: p.jenis,
@@ -40,7 +40,7 @@ export async function updateTransaksi(id: string, input: { jumlah?: string; tang
     if (j <= 0) throw new Error("Jumlah harus > 0");
     data.jumlah = j;
   }
-  if (input.tanggal) data.tanggal = new Date(input.tanggal + "T12:00:00");
+  if (input.tanggal) data.tanggal = parseTanggalLokal(input.tanggal);
   if (input.kategori) data.kategori = input.kategori.trim();
   await prisma.transaksi.update({ where: { id }, data });
   revalidatePath("/");
@@ -69,4 +69,27 @@ export async function updateCatatan(id: string, isi: string) {
 export async function deleteCatatan(id: string) {
   await prisma.catatan.delete({ where: { id } });
   revalidatePath("/transaksi");
+}
+
+// Halaman berikutnya untuk tombol "Muat lagi" (tanggal -> ISO agar serializable).
+export async function listTransaksiPage(input: { jenis?: "masuk" | "keluar"; search?: string; cursor: string }) {
+  const { getTransaksiPage } = await import("@/lib/store");
+  const { rows, nextCursor } = await getTransaksiPage({
+    jenis: input.jenis,
+    search: input.search,
+    cursor: input.cursor,
+  });
+  return {
+    rows: rows.map((t) => ({
+      ...t,
+      tanggal: t.tanggal.toISOString(),
+      createdAt: t.createdAt.toISOString(),
+      updatedAt: t.updatedAt.toISOString(),
+      produk: t.produk
+        ? { ...t.produk, createdAt: t.produk.createdAt.toISOString(), updatedAt: t.produk.updatedAt.toISOString() }
+        : null,
+      catatan: t.catatan.map((c) => ({ ...c, createdAt: c.createdAt.toISOString() })),
+    })),
+    nextCursor,
+  };
 }

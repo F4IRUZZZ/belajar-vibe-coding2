@@ -16,6 +16,13 @@ export function formatTanggalId(iso: string | Date): string {
   });
 }
 
+// Parse "YYYY-MM-DD" sebagai tengah hari lokal agar tidak geser hari
+// saat disimpan ke Postgres timestamptz (pengganti hack T12:00:00 inline).
+export function parseTanggalLokal(ymd: string): Date {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) throw new Error("Tanggal harus YYYY-MM-DD");
+  return new Date(`${ymd}T12:00:00`);
+}
+
 // Default tanggal hari ini (lokal, bukan UTC) -> YYYY-MM-DD
 export function todayLocal(): string {
   const d = new Date();

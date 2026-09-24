@@ -2,7 +2,7 @@
 import { Fragment, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowDownRight, ArrowUpRight, MessageSquarePlus, Pencil, Plus, Search, Trash2, X } from "lucide-react";
-import { createTransaksi, deleteTransaksi, addCatatan, deleteCatatan } from "@/lib/actions/transaksi";
+import { createTransaksi, deleteTransaksi, listTransaksiPage, addCatatan, deleteCatatan } from "@/lib/actions/transaksi";
 import { formatRupiah, parseRupiah, todayLocal } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -128,15 +128,29 @@ export function TransaksiForm({ produk }: { produk: Produk[] }) {
   );
 }
 
-export function TransaksiList({ initial, tab, search }: { initial: Tx[]; tab: string; search: string }) {
+export function TransaksiList({
+  initial,
+  initialCursor,
+  total,
+  tab,
+  search,
+}: {
+  initial: Tx[];
+  initialCursor: string | null;
+  total: { masuk: number; keluar: number };
+  tab: string;
+  search: string;
+}) {
   const router = useRouter();
+  const [rows, setRows] = useState<Tx[]>(initial);
+  const [cursor, setCursor] = useState<string | null>(initialCursor);
   const [sel, setSel] = useState<string[]>([]);
   const [pending, start] = useTransition();
   const [openCat, setOpenCat] = useState<string | null>(null);
   const [catInput, setCatInput] = useState("");
 
   const toggle = (id: string) => setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
-  const toggleAll = () => setSel((s) => (s.length === initial.length ? [] : initial.map((t) => t.id)));
+  const toggleAll = () => setSel((s) => (s.length === rows.length ? [] : rows.map((t) => t.id)));
   const hapus = (ids: string[]) => {
     if (!confirm(`Hapus ${ids.length} transaksi?`)) return;
     start(async () => {
@@ -145,9 +159,18 @@ export function TransaksiList({ initial, tab, search }: { initial: Tx[]; tab: st
       router.refresh();
     });
   };
-
-  const subMasuk = initial.filter((t) => t.jenis === "masuk").reduce((a, t) => a + t.jumlah, 0);
-  const subKeluar = initial.filter((t) => t.jenis === "keluar").reduce((a, t) => a + t.jumlah, 0);
+  const muatLagi = () => {
+    if (!cursor) return;
+    start(async () => {
+      const page = await listTransaksiPage({
+        jenis: tab === "masuk" || tab === "keluar" ? tab : undefined,
+        search: search || undefined,
+        cursor,
+      });
+      setRows((r) => [...r, ...page.rows]);
+      setCursor(page.nextCursor);
+    });
+  };
 
   return (
     <Card>
@@ -181,11 +204,11 @@ export function TransaksiList({ initial, tab, search }: { initial: Tx[]; tab: st
           <Button type="submit" variant="secondary" size="sm">Cari</Button>
         </form>
         <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[12px] text-muted">
-          <span>Masuk Rp{formatRupiah(subMasuk)}</span>
+          <span>Masuk Rp{formatRupiah(total.masuk)}</span>
           <span aria-hidden>·</span>
-          <span>Keluar Rp{formatRupiah(subKeluar)}</span>
+          <span>Keluar Rp{formatRupiah(total.keluar)}</span>
           <span aria-hidden>·</span>
-          <span>Selisih Rp{formatRupiah(subMasuk - subKeluar)}</span>
+          <span>Selisih Rp{formatRupiah(total.masuk - total.keluar)}</span>
           {sel.length > 0 && (
             <Button
               onClick={() => hapus(sel)}
@@ -199,7 +222,7 @@ export function TransaksiList({ initial, tab, search }: { initial: Tx[]; tab: st
             </Button>
           )}
         </div>
-        {initial.length === 0 ? (
+        {rows.length === 0 ? (
           <EmptyState
             icon={<MessageSquarePlus className="h-5 w-5" />}
             title="Belum ada transaksi"
@@ -211,7 +234,7 @@ export function TransaksiList({ initial, tab, search }: { initial: Tx[]; tab: st
               <TH>
                 <input
                   type="checkbox"
-                  checked={sel.length === initial.length && initial.length > 0}
+                  checked={sel.length === rows.length && rows.length > 0}
                   onChange={toggleAll}
                   aria-label="Pilih semua"
                   className="h-3.5 w-3.5 accent-[#5b9cff]"
@@ -224,7 +247,7 @@ export function TransaksiList({ initial, tab, search }: { initial: Tx[]; tab: st
               <TH align="right">Aksi</TH>
             </TableHead>
             <tbody>
-              {initial.map((t) => (
+              {rows.map((t) => (
                 <Fragment key={t.id}>
                   <TableRow>
                     <TD>
@@ -297,6 +320,13 @@ export function TransaksiList({ initial, tab, search }: { initial: Tx[]; tab: st
               ))}
             </tbody>
           </Table>
+        )}
+        {cursor && (
+          <div className="mt-3 flex justify-center">
+            <Button onClick={muatLagi} disabled={pending} variant="secondary" size="sm">
+              {pending ? "Memuat…" : `Muat lagi (${rows.length} tampil)`}
+            </Button>
+          </div>
         )}
       </CardContent>
     </Card>

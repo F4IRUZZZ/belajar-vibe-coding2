@@ -26,6 +26,7 @@ enum StatusHutang {
 
 model Produk {
   id        String   @id @default(cuid())
+  userId    String? // NULL = master shared global (mode single-tenant hari ini)
   nama      String
   namaLower String   @unique // unik case-insensitive
   kategori  String   @default("Lainnya")
@@ -33,10 +34,13 @@ model Produk {
   updatedAt DateTime @updatedAt
 
   transaksi Transaksi[]
+
+  @@index([userId])
 }
 
 model Transaksi {
   id        String         @id @default(cuid())
+  userId    String? // siap-auth Fase 2; NULL = data single-tenant existing
   jenis     JenisTransaksi
   jumlah    Int // Rupiah murni (integer, tanpa sen)
   tanggal   DateTime
@@ -51,6 +55,7 @@ model Transaksi {
 
   @@index([jenis, tanggal])
   @@index([kategori])
+  @@index([userId])
 }
 
 model Catatan {
@@ -65,6 +70,7 @@ model Catatan {
 
 model Hutang {
   id               String        @id @default(cuid())
+  userId           String? // siap-auth Fase 2; NULL = data single-tenant existing
   arah             ArahHutang
   pihak            String
   jumlah           Int
@@ -79,4 +85,5 @@ model Hutang {
   updatedAt        DateTime      @updatedAt
 
   @@index([arah, status])
+  @@index([userId])
 }

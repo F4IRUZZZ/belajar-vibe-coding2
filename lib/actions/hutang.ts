@@ -2,7 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { parseRupiah } from "@/lib/format";
+import { parseRupiah, parseTanggalLokal } from "@/lib/format";
 
 const hutangSchema = z.object({
   arah: z.enum(["hutang", "piutang"]),
@@ -23,8 +23,8 @@ export async function createHutang(input: z.infer<typeof hutangSchema>) {
       arah: p.arah,
       pihak: p.pihak.trim(),
       jumlah,
-      tanggal: new Date(p.tanggal + "T12:00:00"),
-      jatuhTempo: p.jatuhTempo ? new Date(p.jatuhTempo + "T12:00:00") : null,
+      tanggal: parseTanggalLokal(p.tanggal),
+      jatuhTempo: p.jatuhTempo ? parseTanggalLokal(p.jatuhTempo) : null,
       keterangan: p.keterangan?.trim() || null,
     },
   });
