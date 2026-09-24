@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ambilUser } from "@/lib/auth";
-import { getSaldo, getRingkasanKategori, getGrafikHarian, getAnggaranVsRealisasi, getInsight, getSaldoPerDompet, type Periode } from "@/lib/store";
-import { formatRupiah, formatTanggalId } from "@/lib/format";
+import { getSaldo, getRingkasanKategori, getGrafikHarian, getGrafikBulanan, getAnggaranVsRealisasi, getInsight, getSaldoPerDompet, type Periode, type Rentang } from "@/lib/store";
+import { formatRupiah, formatTanggalId, parseTanggalLokal } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -27,16 +27,29 @@ import { cn } from "@/lib/utils";
 export default async function Dashboard({
   searchParams,
 }: {
-  searchParams: Promise<{ p?: string }>;
+  searchParams: Promise<{ p?: string; dari?: string; sampai?: string; grafik?: string }>;
 }) {
-  const { p } = await searchParams;
+  const { p, dari, sampai, grafik } = await searchParams;
   const user = await ambilUser();
   if (!user) redirect("/login");
-  const periode: Periode = p === "minggu" || p === "bulan" ? p : "semua";
+  // Rentang custom mengalahkan pil periode.
+  let rentang: Rentang | undefined;
+  let labelPeriode: string;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dari ?? "") && /^\d{4}-\d{2}-\d{2}$/.test(sampai ?? "") && dari! <= sampai!) {
+    const akhir = parseTanggalLokal(sampai!);
+    akhir.setDate(akhir.getDate() + 1); // sampai inklusif
+    rentang = { dari: parseTanggalLokal(dari!), sampai: akhir };
+    labelPeriode = `${dari} s/d ${sampai}`;
+  } else {
+    const periode: Periode = p === "minggu" || p === "bulan" ? p : "semua";
+    labelPeriode = periode === "semua" ? "Semua waktu" : periode === "minggu" ? "Minggu ini" : "Bulan ini";
+  }
+  const periode: Periode = rentang ? "semua" : p === "minggu" || p === "bulan" ? p : "semua";
+  const modeGrafik = grafik === "bulan" ? "bulan" : "minggu";
   const [saldo, kategori, harian, anggaran, insight, dompets] = await Promise.all([
-    getSaldo(periode, user.id),
-    getRingkasanKategori(periode, user.id),
-    getGrafikHarian(user.id),
+    getSaldo(periode, user.id, rentang),
+    getRingkasanKategori(periode, user.id, rentang),
+    modeGrafik === "bulan" ? getGrafikBulanan(user.id) : getGrafikHarian(user.id),
     getAnggaranVsRealisasi(undefined, user.id),
     getInsight(user.id),
     getSaldoPerDompet(periode, user.id),
@@ -55,7 +68,7 @@ export default async function Dashboard({
           </span>
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
-              Saldo · {periode === "semua" ? "Semua waktu" : periode === "minggu" ? "Minggu ini" : "Bulan ini"}
+              Saldo · {labelPeriode}
             </p>
             <h1 className={`mt-0.5 text-3xl font-semibold tracking-tight ${saldo.saldo < 0 ? "text-bad" : "text-ink"}`}>
               Rp{formatRupiah(saldo.saldo)}
@@ -86,13 +99,44 @@ export default async function Dashboard({
               <Link
                 key={x}
                 href={x === "semua" ? "/" : `/?p=${x}`}
-                className={`rounded-md border px-2.5 py-1 font-mono text-[11px] transition-colors ${periode === x ? "border-glow/40 bg-glow/15 text-irish-soft" : "border-line text-muted hover:text-ink"}`}
+                className={`rounded-md border px-2.5 py-1 font-mono text-[11px] transition-colors ${!rentang && periode === x ? "border-glow/40 bg-glow/15 text-irish-soft" : "border-line text-muted hover:text-ink"}`}
               >
                 {x === "semua" ? "Semua" : x === "minggu" ? "Minggu" : "Bulan"}
               </Link>
             ))}
+            {rentang && (
+              <Link
+                href="/"
+                className="rounded-md border border-glow/40 bg-glow/15 px-2.5 py-1 font-mono text-[11px] text-irish-soft"
+              >
+                Reset
+              </Link>
+            )}
           </span>
         </div>
+        <form action="/" method="get" className="relative mt-3 flex flex-wrap items-center gap-2">
+          <input
+            type="date"
+            name="dari"
+            defaultValue={dari ?? ""}
+            aria-label="Dari tanggal"
+            className="h-8 rounded-md border border-line bg-transparent px-2 text-sm outline-none focus:border-muted"
+          />
+          <span className="font-mono text-[11px] text-muted">s/d</span>
+          <input
+            type="date"
+            name="sampai"
+            defaultValue={sampai ?? ""}
+            aria-label="Sampai tanggal"
+            className="h-8 rounded-md border border-line bg-transparent px-2 text-sm outline-none focus:border-muted"
+          />
+          <button
+            type="submit"
+            className="h-8 rounded-md border border-line px-2.5 font-mono text-[11px] text-muted transition-colors hover:text-ink"
+          >
+            Tampil
+          </button>
+        </form>
       </div>
 
       <div className="mb-6 grid gap-3 lg:grid-cols-2">
@@ -138,6 +182,20 @@ export default async function Dashboard({
             )}
           </CardContent>
         </Card>
+        <div>
+          <div className="mb-2 flex items-center justify-end gap-1">
+            <span className="font-mono text-[11px] text-muted">
+              {modeGrafik === "bulan" ? "12 bulan terakhir" : "7 hari terakhir"}
+            </span>
+            <Link
+              href={modeGrafik === "bulan" ? "/" : "/?grafik=bulan"}
+              className="rounded-md border border-line px-2 py-0.5 font-mono text-[11px] text-muted transition-colors hover:text-ink"
+            >
+              {modeGrafik === "bulan" ? "Mingguan" : "12 bulan"}
+            </Link>
+          </div>
+          <CashflowChart data={harian} />
+        </div>
       </div>
 
       <Card className="mb-6">

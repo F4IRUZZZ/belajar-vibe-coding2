@@ -8,15 +8,19 @@ export type Periode = "semua" | "minggu" | "bulan";
 // Nama dompet bawaan yang selalu ada per user.
 export const DOMPET_KAS = "Kas";
 
-export function periodeRange(p: Periode): { dari?: Date; sampai?: Date } {
+export type Rentang = { dari?: Date; sampai?: Date };
+
+export function periodeRange(p: Periode): Rentang {
   if (p === "minggu") return { dari: startOfWeek() };
   if (p === "bulan") return { dari: startOfMonth() };
   return {};
 }
 
-export async function getSaldo(periode: Periode = "semua", userId: string) {
-  const { dari } = periodeRange(periode);
-  const where = dari ? { tanggal: { gte: dari } } : {};
+export async function getSaldo(periode: Periode = "semua", userId: string, rentang?: Rentang) {
+  const { dari, sampai } = rentang ?? periodeRange(periode);
+  const where: Prisma.TransaksiWhereInput = {
+    ...(dari ? { tanggal: { gte: dari, ...(sampai ? { lt: sampai } : {}) } } : {}),
+  };
   const [masuk, keluar] = await Promise.all([
     prisma.transaksi.aggregate({ _sum: { jumlah: true }, where: { ...where, jenis: "masuk", userId } }),
     prisma.transaksi.aggregate({ _sum: { jumlah: true }, where: { ...where, jenis: "keluar", userId } }),
@@ -26,10 +30,14 @@ export async function getSaldo(periode: Periode = "semua", userId: string) {
   return { totalMasuk, totalKeluar, saldo: totalMasuk - totalKeluar };
 }
 
-export async function getRingkasanKategori(periode: Periode = "semua", userId: string) {
-  const { dari } = periodeRange(periode);
+export async function getRingkasanKategori(periode: Periode = "semua", userId: string, rentang?: Rentang) {
+  const { dari, sampai } = rentang ?? periodeRange(periode);
   const rows = await prisma.transaksi.findMany({
-    where: { ...(dari ? { tanggal: { gte: dari } } : {}), jenis: "keluar", userId },
+    where: {
+      ...(dari ? { tanggal: { gte: dari, ...(sampai ? { lt: sampai } : {}) } } : {}),
+      jenis: "keluar",
+      userId,
+    },
     select: { kategori: true, jumlah: true },
   });
   const map = new Map<string, number>();
@@ -418,4 +426,32 @@ export async function getSaldoPerDompet(periode: Periode = "semua", userId: stri
     }),
   );
   return hasil;
+}
+
+// 12 bulan terakhir (termasuk bulan berjalan): {label "Sep 26", masuk, keluar}.
+export async function getGrafikBulanan(userId: string, sekarang: Date = new Date()) {
+  const awal = new Date(sekarang.getFullYear(), sekarang.getMonth() - 11, 1);
+  const rows = await prisma.transaksi.findMany({
+    where: { userId, tanggal: { gte: awal } },
+    select: { jenis: true, jumlah: true, tanggal: true },
+  });
+  const pendek = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+  const bucket = Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(awal.getFullYear(), awal.getMonth() + i, 1);
+    return {
+      kunci: `${d.getFullYear()}-${d.getMonth()}`,
+      label: `${pendek[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`,
+      masuk: 0,
+      keluar: 0,
+    };
+  });
+  const map = new Map(bucket.map((b) => [b.kunci, b]));
+  for (const r of rows) {
+    const t = new Date(r.tanggal);
+    const b = map.get(`${t.getFullYear()}-${t.getMonth()}`);
+    if (!b) continue;
+    if (r.jenis === "masuk") b.masuk += r.jumlah;
+    else b.keluar += r.jumlah;
+  }
+  return bucket;
 }
