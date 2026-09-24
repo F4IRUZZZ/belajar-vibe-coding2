@@ -70,22 +70,50 @@ export async function updateTransaksi(id: string, input: { jumlah?: string; tang
   }
   if (input.tanggal) data.tanggal = parseTanggalLokal(input.tanggal);
   if (input.kategori) data.kategori = input.kategori.trim();
-  const r = await prisma.transaksi.updateMany({ where: { id, userId: user.id }, data });
+  const r = await prisma.transaksi.updateMany({ where: { id, userId: user.id, deletedAt: null }, data });
   if (r.count === 0) throw new Error("Data tidak ditemukan");
   revalidatePath("/");
   revalidatePath("/transaksi");
 }
 
+// Hapus = pindah ke sampah (soft-delete). Pulihkan/kosongkan lewat tab Sampah.
 export async function deleteTransaksi(ids: string[]) {
   if (ids.length === 0) return;
   const user = await wajibUser();
-  await prisma.transaksi.deleteMany({ where: { id: { in: ids }, userId: user.id } });
+  await prisma.transaksi.updateMany({
+    where: { id: { in: ids }, userId: user.id, deletedAt: null },
+    data: { deletedAt: new Date() },
+  });
+  revalidatePath("/");
+  revalidatePath("/transaksi");
+}
+
+export async function pulihkanTransaksi(ids: string[]) {
+  if (ids.length === 0) return;
+  const user = await wajibUser();
+  await prisma.transaksi.updateMany({
+    where: { id: { in: ids }, userId: user.id, deletedAt: { not: null } },
+    data: { deletedAt: null },
+  });
+  revalidatePath("/");
+  revalidatePath("/transaksi");
+}
+
+export async function hapusPermanen(ids: string[]) {
+  if (ids.length === 0) return;
+  const user = await wajibUser();
+  await prisma.transaksi.deleteMany({
+    where: { id: { in: ids }, userId: user.id, deletedAt: { not: null } },
+  });
   revalidatePath("/");
   revalidatePath("/transaksi");
 }
 
 async function milikUser(transaksiId: string, userId: string) {
-  const t = await prisma.transaksi.findFirst({ where: { id: transaksiId, userId }, select: { id: true } });
+  const t = await prisma.transaksi.findFirst({
+    where: { id: transaksiId, userId, deletedAt: null },
+    select: { id: true },
+  });
   if (!t) throw new Error("Data tidak ditemukan");
 }
 
@@ -100,7 +128,7 @@ export async function addCatatan(transaksiId: string, isi: string) {
 
 async function catatanMilikUser(id: string, userId: string) {
   const c = await prisma.catatan.findFirst({
-    where: { id, transaksi: { userId } },
+    where: { id, transaksi: { userId, deletedAt: null } },
     select: { id: true },
   });
   if (!c) throw new Error("Data tidak ditemukan");

@@ -89,10 +89,12 @@ model Transaksi {
   target   Target? @relation(fields: [targetId], references: [id], onDelete: SetNull)
   dompetId String?
   dompet   Dompet? @relation(fields: [dompetId], references: [id], onDelete: Restrict)
+  deletedAt DateTime? // soft-delete: sampah 30 hari, lalu purge otomatis
 
   @@index([jenis, tanggal])
   @@index([kategori])
   @@index([userId])
+  @@index([userId, deletedAt])
 }
 
 model Catatan {

@@ -83,6 +83,8 @@ export async function jalankanSemua(sekarang: Date = new Date()): Promise<number
 }
 
 async function jalankanUntuk(userId: string, sekarang: Date): Promise<number> {
+  const { purgeSampah } = await import("@/lib/store");
+  await purgeSampah(userId, sekarang); // sampah >30 hari dibersihkan tiap run
   const due = await prisma.jadwal.findMany({
     where: { userId, aktif: true, nextRun: { lte: sekarang } },
     orderBy: { nextRun: "asc" },

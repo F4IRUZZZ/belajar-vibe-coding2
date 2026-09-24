@@ -6,7 +6,7 @@ export async function GET() {
   const user = await ambilUser();
   if (!user) return new Response("Masuk dulu", { status: 401 });
   const rows = await prisma.transaksi.findMany({
-    where: { userId: user.id },
+    where: { userId: user.id, deletedAt: null },
     include: { produk: true, catatan: true, dompet: true },
     orderBy: { tanggal: "desc" },
     take: 5000,

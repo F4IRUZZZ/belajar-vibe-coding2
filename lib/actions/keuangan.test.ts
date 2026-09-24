@@ -125,7 +125,8 @@ describe("bayarHutang transaksional", () => {
   });
 });
 
-describe("deleteTransaksi bulk", () => {  it("hapus massal + cascade catatan", async () => {
+describe("deleteTransaksi bulk", () => {
+  it("hapus massal = masuk sampah (catatan ikut sembunyi, belum musnah)", async () => {
     const a = await createTransaksi({
       jenis: "keluar",
       jumlah: "10000",
@@ -140,8 +141,9 @@ describe("deleteTransaksi bulk", () => {  it("hapus massal + cascade catatan", a
       kategori: "Mandi",
     });
     await deleteTransaksi([a, b]);
-    expect(await prisma.transaksi.count()).toBe(0);
-    expect(await prisma.catatan.count()).toBe(0);
+    expect((await getTransaksiPage({ userId: uid })).rows).toHaveLength(0);
+    expect(await prisma.transaksi.count()).toBe(2); // masih ada (sampah)
+    expect(await prisma.catatan.count()).toBe(1); // ikut sembunyi, belum cascade
   });
 });
 

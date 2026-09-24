@@ -1,9 +1,10 @@
 "use client";
 import { Fragment, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowDownRight, ArrowUpRight, MessageSquarePlus, Pencil, Plus, Search, Trash2, X } from "lucide-react";
-import { createTransaksi, deleteTransaksi, listTransaksiPage, getHargaTerakhir, addCatatan, deleteCatatan } from "@/lib/actions/transaksi";
-import { formatRupiah, parseRupiah, todayLocal } from "@/lib/format";
+import { ArrowDownRight, ArrowUpRight, MessageSquarePlus, Pencil, Plus, Search, Trash2, Undo2, X } from "lucide-react";
+import { createTransaksi, deleteTransaksi, listTransaksiPage, getHargaTerakhir, pulihkanTransaksi, hapusPermanen, addCatatan, deleteCatatan } from "@/lib/actions/transaksi";
+import { formatRupiah, formatTanggalId, parseRupiah, todayLocal } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -230,7 +231,7 @@ export function TransaksiList({
     <Card>
       <CardContent className="p-4">
         <form className="mb-3 flex flex-wrap items-center gap-2" action="/transaksi" method="get">
-          {(["semua", "masuk", "keluar"] as const).map((t) => (
+          {(["semua", "masuk", "keluar", "sampah"] as const).map((t) => (
             <button
               key={t}
               name="tab"
@@ -242,7 +243,7 @@ export function TransaksiList({
                   : "border-line text-muted hover:text-ink",
               )}
             >
-              {t === "semua" ? "Semua" : t === "masuk" ? "Masuk" : "Keluar"}
+              {t === "semua" ? "Semua" : t === "masuk" ? "Masuk" : t === "keluar" ? "Keluar" : "Sampah"}
             </button>
           ))}
           <div className="relative min-w-40 flex-1">
@@ -381,6 +382,126 @@ export function TransaksiList({
               {pending ? "Memuat…" : `Muat lagi (${rows.length} tampil)`}
             </Button>
           </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+export function SampahList({ initial }: { initial: Tx[] }) {
+  const router = useRouter();
+  const [sel, setSel] = useState<string[]>([]);
+  const [pending, start] = useTransition();
+
+  const toggle = (id: string) => setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+
+  const pulihkan = (ids: string[]) => {
+    start(async () => {
+      await pulihkanTransaksi(ids);
+      setSel([]);
+      router.refresh();
+    });
+  };
+
+  const musnah = (ids: string[]) => {
+    if (!confirm(`Hapus permanen ${ids.length} transaksi? Tidak bisa dibatalkan.`)) return;
+    start(async () => {
+      await hapusPermanen(ids);
+      setSel([]);
+      router.refresh();
+    });
+  };
+
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <Link href="/transaksi" className="font-mono text-[11px] text-irish-soft hover:text-ink">
+            ← Kembali
+          </Link>
+          {sel.length > 0 && (
+            <span className="ml-auto flex gap-1">
+              <Button onClick={() => pulihkan(sel)} disabled={pending} variant="secondary" size="sm">
+                <Undo2 className="h-3.5 w-3.5" />
+                Pulihkan {sel.length}
+              </Button>
+              <Button
+                onClick={() => musnah(sel)}
+                disabled={pending}
+                variant="secondary"
+                size="sm"
+                className="border-bad/40 text-bad hover:border-bad hover:text-bad"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Permanen
+              </Button>
+            </span>
+          )}
+        </div>
+        {initial.length === 0 ? (
+          <EmptyState
+            icon={<Trash2 className="h-5 w-5" />}
+            title="Sampah kosong"
+            hint="Transaksi yang dihapus singgah di sini 30 hari sebelum musnah otomatis."
+          />
+        ) : (
+          <Table>
+            <TableHead>
+              <TH>
+                <input
+                  type="checkbox"
+                  checked={sel.length === initial.length}
+                  onChange={() => setSel((s) => (s.length === initial.length ? [] : initial.map((t) => t.id)))}
+                  aria-label="Pilih semua"
+                  className="h-3.5 w-3.5 accent-[#5b9cff]"
+                />
+              </TH>
+              <TH>Dihapus</TH>
+              <TH>Tanggal</TH>
+              <TH>Kategori</TH>
+              <TH align="right">Jumlah</TH>
+              <TH align="right">Aksi</TH>
+            </TableHead>
+            <tbody>
+              {initial.map((t: Tx & { deletedAt?: string | Date }) => (
+                <TableRow key={t.id}>
+                  <TD>
+                    <input
+                      type="checkbox"
+                      checked={sel.includes(t.id)}
+                      onChange={() => toggle(t.id)}
+                      aria-label={`Pilih ${t.kategori}`}
+                      className="h-3.5 w-3.5 accent-[#5b9cff]"
+                    />
+                  </TD>
+                  <TD mono>{t.deletedAt ? formatTanggalId(t.deletedAt) : "—"}</TD>
+                  <TD mono>{new Date(t.tanggal).toISOString().slice(0, 10)}</TD>
+                  <TD>{t.kategori}</TD>
+                  <TD align="right" className="font-medium">Rp{formatRupiah(t.jumlah)}</TD>
+                  <TD align="right">
+                    <div className="flex justify-end gap-1">
+                      <button
+                        onClick={() => pulihkan([t.id])}
+                        aria-label={`Pulihkan ${t.kategori}`}
+                        title="Pulihkan"
+                        className="rounded-md border border-line p-1.5 text-muted transition-colors hover:border-muted hover:text-ink"
+                      >
+                        <Undo2 className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => musnah([t.id])}
+                        aria-label={`Hapus permanen ${t.kategori}`}
+                        title="Hapus permanen"
+                        className="rounded-md border border-line p-1.5 text-muted transition-colors hover:border-bad/50 hover:text-bad"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </TD>
+                </TableRow>
+              ))}
+            </tbody>
+          </Table>
         )}
       </CardContent>
     </Card>
