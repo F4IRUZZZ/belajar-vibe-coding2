@@ -85,6 +85,8 @@ model Transaksi {
 
   catatan Catatan[]
   hutangLunas Hutang[] @relation("HutangLunas")
+  targetId String?
+  target   Target? @relation(fields: [targetId], references: [id], onDelete: SetNull)
 
   @@index([jenis, tanggal])
   @@index([kategori])
@@ -133,4 +135,20 @@ model Anggaran {
 
   @@unique([userId, kategori, bulan])
   @@index([userId, bulan])
+}
+
+// Target tabungan (sinking fund). Terkumpul = jumlah transaksi MASUK
+// milik user yang ditandai ke target ini (dihitung, bukan disimpan).
+model Target {
+  id        String      @id @default(cuid())
+  userId    String
+  nama      String
+  target    Int // Rupiah
+  deadline  DateTime?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  transaksi Transaksi[]
+
+  @@index([userId])
 }

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { ambilUser } from "@/lib/auth";
-import { getTransaksiPage, getTransaksiTotal, getProduk } from "@/lib/store";
+import { getTransaksiPage, getTransaksiTotal, getProduk, getTargets } from "@/lib/store";
 import { PageHeader } from "@/components/ui/field";
 import { TransaksiForm, TransaksiList } from "./_client";
 
@@ -13,10 +13,11 @@ export default async function TransaksiPage({
   const user = await ambilUser();
   if (!user) redirect("/login");
   const jenis = tab === "masuk" || tab === "keluar" ? tab : undefined;
-  const [{ rows, nextCursor }, total, produk] = await Promise.all([
+  const [{ rows, nextCursor }, total, produk, targets] = await Promise.all([
     getTransaksiPage({ userId: user.id, jenis, search: q }),
     getTransaksiTotal({ userId: user.id, jenis, search: q }),
     getProduk(),
+    getTargets(user.id),
   ]);
   return (
     <div>
@@ -24,7 +25,7 @@ export default async function TransaksiPage({
         title="Transaksi"
         description="catat gaji mingguan, belanja, koreksi salah ketik"
       />
-      <TransaksiForm produk={produk} />
+      <TransaksiForm produk={produk} targets={targets.map((t) => ({ id: t.id, nama: t.nama }))} />
       <TransaksiList
         initial={JSON.parse(JSON.stringify(rows))}
         initialCursor={nextCursor}

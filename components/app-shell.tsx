@@ -6,6 +6,7 @@ import { motion } from "motion/react";
 import {
   ArrowLeftRight,
   FlaskConical,
+  Goal,
   HandCoins,
   LayoutDashboard,
   Package,
@@ -22,6 +23,7 @@ const NAV = [
   { href: "/produk", label: "Produk", icon: Package },
   { href: "/hutang", label: "Hutang", icon: HandCoins },
   { href: "/anggaran", label: "Anggaran", icon: PiggyBank },
+  { href: "/target", label: "Target", icon: Goal },
   { href: "/pengaturan", label: "Pengaturan", icon: Settings },
 ];
 

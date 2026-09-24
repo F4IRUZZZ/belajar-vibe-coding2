@@ -12,6 +12,7 @@ const transaksiSchema = z.object({
   kategori: z.string().min(1).max(100),
   produkId: z.string().optional(),
   hargaSatuan: z.string().optional(),
+  targetId: z.string().optional(),
   catatan: z.string().max(500).optional(),
 });
 
@@ -25,12 +26,20 @@ export async function createTransaksi(input: z.infer<typeof transaksiSchema>) {
   const pakaiHarga = p.jenis === "keluar" && !!p.produkId;
   const hargaSatuan = pakaiHarga && p.hargaSatuan ? parseRupiah(p.hargaSatuan) : null;
   if (pakaiHarga && p.hargaSatuan && (hargaSatuan ?? 0) <= 0) throw new Error("Harga satuan harus > 0");
+  // Penanda target hanya untuk pemasukan milik sendiri.
+  let targetId: string | null = null;
+  if (p.jenis === "masuk" && p.targetId) {
+    const t = await prisma.target.findFirst({ where: { id: p.targetId, userId: user.id }, select: { id: true } });
+    if (!t) throw new Error("Target tidak ditemukan");
+    targetId = t.id;
+  }
   const tx = await prisma.transaksi.create({
     data: {
       userId: user.id,
       jenis: p.jenis,
       jumlah,
       hargaSatuan,
+      targetId,
       tanggal,
       kategori: p.kategori.trim(),
       produkId: p.produkId || null,

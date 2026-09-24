@@ -287,3 +287,23 @@ export function formatRekapWa(r: Awaited<ReturnType<typeof getRekap>>): string {
   }
   return baris.join("\n");
 }
+
+// Target + terkumpul (jumlah pemasukan bertanda) + persen.
+export async function getTargets(userId: string) {
+  const targets = await prisma.target.findMany({
+    where: { userId },
+    orderBy: { createdAt: "asc" },
+  });
+  if (targets.length === 0) return [];
+  const jumlah = await prisma.transaksi.groupBy({
+    by: ["targetId"],
+    where: { userId, jenis: "masuk", targetId: { not: null } },
+    _sum: { jumlah: true },
+  });
+  const map = new Map(jumlah.map((j) => [j.targetId, j._sum.jumlah ?? 0]));
+  return targets.map((t) => {
+    const terkumpul = map.get(t.id) ?? 0;
+    const persen = t.target > 0 ? Math.round((terkumpul / t.target) * 100) : 0;
+    return { ...t, terkumpul, persen };
+  });
+}

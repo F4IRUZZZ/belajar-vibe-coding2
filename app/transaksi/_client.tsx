@@ -23,7 +23,7 @@ type Tx = {
   produk: Produk | null; catatan: Cat[];
 };
 
-export function TransaksiForm({ produk }: { produk: Produk[] }) {
+export function TransaksiForm({ produk, targets }: { produk: Produk[]; targets: { id: string; nama: string }[] }) {
   const router = useRouter();
   const [jenis, setJenis] = useState<"masuk" | "keluar">("keluar");
   const [jumlahStr, setJumlahStr] = useState("");
@@ -31,6 +31,7 @@ export function TransaksiForm({ produk }: { produk: Produk[] }) {
   const [produkId, setProdukId] = useState("");
   const [kategoriBebas, setKategoriBebas] = useState("");
   const [catatan, setCatatan] = useState("");
+  const [targetId, setTargetId] = useState("");
   const [hargaStr, setHargaStr] = useState("");
   const [err, setErr] = useState("");
   const [pending, start] = useTransition();
@@ -65,9 +66,10 @@ export function TransaksiForm({ produk }: { produk: Produk[] }) {
           kategori,
           produkId: prod ? prod.id : undefined,
           hargaSatuan: showHarga && hargaStr ? hargaStr : undefined,
+          targetId: jenis === "masuk" && targetId ? targetId : undefined,
           catatan: catatan || undefined,
         });
-        setJumlahStr(""); setCatatan(""); setKategoriBebas(""); setProdukId(""); setHargaStr("");
+        setJumlahStr(""); setCatatan(""); setKategoriBebas(""); setProdukId(""); setHargaStr(""); setTargetId("");
         router.refresh();
       } catch (e) {
         setErr(e instanceof Error ? e.message : "Gagal menyimpan");
@@ -124,6 +126,18 @@ export function TransaksiForm({ produk }: { produk: Produk[] }) {
               placeholder="cth: 12000"
               value={hargaStr ? formatRupiah(parseRupiah(hargaStr)) : ""}
               onChange={(e) => setHargaStr(e.target.value.replace(/[^0-9]/g, ""))}
+            />
+          </Field>
+        </Expand>
+        <Expand open={jenis === "masuk" && targets.length > 0}>
+          <Field label="Tandai ke target (opsional)" htmlFor="tx-target">
+            <Select
+              id="tx-target"
+              ariaLabel="Target tabungan"
+              placeholder="Tanpa target…"
+              value={targetId}
+              onChange={setTargetId}
+              options={targets.map((t) => ({ value: t.id, label: t.nama }))}
             />
           </Field>
         </Expand>
