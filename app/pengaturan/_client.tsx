@@ -4,6 +4,7 @@ import { useTheme } from "next-themes";
 import { Download, LogOut, Monitor, Moon, Smartphone, Sun, UserRound } from "lucide-react";
 import { logout } from "@/lib/actions/auth";
 import { InstallButton } from "@/components/install-button";
+import { CsvImpor } from "@/components/csv-impor";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { SegmentedControl } from "@/components/ui/segmented";
@@ -39,9 +40,11 @@ function SettingRow({
 
 export function PengaturanClient({
   csvHref,
+  hutangHref,
   user,
 }: {
   csvHref: string;
+  hutangHref: string;
   user: { email: string; username: string; role: string } | null;
 }) {
   const { theme, setTheme, resolvedTheme } = useTheme();
@@ -79,13 +82,25 @@ export function PengaturanClient({
       <SettingRow
         icon={<Download className="h-4 w-4" />}
         title="Export CSV"
-        description="Unduh semua transaksi untuk spreadsheet."
+        description="Unduh transaksi lengkap + hutang untuk spreadsheet."
         control={
-          <a href={csvHref} className={cn(buttonVariants({ variant: "secondary" }), "shrink-0")}>
-            <Download className="h-4 w-4" />
-            Unduh
-          </a>
+          <span className="flex shrink-0 gap-1">
+            <a href={csvHref} className={cn(buttonVariants({ variant: "secondary" }))}>
+              <Download className="h-4 w-4" />
+              Transaksi
+            </a>
+            <a href={hutangHref} className={cn(buttonVariants({ variant: "secondary" }))}>
+              <Download className="h-4 w-4" />
+              Hutang
+            </a>
+          </span>
         }
+      />
+      <SettingRow
+        icon={<Download className="h-4 w-4" />}
+        title="Impor CSV"
+        description="Format: tanggal,jenis,jumlah,kategori. Maks 1000 baris."
+        control={<CsvImpor />}
       />
       <SettingRow
         icon={resolvedTheme === "light" && mounted ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}

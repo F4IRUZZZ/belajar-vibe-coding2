@@ -13,7 +13,7 @@ export default async function PengaturanPage() {
         title="Pengaturan"
         description="akun, dompet, export, tema"
       />
-      <PengaturanClient csvHref="/api/export" user={user} />
+      <PengaturanClient csvHref="/api/export" hutangHref="/api/export/hutang" user={user} />
       <DompetManager initial={dompets} />
     </div>
   );
