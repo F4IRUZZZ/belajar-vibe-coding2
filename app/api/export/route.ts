@@ -1,7 +1,14 @@
+import { ambilUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-  const rows = await prisma.transaksi.findMany({ orderBy: { tanggal: "desc" }, take: 1000 });
+  const user = await ambilUser();
+  if (!user) return new Response("Masuk dulu", { status: 401 });
+  const rows = await prisma.transaksi.findMany({
+    where: { userId: user.id },
+    orderBy: { tanggal: "desc" },
+    take: 1000,
+  });
   const esc = (s: string) => `"${s.replace(/"/g, '""')}"`;
   const lines = ["tanggal,jenis,jumlah,kategori"];
   for (const r of rows) {

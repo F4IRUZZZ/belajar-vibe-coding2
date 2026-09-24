@@ -2,12 +2,21 @@ import { beforeAll, afterAll, beforeEach, describe, expect, it, vi } from "vites
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
+vi.mock("next/headers", () => ({
+  cookies: async () => ({
+    get: () => ({ value: "test-token" }),
+    set: () => {},
+    delete: () => {},
+  }),
+}));
 
 import { prisma } from "@/lib/prisma";
 import { getHargaTerakhirProduk, getTrenHarga } from "@/lib/store";
 import { createTransaksi, getHargaTerakhir } from "./transaksi";
 
 async function bersih() {
+  await prisma.session.deleteMany();
+  await prisma.user.deleteMany();
   await prisma.catatan.deleteMany();
   await prisma.hutang.deleteMany();
   await prisma.transaksi.deleteMany();
@@ -15,8 +24,30 @@ async function bersih() {
   await prisma.anggaran.deleteMany();
 }
 
+let uid = "";
+
+async function masukSebagaiTest() {
+  const u = await prisma.user.create({
+    data: {
+      email: "test@x.id",
+      emailLower: "test@x.id",
+      username: "Test",
+      usernameLower: "test",
+      passwordHash: "x",
+      role: "keluarga",
+    },
+  });
+  await prisma.session.create({
+    data: { token: "test-token", userId: u.id, expiresAt: new Date("2999-01-01") },
+  });
+  uid = u.id;
+}
+
 beforeAll(bersih);
-beforeEach(bersih);
+beforeEach(async () => {
+  await bersih();
+  await masukSebagaiTest();
+});
 afterAll(async () => {
   await bersih();
   await prisma.$disconnect();
@@ -73,7 +104,7 @@ describe("hargaSatuan", () => {
     await mk("2026-09-01", "10000");
     await mk("2026-09-10", "12000");
     await mk("2026-09-15"); // tanpa harga, tidak merusak prefill
-    expect(await getHargaTerakhirProduk(beras.id)).toBe(12000);
+    expect(await getHargaTerakhirProduk(beras.id, uid)).toBe(12000);
     expect(await getHargaTerakhir(beras.id)).toBe(12000);
   });
 
@@ -92,7 +123,7 @@ describe("hargaSatuan", () => {
     await mk(beras.id, "2026-09-22", "12000"); // +20% vs rata-rata 10000
     await mk(sabun.id, "2026-09-22", "5000"); // cuma 1x → tanpa tren
 
-    const tren = await getTrenHarga();
+    const tren = await getTrenHarga(uid);
     expect(tren[beras.id]).toMatchObject({ terakhir: 12000, persen: 20 });
     expect(tren[beras.id].riwayat).toEqual([10000, 10000, 10000, 12000]);
     expect(tren[sabun.id]).toBeUndefined();

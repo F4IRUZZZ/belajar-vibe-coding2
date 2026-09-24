@@ -6,7 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
   title: "Keuangan Keluarga",
-  description: "Catatan pendapatan & pengeluaran keluarga. Tanpa login (mode testing).",
+  description: "Catatan pendapatan & pengeluaran keluarga.",
   manifest: "/manifest.json",
 };
 

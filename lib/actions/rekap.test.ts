@@ -2,6 +2,13 @@ import { beforeAll, afterAll, beforeEach, describe, expect, it, vi } from "vites
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
+vi.mock("next/headers", () => ({
+  cookies: async () => ({
+    get: () => ({ value: "test-token" }),
+    set: () => {},
+    delete: () => {},
+  }),
+}));
 
 import { prisma } from "@/lib/prisma";
 import { formatRekapWa, getRekap, isLewatTempo, labelBulan } from "@/lib/store";
@@ -9,6 +16,8 @@ import { createHutang } from "./hutang";
 import { createTransaksi } from "./transaksi";
 
 async function bersih() {
+  await prisma.session.deleteMany();
+  await prisma.user.deleteMany();
   await prisma.catatan.deleteMany();
   await prisma.hutang.deleteMany();
   await prisma.transaksi.deleteMany();
@@ -16,8 +25,30 @@ async function bersih() {
   await prisma.anggaran.deleteMany();
 }
 
+let uid = "";
+
+async function masukSebagaiTest() {
+  const u = await prisma.user.create({
+    data: {
+      email: "test@x.id",
+      emailLower: "test@x.id",
+      username: "Test",
+      usernameLower: "test",
+      passwordHash: "x",
+      role: "keluarga",
+    },
+  });
+  await prisma.session.create({
+    data: { token: "test-token", userId: u.id, expiresAt: new Date("2999-01-01") },
+  });
+  uid = u.id;
+}
+
 beforeAll(bersih);
-beforeEach(bersih);
+beforeEach(async () => {
+  await bersih();
+  await masukSebagaiTest();
+});
 afterAll(async () => {
   await bersih();
   await prisma.$disconnect();
@@ -52,7 +83,7 @@ describe("getRekap + formatRekapWa", () => {
       jatuhTempo: "2020-01-01",
     });
 
-    const r = await getRekap("2026-09");
+    const r = await getRekap("2026-09", uid);
     expect(r).toMatchObject({
       totalMasuk: 3000000,
       totalKeluar: 1750000,
@@ -72,7 +103,7 @@ describe("getRekap + formatRekapWa", () => {
   });
 
   it("bulan kosong tetap valid", async () => {
-    const teks = formatRekapWa(await getRekap("2026-02"));
+    const teks = formatRekapWa(await getRekap("2026-02", uid));
     expect(teks).toContain("Belum ada pengeluaran bulan ini.");
     expect(teks).not.toContain("Sisa hutang");
   });

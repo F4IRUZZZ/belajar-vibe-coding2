@@ -11,22 +11,22 @@ export function periodeRange(p: Periode): { dari?: Date; sampai?: Date } {
   return {};
 }
 
-export async function getSaldo(periode: Periode = "semua") {
+export async function getSaldo(periode: Periode = "semua", userId: string) {
   const { dari } = periodeRange(periode);
   const where = dari ? { tanggal: { gte: dari } } : {};
   const [masuk, keluar] = await Promise.all([
-    prisma.transaksi.aggregate({ _sum: { jumlah: true }, where: { ...where, jenis: "masuk" } }),
-    prisma.transaksi.aggregate({ _sum: { jumlah: true }, where: { ...where, jenis: "keluar" } }),
+    prisma.transaksi.aggregate({ _sum: { jumlah: true }, where: { ...where, jenis: "masuk", userId } }),
+    prisma.transaksi.aggregate({ _sum: { jumlah: true }, where: { ...where, jenis: "keluar", userId } }),
   ]);
   const totalMasuk = masuk._sum.jumlah ?? 0;
   const totalKeluar = keluar._sum.jumlah ?? 0;
   return { totalMasuk, totalKeluar, saldo: totalMasuk - totalKeluar };
 }
 
-export async function getRingkasanKategori(periode: Periode = "semua") {
+export async function getRingkasanKategori(periode: Periode = "semua", userId: string) {
   const { dari } = periodeRange(periode);
   const rows = await prisma.transaksi.findMany({
-    where: { ...(dari ? { tanggal: { gte: dari } } : {}), jenis: "keluar" },
+    where: { ...(dari ? { tanggal: { gte: dari } } : {}), jenis: "keluar", userId },
     select: { kategori: true, jumlah: true },
   });
   const map = new Map<string, number>();
@@ -37,10 +37,10 @@ export async function getRingkasanKategori(periode: Periode = "semua") {
     .sort((a, b) => b.jumlah - a.jumlah);
 }
 
-export async function getGrafikHarian() {
+export async function getGrafikHarian(userId: string) {
   const dari = startOfWeek();
   const rows = await prisma.transaksi.findMany({
-    where: { tanggal: { gte: dari } },
+    where: { tanggal: { gte: dari }, userId },
     select: { jenis: true, jumlah: true, tanggal: true },
   });
   const hari = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
@@ -57,13 +57,17 @@ export async function getGrafikHarian() {
 export const TRANSKASI_PAGE = 50;
 
 export type TransaksiFilter = {
+  userId: string;
   jenis?: "masuk" | "keluar";
   search?: string;
 };
 
 // WHERE dipakai bersama oleh daftar + subtotal agar angkanya konsisten.
 function transaksiWhere(opts: TransaksiFilter): Prisma.TransaksiWhereInput {
-  const where: Prisma.TransaksiWhereInput = { ...(opts.jenis ? { jenis: opts.jenis } : {}) };
+  const where: Prisma.TransaksiWhereInput = {
+    userId: opts.userId,
+    ...(opts.jenis ? { jenis: opts.jenis } : {}),
+  };
   const q = (opts.search ?? "").trim();
   if (!q) return where;
   const or: Prisma.TransaksiWhereInput[] = [
@@ -83,7 +87,7 @@ function transaksiWhere(opts: TransaksiFilter): Prisma.TransaksiWhereInput {
 
 const transaksiOrder: Prisma.TransaksiOrderByWithRelationInput[] = [{ tanggal: "desc" }, { id: "desc" }];
 
-export async function getTransaksiPage(opts: TransaksiFilter & { cursor?: string; limit?: number } = {}) {
+export async function getTransaksiPage(opts: TransaksiFilter & { cursor?: string; limit?: number }) {
   const limit = opts.limit ?? TRANSKASI_PAGE;
   const rows = await prisma.transaksi.findMany({
     where: transaksiWhere(opts),
@@ -101,7 +105,7 @@ export async function getTransaksiPage(opts: TransaksiFilter & { cursor?: string
 }
 
 // Subtotal seluruh hasil filter (bukan cuma halaman yang termuat).
-export async function getTransaksiTotal(opts: TransaksiFilter = {}) {
+export async function getTransaksiTotal(opts: TransaksiFilter) {
   const where = transaksiWhere(opts);
   const [masuk, keluar] = await Promise.all([
     prisma.transaksi.aggregate({ _sum: { jumlah: true }, where: { ...where, jenis: "masuk" } }),
@@ -119,10 +123,10 @@ export async function getKategoriExisting(): Promise<string[]> {
   return rows.map((r) => r.kategori).sort();
 }
 
-// Harga satuan terakhir suatu produk (untuk prefill form).
-export async function getHargaTerakhirProduk(produkId: string): Promise<number | null> {
+// Harga satuan terakhir suatu produk milik user (untuk prefill form).
+export async function getHargaTerakhirProduk(produkId: string, userId: string): Promise<number | null> {
   const t = await prisma.transaksi.findFirst({
-    where: { produkId, jenis: "keluar", hargaSatuan: { not: null } },
+    where: { produkId, userId, jenis: "keluar", hargaSatuan: { not: null } },
     orderBy: [{ tanggal: "desc" }, { id: "desc" }],
     select: { hargaSatuan: true },
   });
@@ -135,10 +139,10 @@ export type TrenHarga = {
   riwayat: number[]; // ≤8 harga terakhir, tertua dulu (untuk sparkline)
 };
 
-// Tren per produk yang punya ≥2 pembelian ber-harga.
-export async function getTrenHarga(): Promise<Record<string, TrenHarga>> {
+// Tren per produk milik user yang punya ≥2 pembelian ber-harga.
+export async function getTrenHarga(userId: string): Promise<Record<string, TrenHarga>> {
   const rows = await prisma.transaksi.findMany({
-    where: { jenis: "keluar", hargaSatuan: { not: null }, produkId: { not: null } },
+    where: { userId, jenis: "keluar", hargaSatuan: { not: null }, produkId: { not: null } },
     select: { produkId: true, hargaSatuan: true, tanggal: true, id: true },
     orderBy: [{ tanggal: "desc" }, { id: "desc" }],
   });
@@ -164,8 +168,12 @@ export async function getTrenHarga(): Promise<Record<string, TrenHarga>> {
   return hasil;
 }
 
-export async function getHutang() {
-  const rows = await prisma.hutang.findMany({ orderBy: { tanggal: "desc" }, take: 200 });
+export async function getHutang(userId: string) {
+  const rows = await prisma.hutang.findMany({
+    where: { userId },
+    orderBy: { tanggal: "desc" },
+    take: 200,
+  });
   const sisa = (h: { jumlah: number; dibayar: number }) => h.jumlah - h.dibayar;
   return {
     hutang: rows.filter((r) => r.arah === "hutang"),
@@ -177,13 +185,13 @@ export async function getHutang() {
 export type StatusAnggaran = "aman" | "waspada" | "bocor";
 
 // Anggaran vs realisasi keluar bulan tertentu + kategori tanpa anggaran.
-export async function getAnggaranVsRealisasi(bulan: string = bulanIni()) {
+export async function getAnggaranVsRealisasi(bulan: string = bulanIni(), userId: string) {
   const { dari, sampai } = rentangBulan(bulan);
   const [anggaran, keluar] = await Promise.all([
-    prisma.anggaran.findMany({ where: { userId: null, bulan }, orderBy: { kategori: "asc" } }),
+    prisma.anggaran.findMany({ where: { userId, bulan }, orderBy: { kategori: "asc" } }),
     prisma.transaksi.groupBy({
       by: ["kategori"],
-      where: { userId: null, jenis: "keluar", tanggal: { gte: dari, lt: sampai } },
+      where: { userId, jenis: "keluar", tanggal: { gte: dari, lt: sampai } },
       _sum: { jumlah: true },
     }),
   ]);
@@ -218,19 +226,19 @@ export function labelBulan(bulan: string): string {
   return `${NAMA_BULAN[Number(m[2]) - 1]} ${m[1]}`;
 }
 
-// Data rekap bulanan untuk teks share WA.
-export async function getRekap(bulan: string = bulanIni()) {
+// Data rekap bulanan milik user untuk teks share WA.
+export async function getRekap(bulan: string = bulanIni(), userId: string) {
   const { dari, sampai } = rentangBulan(bulan);
   const range = { tanggal: { gte: dari, lt: sampai } };
   const [masuk, keluar, perKategori, hutang] = await Promise.all([
-    prisma.transaksi.aggregate({ _sum: { jumlah: true }, where: { ...range, jenis: "masuk" } }),
-    prisma.transaksi.aggregate({ _sum: { jumlah: true }, where: { ...range, jenis: "keluar" } }),
+    prisma.transaksi.aggregate({ _sum: { jumlah: true }, where: { ...range, jenis: "masuk", userId } }),
+    prisma.transaksi.aggregate({ _sum: { jumlah: true }, where: { ...range, jenis: "keluar", userId } }),
     prisma.transaksi.groupBy({
       by: ["kategori"],
-      where: { ...range, jenis: "keluar" },
+      where: { ...range, jenis: "keluar", userId },
       _sum: { jumlah: true },
     }),
-    prisma.hutang.findMany({ where: { status: "belum" } }),
+    prisma.hutang.findMany({ where: { status: "belum", userId } }),
   ]);
   const totalMasuk = masuk._sum.jumlah ?? 0;
   const totalKeluar = keluar._sum.jumlah ?? 0;

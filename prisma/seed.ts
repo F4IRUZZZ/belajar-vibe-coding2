@@ -1,6 +1,21 @@
+import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
 export async function main() {
+  // User dev untuk seed (password: keluarga123 — ganti di produksi).
+  let user = await prisma.user.findFirst({ where: { emailLower: "dev@lokal" } });
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        email: "dev@lokal",
+        emailLower: "dev@lokal",
+        username: "Dev",
+        usernameLower: "dev",
+        passwordHash: await bcrypt.hash("keluarga123", 10),
+        role: "keluarga",
+      },
+    });
+  }
   const beras = await prisma.produk.upsert({
     where: { namaLower: "beras" },
     update: {},
@@ -11,14 +26,21 @@ export async function main() {
     update: {},
     create: { nama: "Sabun", namaLower: "sabun", kategori: "Mandi" },
   });
-  const count = await prisma.transaksi.count();
+  const count = await prisma.transaksi.count({ where: { userId: user.id } });
   if (count === 0) {
     const t1 = await prisma.transaksi.create({
-      data: { jenis: "masuk", jumlah: 300000, tanggal: new Date(), kategori: "Gajian" },
+      data: { userId: user.id, jenis: "masuk", jumlah: 300000, tanggal: new Date(), kategori: "Gajian" },
     });
     await prisma.catatan.create({ data: { transaksiId: t1.id, isi: "Gajian minggu ini" } });
     await prisma.transaksi.create({
-      data: { jenis: "keluar", jumlah: 50000, tanggal: new Date(), kategori: "Pangan", produkId: beras.id },
+      data: {
+        userId: user.id,
+        jenis: "keluar",
+        jumlah: 50000,
+        tanggal: new Date(),
+        kategori: "Pangan",
+        produkId: beras.id,
+      },
     });
   }
   console.log("seed ok");

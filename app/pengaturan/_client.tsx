@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
-import { Download, FlaskConical, Monitor, Moon, Smartphone, Sun } from "lucide-react";
+import { Download, LogOut, Monitor, Moon, Smartphone, Sun, UserRound } from "lucide-react";
+import { logout } from "@/lib/actions/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { SegmentedControl } from "@/components/ui/segmented";
@@ -35,7 +36,13 @@ function SettingRow({
   );
 }
 
-export function PengaturanClient({ csvHref }: { csvHref: string }) {
+export function PengaturanClient({
+  csvHref,
+  user,
+}: {
+  csvHref: string;
+  user: { email: string; username: string; role: string } | null;
+}) {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -52,9 +59,21 @@ export function PengaturanClient({ csvHref }: { csvHref: string }) {
   return (
     <div className="space-y-3">
       <SettingRow
-        icon={<FlaskConical className="h-4 w-4" />}
-        title="Mode testing"
-        description="Tanpa login — semua perangkat yang buka URL ini berbagi data yang sama."
+        icon={<UserRound className="h-4 w-4" />}
+        title={user ? `${user.username} · ${user.role}` : "Akun"}
+        description={user ? user.email : "Belum masuk"}
+        control={
+          <Button
+            variant="secondary"
+            className="shrink-0"
+            onClick={() => {
+              if (confirm("Keluar dari akun ini?")) logout();
+            }}
+          >
+            <LogOut className="h-4 w-4" />
+            Keluar
+          </Button>
+        }
       />
       <SettingRow
         icon={<Download className="h-4 w-4" />}

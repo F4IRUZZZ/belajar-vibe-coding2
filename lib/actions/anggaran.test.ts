@@ -2,6 +2,13 @@ import { beforeAll, afterAll, beforeEach, describe, expect, it, vi } from "vites
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
+vi.mock("next/headers", () => ({
+  cookies: async () => ({
+    get: () => ({ value: "test-token" }),
+    set: () => {},
+    delete: () => {},
+  }),
+}));
 
 import { prisma } from "@/lib/prisma";
 import { getAnggaranVsRealisasi } from "@/lib/store";
@@ -9,6 +16,8 @@ import { hapusAnggaran, salinBulanLalu, upsertAnggaran } from "./anggaran";
 import { createTransaksi } from "./transaksi";
 
 async function bersih() {
+  await prisma.session.deleteMany();
+  await prisma.user.deleteMany();
   await prisma.catatan.deleteMany();
   await prisma.hutang.deleteMany();
   await prisma.transaksi.deleteMany();
@@ -16,8 +25,30 @@ async function bersih() {
   await prisma.anggaran.deleteMany();
 }
 
+let uid = "";
+
+async function masukSebagaiTest() {
+  const u = await prisma.user.create({
+    data: {
+      email: "test@x.id",
+      emailLower: "test@x.id",
+      username: "Test",
+      usernameLower: "test",
+      passwordHash: "x",
+      role: "keluarga",
+    },
+  });
+  await prisma.session.create({
+    data: { token: "test-token", userId: u.id, expiresAt: new Date("2999-01-01") },
+  });
+  uid = u.id;
+}
+
 beforeAll(bersih);
-beforeEach(bersih);
+beforeEach(async () => {
+  await bersih();
+  await masukSebagaiTest();
+});
 afterAll(async () => {
   await bersih();
   await prisma.$disconnect();
@@ -78,7 +109,7 @@ describe("getAnggaranVsRealisasi", () => {
     await createTransaksi({ jenis: "keluar", jumlah: "30000", tanggal: "2026-09-08", kategori: "Jajan" });
     await createTransaksi({ jenis: "keluar", jumlah: "999000", tanggal: "2026-08-08", kategori: "Pangan" }); // bulan lain, abaikan
 
-    const r = await getAnggaranVsRealisasi("2026-09");
+    const r = await getAnggaranVsRealisasi("2026-09", uid);
     const byKat = new Map(r.item.map((i) => [i.kategori, i]));
     expect(byKat.get("Pangan")).toMatchObject({ terpakai: 50000, persen: 50, status: "aman" });
     expect(byKat.get("Mandi")).toMatchObject({ terpakai: 85000, persen: 85, status: "waspada" });

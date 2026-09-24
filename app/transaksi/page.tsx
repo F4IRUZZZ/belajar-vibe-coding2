@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { ambilUser } from "@/lib/auth";
 import { getTransaksiPage, getTransaksiTotal, getProduk } from "@/lib/store";
 import { PageHeader } from "@/components/ui/field";
 import { TransaksiForm, TransaksiList } from "./_client";
@@ -8,10 +10,12 @@ export default async function TransaksiPage({
   searchParams: Promise<{ tab?: string; q?: string }>;
 }) {
   const { tab, q } = await searchParams;
+  const user = await ambilUser();
+  if (!user) redirect("/login");
   const jenis = tab === "masuk" || tab === "keluar" ? tab : undefined;
   const [{ rows, nextCursor }, total, produk] = await Promise.all([
-    getTransaksiPage({ jenis, search: q }),
-    getTransaksiTotal({ jenis, search: q }),
+    getTransaksiPage({ userId: user.id, jenis, search: q }),
+    getTransaksiTotal({ userId: user.id, jenis, search: q }),
     getProduk(),
   ]);
   return (

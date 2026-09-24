@@ -2,6 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { wajibUser } from "@/lib/auth";
 import { parseRupiah, parseTanggalLokal } from "@/lib/format";
 
 const transaksiSchema = z.object({
@@ -15,6 +16,7 @@ const transaksiSchema = z.object({
 });
 
 export async function createTransaksi(input: z.infer<typeof transaksiSchema>) {
+  const user = await wajibUser();
   const p = transaksiSchema.parse(input);
   const jumlah = parseRupiah(p.jumlah);
   if (jumlah <= 0) throw new Error("Jumlah harus > 0");
@@ -25,6 +27,7 @@ export async function createTransaksi(input: z.infer<typeof transaksiSchema>) {
   if (pakaiHarga && p.hargaSatuan && (hargaSatuan ?? 0) <= 0) throw new Error("Harga satuan harus > 0");
   const tx = await prisma.transaksi.create({
     data: {
+      userId: user.id,
       jenis: p.jenis,
       jumlah,
       hargaSatuan,
@@ -40,6 +43,7 @@ export async function createTransaksi(input: z.infer<typeof transaksiSchema>) {
 }
 
 export async function updateTransaksi(id: string, input: { jumlah?: string; tanggal?: string; kategori?: string }) {
+  const user = await wajibUser();
   const data: { jumlah?: number; tanggal?: Date; kategori?: string } = {};
   if (input.jumlah !== undefined) {
     const j = parseRupiah(input.jumlah);
@@ -48,45 +52,69 @@ export async function updateTransaksi(id: string, input: { jumlah?: string; tang
   }
   if (input.tanggal) data.tanggal = parseTanggalLokal(input.tanggal);
   if (input.kategori) data.kategori = input.kategori.trim();
-  await prisma.transaksi.update({ where: { id }, data });
+  const r = await prisma.transaksi.updateMany({ where: { id, userId: user.id }, data });
+  if (r.count === 0) throw new Error("Data tidak ditemukan");
   revalidatePath("/");
   revalidatePath("/transaksi");
 }
 
 export async function deleteTransaksi(ids: string[]) {
   if (ids.length === 0) return;
-  await prisma.transaksi.deleteMany({ where: { id: { in: ids } } });
+  const user = await wajibUser();
+  await prisma.transaksi.deleteMany({ where: { id: { in: ids }, userId: user.id } });
   revalidatePath("/");
   revalidatePath("/transaksi");
 }
 
+async function milikUser(transaksiId: string, userId: string) {
+  const t = await prisma.transaksi.findFirst({ where: { id: transaksiId, userId }, select: { id: true } });
+  if (!t) throw new Error("Data tidak ditemukan");
+}
+
 export async function addCatatan(transaksiId: string, isi: string) {
+  const user = await wajibUser();
   const v = isi.trim();
   if (!v) throw new Error("Catatan kosong");
+  await milikUser(transaksiId, user.id);
   await prisma.catatan.create({ data: { transaksiId, isi: v } });
   revalidatePath("/transaksi");
 }
 
+async function catatanMilikUser(id: string, userId: string) {
+  const c = await prisma.catatan.findFirst({
+    where: { id, transaksi: { userId } },
+    select: { id: true },
+  });
+  if (!c) throw new Error("Data tidak ditemukan");
+}
+
 export async function updateCatatan(id: string, isi: string) {
+  const user = await wajibUser();
+  await catatanMilikUser(id, user.id);
   await prisma.catatan.update({ where: { id }, data: { isi: isi.trim() } });
   revalidatePath("/transaksi");
 }
 
 export async function deleteCatatan(id: string) {
+  const user = await wajibUser();
+  await catatanMilikUser(id, user.id);
   await prisma.catatan.delete({ where: { id } });
   revalidatePath("/transaksi");
 }
 
 // Harga terakhir produk untuk prefill form (dipanggil saat produk dipilih).
 export async function getHargaTerakhir(produkId: string): Promise<number | null> {
+  const user = await wajibUser();
   const { getHargaTerakhirProduk } = await import("@/lib/store");
-  return getHargaTerakhirProduk(produkId);
+  return getHargaTerakhirProduk(produkId, user.id);
 }
 
 // Halaman berikutnya untuk tombol "Muat lagi" (tanggal -> ISO agar serializable).
 export async function listTransaksiPage(input: { jenis?: "masuk" | "keluar"; search?: string; cursor: string }) {
+  const user = await wajibUser();
   const { getTransaksiPage } = await import("@/lib/store");
   const { rows, nextCursor } = await getTransaksiPage({
+    userId: user.id,
     jenis: input.jenis,
     search: input.search,
     cursor: input.cursor,

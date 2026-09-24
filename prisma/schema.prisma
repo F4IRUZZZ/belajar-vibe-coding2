@@ -24,6 +24,38 @@ enum StatusHutang {
   lunas
 }
 
+enum Role {
+  pribadi
+  keluarga
+}
+
+// Akun: 1 email dipakai rame-rame serumah (role keluarga) atau sendiri (pribadi).
+// Email/username disimpan apa adanya + versi lower untuk unik case-insensitive.
+model User {
+  id            String    @id @default(cuid())
+  email         String
+  emailLower    String    @unique
+  username      String
+  usernameLower String    @unique
+  passwordHash  String
+  role          Role      @default(keluarga)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions Session[]
+}
+
+// 1 user = 1 sesi aktif (login baru menghanguskan sesi lama).
+model Session {
+  token     String   @id // random 32 byte hex, dibuat di kode
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
 model Produk {
   id        String   @id @default(cuid())
   userId    String? // NULL = master shared global (mode single-tenant hari ini)
@@ -40,7 +72,7 @@ model Produk {
 
 model Transaksi {
   id        String         @id @default(cuid())
-  userId    String? // siap-auth Fase 2; NULL = data single-tenant existing
+  userId    String // pemilik baris (Fase 2, backfill dari NULL)
   jenis     JenisTransaksi
   jumlah    Int // Rupiah murni (integer, tanpa sen)
   hargaSatuan Int? // Harga per unit saat beli (opsional, khusus keluar + produk)
@@ -71,7 +103,7 @@ model Catatan {
 
 model Hutang {
   id               String        @id @default(cuid())
-  userId           String? // siap-auth Fase 2; NULL = data single-tenant existing
+  userId           String // pemilik baris (Fase 2, backfill dari NULL)
   arah             ArahHutang
   pihak            String
   jumlah           Int
@@ -90,10 +122,9 @@ model Hutang {
 }
 
 // Anggaran pengeluaran per kategori per bulan ("2026-09").
-// userId NULL = single-tenant (hari ini); di Postgres, NULL tidak bentrok di @@unique.
 model Anggaran {
   id        String   @id @default(cuid())
-  userId    String?
+  userId    String
   kategori  String
   batas     Int // Rupiah per bulan
   bulan     String // YYYY-MM

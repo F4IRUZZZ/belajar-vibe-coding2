@@ -55,7 +55,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
           <span className="ml-auto hidden items-center gap-1.5 rounded-full border border-glow/25 bg-glow/10 px-3 py-1 font-mono text-[11px] text-irish-soft sm:inline-flex">
             <FlaskConical className="h-3.5 w-3.5" />
-            MODE TESTING · TANPA LOGIN
+            DATA PER AKUN
           </span>
           <Link
             href="/transaksi"
@@ -118,7 +118,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <span className="h-2 w-2 rounded-full bg-ok" />
                 <span className="font-mono text-[11px] text-muted">Data lokal · tersimpan</span>
               </div>
-              <p className="px-2 pt-1 font-mono text-[10px] text-muted/60">v0.1 · mode testing</p>
+              <p className="px-2 pt-1 font-mono text-[10px] text-muted/60">v0.2 · per akun</p>
             </div>
           </div>
         </aside>

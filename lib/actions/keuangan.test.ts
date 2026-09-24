@@ -2,6 +2,13 @@ import { beforeAll, afterAll, beforeEach, describe, expect, it, vi } from "vites
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
+vi.mock("next/headers", () => ({
+  cookies: async () => ({
+    get: () => ({ value: "test-token" }),
+    set: () => {},
+    delete: () => {},
+  }),
+}));
 
 import { prisma } from "@/lib/prisma";
 import { getTransaksiPage, getTransaksiTotal } from "@/lib/store";
@@ -9,14 +16,39 @@ import { bayarHutang, createHutang } from "./hutang";
 import { createTransaksi, deleteTransaksi } from "./transaksi";
 
 async function bersih() {
+  await prisma.session.deleteMany();
+  await prisma.user.deleteMany();
   await prisma.catatan.deleteMany();
   await prisma.hutang.deleteMany();
   await prisma.transaksi.deleteMany();
   await prisma.produk.deleteMany();
+  await prisma.anggaran.deleteMany();
+}
+
+let uid = "";
+
+async function masukSebagaiTest() {
+  const u = await prisma.user.create({
+    data: {
+      email: "test@x.id",
+      emailLower: "test@x.id",
+      username: "Test",
+      usernameLower: "test",
+      passwordHash: "x",
+      role: "keluarga",
+    },
+  });
+  await prisma.session.create({
+    data: { token: "test-token", userId: u.id, expiresAt: new Date("2999-01-01") },
+  });
+  uid = u.id;
 }
 
 beforeAll(bersih);
-beforeEach(bersih);
+beforeEach(async () => {
+  await bersih();
+  await masukSebagaiTest();
+});
 afterAll(async () => {
   await bersih();
   await prisma.$disconnect();
@@ -120,16 +152,16 @@ describe("getTransaksiPage + getTransaksiTotal (DB)", () => {
         kategori: i % 2 ? "Gajian" : "Pangan",
       });
     }
-    const p1 = await getTransaksiPage({ limit: 10 });
+    const p1 = await getTransaksiPage({ userId: uid, limit: 10 });
     expect(p1.rows).toHaveLength(10);
     expect(p1.nextCursor).not.toBeNull();
-    const p2 = await getTransaksiPage({ limit: 10, cursor: p1.nextCursor! });
-    const p3 = await getTransaksiPage({ limit: 10, cursor: p2.nextCursor! });
+    const p2 = await getTransaksiPage({ userId: uid, limit: 10, cursor: p1.nextCursor! });
+    const p3 = await getTransaksiPage({ userId: uid, limit: 10, cursor: p2.nextCursor! });
     const ids = [...p1.rows, ...p2.rows, ...p3.rows].map((t) => t.id);
     expect(new Set(ids).size).toBe(25);
     expect(p3.nextCursor).toBeNull();
 
-    const total = await getTransaksiTotal();
+    const total = await getTransaksiTotal({ userId: uid });
     expect(total.masuk).toBeGreaterThan(0);
     expect(total.keluar).toBeGreaterThan(0);
   });
@@ -148,12 +180,12 @@ describe("getTransaksiPage + getTransaksiTotal (DB)", () => {
       tanggal: "2026-07-01",
       kategori: "Gajian",
     });
-    expect((await getTransaksiPage({ search: "warung" })).rows).toHaveLength(1);
-    expect((await getTransaksiPage({ search: "PANGAN" })).rows).toHaveLength(1);
-    expect((await getTransaksiPage({ search: "75000" })).rows).toHaveLength(1);
-    expect((await getTransaksiPage({ search: "2026-07-15" })).rows).toHaveLength(1);
-    expect((await getTransaksiPage({ search: "tidak-ada-xyz" })).rows).toHaveLength(0);
-    const total = await getTransaksiTotal({ search: "warung" });
+    expect((await getTransaksiPage({ userId: uid, search: "warung" })).rows).toHaveLength(1);
+    expect((await getTransaksiPage({ userId: uid, search: "PANGAN" })).rows).toHaveLength(1);
+    expect((await getTransaksiPage({ userId: uid, search: "75000" })).rows).toHaveLength(1);
+    expect((await getTransaksiPage({ userId: uid, search: "2026-07-15" })).rows).toHaveLength(1);
+    expect((await getTransaksiPage({ userId: uid, search: "tidak-ada-xyz" })).rows).toHaveLength(0);
+    const total = await getTransaksiTotal({ userId: uid, search: "warung" });
     expect(total).toEqual({ masuk: 0, keluar: 75000 });
   });
 });

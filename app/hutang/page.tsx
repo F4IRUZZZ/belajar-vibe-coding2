@@ -1,9 +1,13 @@
+import { redirect } from "next/navigation";
+import { ambilUser } from "@/lib/auth";
 import { getHutang } from "@/lib/store";
 import { PageHeader } from "@/components/ui/field";
 import { HutangClient } from "./_client";
 
 export default async function HutangPage() {
-  const { hutang, piutang } = await getHutang();
+  const user = await ambilUser();
+  if (!user) redirect("/login");
+  const { hutang, piutang } = await getHutang(user.id);
   return (
     <div>
       <PageHeader

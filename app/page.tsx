@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { ambilUser } from "@/lib/auth";
 import { getSaldo, getRingkasanKategori, getGrafikHarian, getAnggaranVsRealisasi, type Periode } from "@/lib/store";
 import { formatRupiah } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,12 +29,14 @@ export default async function Dashboard({
   searchParams: Promise<{ p?: string }>;
 }) {
   const { p } = await searchParams;
+  const user = await ambilUser();
+  if (!user) redirect("/login");
   const periode: Periode = p === "minggu" || p === "bulan" ? p : "semua";
   const [saldo, kategori, harian, anggaran] = await Promise.all([
-    getSaldo(periode),
-    getRingkasanKategori(periode),
-    getGrafikHarian(),
-    getAnggaranVsRealisasi(),
+    getSaldo(periode, user.id),
+    getRingkasanKategori(periode, user.id),
+    getGrafikHarian(user.id),
+    getAnggaranVsRealisasi(undefined, user.id),
   ]);
   const maxDonat = Math.max(1, ...kategori.map((k) => k.jumlah));
   const perhatian = [...anggaran.item]

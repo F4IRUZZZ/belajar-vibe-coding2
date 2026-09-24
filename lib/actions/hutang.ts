@@ -2,6 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { wajibUser } from "@/lib/auth";
 import { parseRupiah, parseTanggalLokal } from "@/lib/format";
 
 const hutangSchema = z.object({
@@ -14,12 +15,14 @@ const hutangSchema = z.object({
 });
 
 export async function createHutang(input: z.infer<typeof hutangSchema>) {
+  const user = await wajibUser();
   const p = hutangSchema.parse(input);
   const jumlah = parseRupiah(p.jumlah);
   if (jumlah <= 0) throw new Error("Jumlah harus > 0");
   if (!p.pihak.trim()) throw new Error("Pihak wajib");
   await prisma.hutang.create({
     data: {
+      userId: user.id,
       arah: p.arah,
       pihak: p.pihak.trim(),
       jumlah,
@@ -33,10 +36,11 @@ export async function createHutang(input: z.infer<typeof hutangSchema>) {
 
 // Bayar sebagian / pelunasan: transaksional + auto-jurnal ke kas + idempoten.
 export async function bayarHutang(id: string, nominalStr: string) {
+  const user = await wajibUser();
   const nominal = parseRupiah(nominalStr);
   if (nominal <= 0) throw new Error("Nominal harus > 0");
   await prisma.$transaction(async (tx) => {
-    const h = await tx.hutang.findUnique({ where: { id } });
+    const h = await tx.hutang.findFirst({ where: { id, userId: user.id } });
     if (!h) throw new Error("Data tidak ditemukan");
     if (h.status === "lunas") throw new Error("Sudah lunas");
     const sisa = h.jumlah - h.dibayar;
@@ -46,6 +50,7 @@ export async function bayarHutang(id: string, nominalStr: string) {
     // Auto-catat ke kas: hutang->keluar, piutang->masuk
     const kas = await tx.transaksi.create({
       data: {
+        userId: user.id,
         jenis: h.arah === "hutang" ? "keluar" : "masuk",
         jumlah: nominal,
         tanggal: new Date(),
@@ -69,9 +74,10 @@ export async function bayarHutang(id: string, nominalStr: string) {
 }
 
 export async function deleteHutang(id: string) {
-  const h = await prisma.hutang.findUnique({ where: { id } });
+  const user = await wajibUser();
+  const h = await prisma.hutang.findFirst({ where: { id, userId: user.id } });
   if (!h) throw new Error("Data tidak ditemukan");
   if (h.status === "lunas") throw new Error("Yang lunas = jejak audit, tidak bisa dihapus");
-  await prisma.hutang.delete({ where: { id } });
+  await prisma.hutang.delete({ where: { id: h.id } });
   revalidatePath("/hutang");
 }
