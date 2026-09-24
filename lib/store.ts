@@ -119,6 +119,51 @@ export async function getKategoriExisting(): Promise<string[]> {
   return rows.map((r) => r.kategori).sort();
 }
 
+// Harga satuan terakhir suatu produk (untuk prefill form).
+export async function getHargaTerakhirProduk(produkId: string): Promise<number | null> {
+  const t = await prisma.transaksi.findFirst({
+    where: { produkId, jenis: "keluar", hargaSatuan: { not: null } },
+    orderBy: [{ tanggal: "desc" }, { id: "desc" }],
+    select: { hargaSatuan: true },
+  });
+  return t?.hargaSatuan ?? null;
+}
+
+export type TrenHarga = {
+  terakhir: number;
+  persen: number | null; // vs rata-rata ≤3 pembelian ber-harga sebelumnya
+  riwayat: number[]; // ≤8 harga terakhir, tertua dulu (untuk sparkline)
+};
+
+// Tren per produk yang punya ≥2 pembelian ber-harga.
+export async function getTrenHarga(): Promise<Record<string, TrenHarga>> {
+  const rows = await prisma.transaksi.findMany({
+    where: { jenis: "keluar", hargaSatuan: { not: null }, produkId: { not: null } },
+    select: { produkId: true, hargaSatuan: true, tanggal: true, id: true },
+    orderBy: [{ tanggal: "desc" }, { id: "desc" }],
+  });
+  const grup = new Map<string, number[]>();
+  for (const r of rows) {
+    if (r.produkId == null || r.hargaSatuan == null) continue;
+    const arr = grup.get(r.produkId) ?? [];
+    if (arr.length < 8) arr.push(r.hargaSatuan);
+    grup.set(r.produkId, arr);
+  }
+  const hasil: Record<string, TrenHarga> = {};
+  for (const [pid, arr] of grup) {
+    if (arr.length < 2) continue;
+    const [terakhir, ...prev] = arr;
+    const dasar = prev.slice(0, 3);
+    const rata = dasar.reduce((a, b) => a + b, 0) / dasar.length;
+    hasil[pid] = {
+      terakhir,
+      persen: rata > 0 ? Math.round(((terakhir - rata) / rata) * 100) : null,
+      riwayat: [...arr].reverse(),
+    };
+  }
+  return hasil;
+}
+
 export async function getHutang() {
   const rows = await prisma.hutang.findMany({ orderBy: { tanggal: "desc" }, take: 200 });
   const sisa = (h: { jumlah: number; dibayar: number }) => h.jumlah - h.dibayar;

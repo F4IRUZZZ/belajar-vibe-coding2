@@ -1,8 +1,10 @@
 "use client";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Package, Pencil, Trash2 } from "lucide-react";
+import { Package, Pencil, Trash2, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import { createProduk, updateProduk, deleteProduk } from "@/lib/actions/produk";
+import { formatRupiah } from "@/lib/format";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,8 +14,35 @@ import { Combobox } from "@/components/ui/combobox";
 import { Table, TableHead, TableRow, TH, TD } from "@/components/ui/data-table";
 
 type P = { id: string; nama: string; kategori: string };
+type Tren = { terakhir: number; persen: number | null; riwayat: number[] };
 
-export function ProdukClient({ initial, kategoriExisting }: { initial: P[]; kategoriExisting: string[] }) {
+function Spark({ data }: { data: number[] }) {
+  if (data.length < 2) return null;
+  const w = 64;
+  const h = 20;
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const span = max - min || 1;
+  const pts = data
+    .map((v, i) => `${((i / (data.length - 1)) * w).toFixed(1)},${(h - 2 - ((v - min) / span) * (h - 4)).toFixed(1)}`)
+    .join(" ");
+  const naik = data[data.length - 1] >= data[0];
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden className="mt-1 block">
+      <polyline points={pts} fill="none" stroke={naik ? "var(--color-bad)" : "var(--color-ok)"} strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+export function ProdukClient({
+  initial,
+  kategoriExisting,
+  tren,
+}: {
+  initial: P[];
+  kategoriExisting: string[];
+  tren: Record<string, Tren>;
+}) {
   const router = useRouter();
   const [nama, setNama] = useState("");
   const [kategori, setKategori] = useState("");
@@ -99,14 +128,38 @@ export function ProdukClient({ initial, kategoriExisting }: { initial: P[]; kate
                 <TH>No</TH>
                 <TH>Nama</TH>
                 <TH>Kategori</TH>
+                <TH align="right">Terakhir</TH>
                 <TH align="right">Aksi</TH>
               </TableHead>
               <tbody>
-                {initial.map((p, i) => (
+                {initial.map((p, i) => {
+                  const t = tren[p.id];
+                  return (
                   <TableRow key={p.id}>
                     <TD mono className="text-muted">{i + 1}</TD>
                     <TD className="font-medium">{p.nama}</TD>
                     <TD>{p.kategori}</TD>
+                    <TD align="right">
+                      {t ? (
+                        <span className="inline-block text-right">
+                          <span className="flex items-center justify-end gap-1.5 font-mono">
+                            Rp{formatRupiah(t.terakhir)}
+                            {t.persen == null ? (
+                              <Badge variant="outline"><Minus className="h-3 w-3" />baru</Badge>
+                            ) : t.persen > 0 ? (
+                              <Badge variant="bad"><TrendingUp className="h-3 w-3" />{t.persen}%</Badge>
+                            ) : t.persen < 0 ? (
+                              <Badge variant="ok"><TrendingDown className="h-3 w-3" />{t.persen}%</Badge>
+                            ) : (
+                              <Badge variant="outline">stabil</Badge>
+                            )}
+                          </span>
+                          <Spark data={t.riwayat} />
+                        </span>
+                      ) : (
+                        <span className="font-mono text-muted">—</span>
+                      )}
+                    </TD>
                     <TD align="right">
                       <div className="flex justify-end gap-1">
                         <Button
@@ -129,7 +182,8 @@ export function ProdukClient({ initial, kategoriExisting }: { initial: P[]; kate
                       </div>
                     </TD>
                   </TableRow>
-                ))}
+                  );
+                })}
               </tbody>
             </Table>
           )}

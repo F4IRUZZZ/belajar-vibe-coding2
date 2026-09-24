@@ -10,6 +10,7 @@ const transaksiSchema = z.object({
   tanggal: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   kategori: z.string().min(1).max(100),
   produkId: z.string().optional(),
+  hargaSatuan: z.string().optional(),
   catatan: z.string().max(500).optional(),
 });
 
@@ -18,10 +19,15 @@ export async function createTransaksi(input: z.infer<typeof transaksiSchema>) {
   const jumlah = parseRupiah(p.jumlah);
   if (jumlah <= 0) throw new Error("Jumlah harus > 0");
   const tanggal = parseTanggalLokal(p.tanggal);
+  // Harga satuan hanya relevan untuk pembelian berproduk; selain itu abaikan.
+  const pakaiHarga = p.jenis === "keluar" && !!p.produkId;
+  const hargaSatuan = pakaiHarga && p.hargaSatuan ? parseRupiah(p.hargaSatuan) : null;
+  if (pakaiHarga && p.hargaSatuan && (hargaSatuan ?? 0) <= 0) throw new Error("Harga satuan harus > 0");
   const tx = await prisma.transaksi.create({
     data: {
       jenis: p.jenis,
       jumlah,
+      hargaSatuan,
       tanggal,
       kategori: p.kategori.trim(),
       produkId: p.produkId || null,
@@ -69,6 +75,12 @@ export async function updateCatatan(id: string, isi: string) {
 export async function deleteCatatan(id: string) {
   await prisma.catatan.delete({ where: { id } });
   revalidatePath("/transaksi");
+}
+
+// Harga terakhir produk untuk prefill form (dipanggil saat produk dipilih).
+export async function getHargaTerakhir(produkId: string): Promise<number | null> {
+  const { getHargaTerakhirProduk } = await import("@/lib/store");
+  return getHargaTerakhirProduk(produkId);
 }
 
 // Halaman berikutnya untuk tombol "Muat lagi" (tanggal -> ISO agar serializable).

@@ -43,6 +43,7 @@ model Transaksi {
   userId    String? // siap-auth Fase 2; NULL = data single-tenant existing
   jenis     JenisTransaksi
   jumlah    Int // Rupiah murni (integer, tanpa sen)
+  hargaSatuan Int? // Harga per unit saat beli (opsional, khusus keluar + produk)
   tanggal   DateTime
   kategori  String
   produkId  String?

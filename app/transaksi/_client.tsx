@@ -2,7 +2,7 @@
 import { Fragment, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowDownRight, ArrowUpRight, MessageSquarePlus, Pencil, Plus, Search, Trash2, X } from "lucide-react";
-import { createTransaksi, deleteTransaksi, listTransaksiPage, addCatatan, deleteCatatan } from "@/lib/actions/transaksi";
+import { createTransaksi, deleteTransaksi, listTransaksiPage, getHargaTerakhir, addCatatan, deleteCatatan } from "@/lib/actions/transaksi";
 import { formatRupiah, parseRupiah, todayLocal } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,9 +31,23 @@ export function TransaksiForm({ produk }: { produk: Produk[] }) {
   const [produkId, setProdukId] = useState("");
   const [kategoriBebas, setKategoriBebas] = useState("");
   const [catatan, setCatatan] = useState("");
+  const [hargaStr, setHargaStr] = useState("");
   const [err, setErr] = useState("");
   const [pending, start] = useTransition();
   const showKategori = jenis === "masuk" || produkId === "__bebas" || (jenis === "keluar" && !produkId);
+  const showHarga = jenis === "keluar" && !!produk.find((x) => x.id === produkId);
+
+  const pilihProduk = (id: string) => {
+    setProdukId(id);
+    setHargaStr("");
+    const prod = produk.find((x) => x.id === id);
+    if (prod) {
+      start(async () => {
+        const h = await getHargaTerakhir(prod.id);
+        if (h != null) setHargaStr(String(h));
+      });
+    }
+  };
 
   const submit = () =>
     start(async () => {
@@ -50,9 +64,10 @@ export function TransaksiForm({ produk }: { produk: Produk[] }) {
           tanggal,
           kategori,
           produkId: prod ? prod.id : undefined,
+          hargaSatuan: showHarga && hargaStr ? hargaStr : undefined,
           catatan: catatan || undefined,
         });
-        setJumlahStr(""); setCatatan(""); setKategoriBebas(""); setProdukId("");
+        setJumlahStr(""); setCatatan(""); setKategoriBebas(""); setProdukId(""); setHargaStr("");
         router.refresh();
       } catch (e) {
         setErr(e instanceof Error ? e.message : "Gagal menyimpan");
@@ -93,11 +108,22 @@ export function TransaksiForm({ produk }: { produk: Produk[] }) {
               ariaLabel="Produk"
               placeholder="Pilih produk…"
               value={produkId}
-              onChange={setProdukId}
+              onChange={pilihProduk}
               options={[
                 ...produk.map((p) => ({ value: p.id, label: `${p.nama} (${p.kategori})` })),
                 { value: "__bebas", label: "Tulis sendiri…" },
               ]}
+            />
+          </Field>
+        </Expand>
+        <Expand open={showHarga}>
+          <Field label="Harga satuan (Rp, opsional)" htmlFor="tx-harga" hint="Terisi otomatis dari pembelian terakhir, bisa diubah">
+            <Input
+              id="tx-harga"
+              inputMode="numeric"
+              placeholder="cth: 12000"
+              value={hargaStr ? formatRupiah(parseRupiah(hargaStr)) : ""}
+              onChange={(e) => setHargaStr(e.target.value.replace(/[^0-9]/g, ""))}
             />
           </Field>
         </Expand>
