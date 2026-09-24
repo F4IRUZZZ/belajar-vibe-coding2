@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { Download, LogOut, Monitor, Moon, Smartphone, Sun, UserRound } from "lucide-react";
-import { logout } from "@/lib/actions/auth";
+import { authClient } from "@/lib/auth-client";
 import { InstallButton } from "@/components/install-button";
 import { CsvImpor } from "@/components/csv-impor";
 import { Card, CardContent } from "@/components/ui/card";
@@ -47,6 +48,7 @@ export function PengaturanClient({
   hutangHref: string;
   user: { email: string; username: string; role: string } | null;
 }) {
+  const router = useRouter();
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -70,8 +72,10 @@ export function PengaturanClient({
           <Button
             variant="secondary"
             className="shrink-0"
-            onClick={() => {
-              if (confirm("Keluar dari akun ini?")) logout();
+            onClick={async () => {
+              if (!confirm("Keluar dari akun ini?")) return;
+              await authClient.signOut();
+              router.push("/login");
             }}
           >
             <LogOut className="h-4 w-4" />

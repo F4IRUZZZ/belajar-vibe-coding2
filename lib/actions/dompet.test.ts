@@ -2,12 +2,10 @@ import { beforeAll, afterAll, beforeEach, describe, expect, it, vi } from "vites
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
+
+const box = vi.hoisted(() => ({ cookie: "" }));
 vi.mock("next/headers", () => ({
-  cookies: async () => ({
-    get: () => ({ value: "test-token" }),
-    set: () => {},
-    delete: () => {},
-  }),
+  headers: async () => new Headers(box.cookie ? { cookie: `better-auth.session_token=${box.cookie}` } : {}),
 }));
 
 import { prisma } from "@/lib/prisma";
@@ -15,45 +13,19 @@ import { DOMPET_KAS, getSaldoPerDompet } from "@/lib/store";
 import { createDompet, deleteDompet, getDompetSaya, renameDompet } from "./dompet";
 import { createTransaksi } from "./transaksi";
 
-async function bersih() {
-  await prisma.session.deleteMany();
-  await prisma.user.deleteMany();
-  await prisma.catatan.deleteMany();
-  await prisma.hutang.deleteMany();
-  await prisma.transaksi.deleteMany();
-  await prisma.produk.deleteMany();
-  await prisma.anggaran.deleteMany();
-  await prisma.target.deleteMany();
-  await prisma.jadwal.deleteMany();
-  await prisma.dompet.deleteMany();
-}
+import { bersihSemua, buatSesiTest } from "@/lib/testing";
 
 let uid = "";
 
-async function masukSebagaiTest() {
-  const u = await prisma.user.create({
-    data: {
-      email: "test@x.id",
-      emailLower: "test@x.id",
-      username: "Test",
-      usernameLower: "test",
-      passwordHash: "x",
-      role: "keluarga",
-    },
-  });
-  await prisma.session.create({
-    data: { token: "test-token", userId: u.id, expiresAt: new Date("2999-01-01") },
-  });
-  uid = u.id;
-}
-
-beforeAll(bersih);
+beforeAll(bersihSemua);
 beforeEach(async () => {
-  await bersih();
-  await masukSebagaiTest();
+  await bersihSemua();
+  const s = await buatSesiTest("test@x.id", "Test");
+  box.cookie = s.cookie;
+  uid = s.userId;
 });
 afterAll(async () => {
-  await bersih();
+  await bersihSemua();
   await prisma.$disconnect();
 });
 
@@ -111,17 +83,8 @@ describe("dompet", () => {
   });
 
   it("menolak dompet milik orang lain", async () => {
-    const lain = await prisma.user.create({
-      data: {
-        email: "lain@x.id",
-        emailLower: "lain@x.id",
-        username: "Lain",
-        usernameLower: "lain",
-        passwordHash: "x",
-        role: "pribadi",
-      },
-    });
-    const milikLain = await prisma.dompet.create({ data: { userId: lain.id, nama: "Brankas" } });
+    const lain = await buatSesiTest("lain@x.id", "Lain");
+    const milikLain = await prisma.dompet.create({ data: { userId: lain.userId, nama: "Brankas" } });
     await expect(
       createTransaksi({
         jenis: "masuk",

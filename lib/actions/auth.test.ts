@@ -3,123 +3,62 @@ import { beforeAll, afterAll, beforeEach, describe, expect, it, vi } from "vites
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
 
-const jar = new Map<string, string>();
+const box = vi.hoisted(() => ({ cookie: "" }));
 vi.mock("next/headers", () => ({
-  cookies: async () => ({
-    get: (k: string) => (jar.has(k) ? { value: jar.get(k) } : undefined),
-    set: (k: string, v: string) => void jar.set(k, v),
-    delete: (k: string) => void jar.delete(k),
-  }),
-}));
-vi.mock("next/navigation", () => ({
-  redirect: (url: string) => {
-    throw new Error(`NEXT_REDIRECT:${url}`);
-  },
+  headers: async () => new Headers(box.cookie ? { cookie: `better-auth.session_token=${box.cookie}` } : {}),
 }));
 
 import { prisma } from "@/lib/prisma";
-import { SESSION_COOKIE, ambilUser, hashPassword, verifyPassword } from "@/lib/auth";
+import { ambilUser, wajibUser } from "@/lib/auth";
 import { getTransaksiPage } from "@/lib/store";
-import { login, logout, register } from "./auth";
-import { createTransaksi, deleteTransaksi } from "./transaksi";
+import { bersihSemua, buatSesiTest } from "@/lib/testing";
+import { createTransaksi } from "./transaksi";
 
-async function bersih() {
-  jar.clear();
-  await prisma.session.deleteMany();
-  await prisma.user.deleteMany();
-  await prisma.catatan.deleteMany();
-  await prisma.hutang.deleteMany();
-  await prisma.transaksi.deleteMany();
-  await prisma.produk.deleteMany();
-  await prisma.anggaran.deleteMany();
-  await prisma.target.deleteMany();
-  await prisma.jadwal.deleteMany();
-  await prisma.dompet.deleteMany();
-}
-
-beforeAll(bersih);
-beforeEach(bersih);
+beforeAll(bersihSemua);
+beforeEach(async () => {
+  await bersihSemua();
+  box.cookie = "";
+});
 afterAll(async () => {
-  await bersih();
+  await bersihSemua();
   await prisma.$disconnect();
 });
 
-describe("password", () => {
-  it("hash + verifikasi", async () => {
-    const h = await hashPassword("rahasia123");
-    expect(h).not.toContain("rahasia123");
-    expect(await verifyPassword("rahasia123", h)).toBe(true);
-    expect(await verifyPassword("salah", h)).toBe(false);
-  });
-});
-
-describe("register + login + logout", () => {
-  it("daftar → sesi cookie terisi → user terbaca", async () => {
-    await expect(
-      register({ email: "Ibu@contoh.id", username: "Ibu", password: "keluarga123", role: "keluarga" }),
-    ).rejects.toThrow("NEXT_REDIRECT:/");
-    expect(jar.get(SESSION_COOKIE)).toBeTruthy();
-    const u = await ambilUser();
-    expect(u).toMatchObject({ email: "ibu@contoh.id", username: "Ibu", role: "keluarga" });
+describe("sesi better-auth", () => {
+  it("tanpa cookie = anonim, wajibUser melempar", async () => {
+    expect(await ambilUser()).toBeNull();
+    await expect(wajibUser()).rejects.toThrow("Masuk dulu");
   });
 
-  it("menolak email/username ganda dan password lemah", async () => {
-    await expect(
-      register({ email: "a@x.id", username: "Ayah", password: "ayah1234", role: "pribadi" }),
-    ).rejects.toThrow("NEXT_REDIRECT");
-    await expect(
-      register({ email: "A@X.id", username: "Lain", password: "lain1234", role: "pribadi" }),
-    ).rejects.toThrow("Email sudah terdaftar");
-    await expect(
-      register({ email: "b@x.id", username: "AYAH", password: "b1234567", role: "pribadi" }),
-    ).rejects.toThrow("Username sudah dipakai");
-    await expect(
-      register({ email: "c@x.id", username: "Caca", password: "pendek", role: "pribadi" }),
-    ).rejects.toThrow();
-    await expect(
-      register({ email: "d@x.id", username: "Dede", password: "tanpaangka", role: "pribadi" }),
-    ).rejects.toThrow("huruf + angka");
+  it("cookie sesi valid = user terpetakan (nama Google)", async () => {
+    const s = await buatSesiTest("ibu@contoh.id", "Ibu");
+    box.cookie = s.cookie;
+    expect(await ambilUser()).toMatchObject({ id: s.userId, email: "ibu@contoh.id", username: "Ibu" });
   });
 
-  it("login benar/salah + sesi tunggal + logout", async () => {
-    await expect(
-      register({ email: "a@x.id", username: "Ayah", password: "ayah1234", role: "pribadi" }),
-    ).rejects.toThrow("NEXT_REDIRECT");
-    const token1 = jar.get(SESSION_COOKIE);
-    await expect(login({ email: "a@x.id", password: "salah" })).rejects.toThrow("Email/password salah");
-    await expect(login({ email: "a@x.id", password: "ayah1234" })).rejects.toThrow("NEXT_REDIRECT:/");
-    const token2 = jar.get(SESSION_COOKIE);
-    expect(token2).not.toBe(token1); // sesi lama hangus
-    expect(await prisma.session.count()).toBe(1);
-    await expect(logout()).rejects.toThrow("NEXT_REDIRECT:/login");
+  it("token basi/kedaluwarsa = anonim", async () => {
+    box.cookie = "token-ngawur-tanpa-tandatangan";
+    expect(await ambilUser()).toBeNull();
+    const s = await buatSesiTest("a@x.id", "Ayah");
+    await prisma.session.update({
+      where: { token: s.token },
+      data: { expiresAt: new Date("2020-01-01") },
+    });
+    box.cookie = s.cookie;
     expect(await ambilUser()).toBeNull();
   });
 });
 
 describe("isolasi data antar user", () => {
-  it("B tidak melihat / tidak bisa mengubah data A", async () => {
-    await expect(
-      register({ email: "a@x.id", username: "Ayah", password: "ayah1234", role: "keluarga" }),
-    ).rejects.toThrow("NEXT_REDIRECT");
-    const userA = (await ambilUser())!;
-    const idA = await createTransaksi({
-      jenis: "masuk",
-      jumlah: "100000",
-      tanggal: "2026-09-01",
-      kategori: "Gajian",
-    });
-    expect((await getTransaksiPage({ userId: userA.id })).rows).toHaveLength(1);
+  it("B tidak melihat data A", async () => {
+    const a = await buatSesiTest("a@x.id", "Ayah");
+    box.cookie = a.cookie;
+    await createTransaksi({ jenis: "masuk", jumlah: "100000", tanggal: "2026-09-01", kategori: "Gajian" });
+    expect((await getTransaksiPage({ userId: a.userId })).rows).toHaveLength(1);
 
-    jar.clear(); // ganti perangkat: sesi A hilang
-    await expect(
-      register({ email: "b@x.id", username: "Bunda", password: "bunda1234", role: "keluarga" }),
-    ).rejects.toThrow("NEXT_REDIRECT");
-    const userB = (await ambilUser())!;
-    expect(userB.id).not.toBe(userA.id);
-    expect((await getTransaksiPage({ userId: userB.id })).rows).toHaveLength(0);
-
-    // B mencoba hapus milik A: tidak error massal, tapi data A utuh
-    await deleteTransaksi([idA]);
-    expect((await getTransaksiPage({ userId: userA.id })).rows).toHaveLength(1);
+    const b = await buatSesiTest("b@x.id", "Bunda");
+    box.cookie = b.cookie;
+    expect((await ambilUser())?.id).toBe(b.userId);
+    expect((await getTransaksiPage({ userId: b.userId })).rows).toHaveLength(0);
   });
 });

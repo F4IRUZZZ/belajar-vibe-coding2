@@ -1,19 +1,12 @@
-import bcrypt from "bcryptjs";
+import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 
 export async function main() {
-  // User dev untuk seed (password: keluarga123 — ganti di produksi).
-  let user = await prisma.user.findFirst({ where: { emailLower: "dev@lokal" } });
+  // User dev untuk seed (login via Google dengan email yang sama di dev).
+  let user = await prisma.user.findFirst({ where: { email: "dev@lokal" } });
   if (!user) {
     user = await prisma.user.create({
-      data: {
-        email: "dev@lokal",
-        emailLower: "dev@lokal",
-        username: "Dev",
-        usernameLower: "dev",
-        passwordHash: await bcrypt.hash("keluarga123", 10),
-        role: "keluarga",
-      },
+      data: { id: randomUUID(), name: "Dev", email: "dev@lokal" },
     });
   }
   const beras = await prisma.produk.upsert({

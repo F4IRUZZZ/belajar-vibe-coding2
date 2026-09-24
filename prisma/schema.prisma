@@ -24,38 +24,6 @@ enum StatusHutang {
   lunas
 }
 
-enum Role {
-  pribadi
-  keluarga
-}
-
-// Akun: 1 email dipakai rame-rame serumah (role keluarga) atau sendiri (pribadi).
-// Email/username disimpan apa adanya + versi lower untuk unik case-insensitive.
-model User {
-  id            String    @id @default(cuid())
-  email         String
-  emailLower    String    @unique
-  username      String
-  usernameLower String    @unique
-  passwordHash  String
-  role          Role      @default(keluarga)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  sessions Session[]
-}
-
-// 1 user = 1 sesi aktif (login baru menghanguskan sesi lama).
-model Session {
-  token     String   @id // random 32 byte hex, dibuat di kode
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-}
-
 model Produk {
   id        String   @id @default(cuid())
   userId    String? // NULL = master shared global (mode single-tenant hari ini)
@@ -195,4 +163,67 @@ model Dompet {
 
   @@unique([userId, nama])
   @@index([userId])
+}
+
+// ===== better-auth (Google OAuth only) =====
+// Tabel huruf-kecil milik adapter; User/Session lama (huruf kapital) dihapus
+// setelah migrasi preservasi-ID. Semua userId data app menunjuk user.id ini.
+model user {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now()) @updatedAt
+  sessions      session[]
+  accounts      account[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("session")
+}
+
+model account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  user      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("account")
+}
+
+model verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@map("verification")
 }
