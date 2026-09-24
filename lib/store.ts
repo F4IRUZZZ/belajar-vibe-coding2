@@ -307,3 +307,86 @@ export async function getTargets(userId: string) {
     return { ...t, terkumpul, persen };
   });
 }
+
+export type Insight = {
+  keluarIni: number;
+  keluarLalu: number;
+  persenKeluar: number | null; // vs bulan lalu
+  kategoriNaik: { kategori: string; ini: number; lalu: number; persen: number | null }[];
+  tempoDekat: { id: string; arah: string; pihak: string; sisa: number; jatuhTempo: Date }[];
+};
+
+// Perbandingan bulan berjalan vs bulan lalu + tempo ≤7 hari. Murni agregasi.
+export async function getInsight(userId: string, sekarang: Date = new Date()): Promise<Insight> {
+  const bulanIniStr = `${sekarang.getFullYear()}-${String(sekarang.getMonth() + 1).padStart(2, "0")}`;
+  const lalu = new Date(sekarang.getFullYear(), sekarang.getMonth() - 1, 1);
+  const bulanLaluStr = `${lalu.getFullYear()}-${String(lalu.getMonth() + 1).padStart(2, "0")}`;
+  const rIni = rentangBulan(bulanIniStr);
+  const rLalu = rentangBulan(bulanLaluStr);
+
+  const [aggIni, aggLalu, katIni, katLalu, hutang] = await Promise.all([
+    prisma.transaksi.aggregate({
+      _sum: { jumlah: true },
+      where: { userId, jenis: "keluar", tanggal: { gte: rIni.dari, lt: rIni.sampai } },
+    }),
+    prisma.transaksi.aggregate({
+      _sum: { jumlah: true },
+      where: { userId, jenis: "keluar", tanggal: { gte: rLalu.dari, lt: rLalu.sampai } },
+    }),
+    prisma.transaksi.groupBy({
+      by: ["kategori"],
+      where: { userId, jenis: "keluar", tanggal: { gte: rIni.dari, lt: rIni.sampai } },
+      _sum: { jumlah: true },
+    }),
+    prisma.transaksi.groupBy({
+      by: ["kategori"],
+      where: { userId, jenis: "keluar", tanggal: { gte: rLalu.dari, lt: rLalu.sampai } },
+      _sum: { jumlah: true },
+    }),
+    prisma.hutang.findMany({
+      where: {
+        userId,
+        status: "belum",
+        jatuhTempo: { not: null, lte: new Date(sekarang.getTime() + 7 * 24 * 3600 * 1000) },
+      },
+      orderBy: { jatuhTempo: "asc" },
+      take: 5,
+    }),
+  ]);
+
+  const keluarIni = aggIni._sum.jumlah ?? 0;
+  const keluarLalu = aggLalu._sum.jumlah ?? 0;
+  const persenKeluar = keluarLalu > 0 ? Math.round(((keluarIni - keluarLalu) / keluarLalu) * 100) : null;
+
+  const mapLalu = new Map(katLalu.map((k) => [k.kategori, k._sum.jumlah ?? 0]));
+  const kategoriNaik = katIni
+    .map((k) => {
+      const ini = k._sum.jumlah ?? 0;
+      const laluJ = mapLalu.get(k.kategori) ?? 0;
+      return {
+        kategori: k.kategori,
+        ini,
+        lalu: laluJ,
+        persen: laluJ > 0 ? Math.round(((ini - laluJ) / laluJ) * 100) : null,
+      };
+    })
+    .filter((k) => k.persen != null && k.persen > 0)
+    .sort((a, b) => (b.persen ?? 0) - (a.persen ?? 0))
+    .slice(0, 3);
+
+  return {
+    keluarIni,
+    keluarLalu,
+    persenKeluar,
+    kategoriNaik,
+    tempoDekat: hutang
+      .filter((h) => h.jatuhTempo != null)
+      .map((h) => ({
+        id: h.id,
+        arah: h.arah,
+        pihak: h.pihak,
+        sisa: h.jumlah - h.dibayar,
+        jatuhTempo: h.jatuhTempo!,
+      })),
+  };
+}

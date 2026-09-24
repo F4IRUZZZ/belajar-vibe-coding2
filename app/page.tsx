@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ambilUser } from "@/lib/auth";
-import { getSaldo, getRingkasanKategori, getGrafikHarian, getAnggaranVsRealisasi, type Periode } from "@/lib/store";
-import { formatRupiah } from "@/lib/format";
+import { getSaldo, getRingkasanKategori, getGrafikHarian, getAnggaranVsRealisasi, getInsight, type Periode } from "@/lib/store";
+import { formatRupiah, formatTanggalId } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -15,6 +15,7 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   HandCoins,
+  Lightbulb,
   Package,
   PiggyBank,
   PlusCircle,
@@ -32,11 +33,12 @@ export default async function Dashboard({
   const user = await ambilUser();
   if (!user) redirect("/login");
   const periode: Periode = p === "minggu" || p === "bulan" ? p : "semua";
-  const [saldo, kategori, harian, anggaran] = await Promise.all([
+  const [saldo, kategori, harian, anggaran, insight] = await Promise.all([
     getSaldo(periode, user.id),
     getRingkasanKategori(periode, user.id),
     getGrafikHarian(user.id),
     getAnggaranVsRealisasi(undefined, user.id),
+    getInsight(user.id),
   ]);
   const maxDonat = Math.max(1, ...kategori.map((k) => k.jumlah));
   const perhatian = [...anggaran.item]
@@ -158,6 +160,40 @@ export default async function Dashboard({
             )}
           </CardContent>
         </Card>
+
+      {(insight.persenKeluar != null || insight.kategoriNaik.length > 0 || insight.tempoDekat.length > 0) && (
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <p className="mb-2 flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
+              <Lightbulb className="h-3.5 w-3.5" />
+              Insight bulan ini
+            </p>
+            <ul className="space-y-1.5 text-[13px]">
+              {insight.persenKeluar != null && (
+                <li>
+                  Pengeluaran{" "}
+                  <Badge variant={insight.persenKeluar > 0 ? "warn" : "ok"}>
+                    {insight.persenKeluar > 0 ? `naik ${insight.persenKeluar}%` : insight.persenKeluar < 0 ? `turun ${-insight.persenKeluar}%` : "sama"}
+                  </Badge>{" "}
+                  vs bulan lalu (Rp{formatRupiah(insight.keluarIni)} vs Rp{formatRupiah(insight.keluarLalu)}).
+                </li>
+              )}
+              {insight.kategoriNaik.map((k) => (
+                <li key={k.kategori}>
+                  {k.kategori} naik {k.persen}% (Rp{formatRupiah(k.lalu)} jadi Rp{formatRupiah(k.ini)}).
+                </li>
+              ))}
+              {insight.tempoDekat.map((h) => (
+                <li key={h.id}>
+                  <Badge variant="bad">tempo</Badge>{" "}
+                  {h.arah} {h.pihak} Rp{formatRupiah(h.sisa)} jatuh {formatTanggalId(h.jatuhTempo)} —{" "}
+                  <Link href="/hutang" className="text-irish-soft hover:text-ink">lihat</Link>.
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-3">
         {[
