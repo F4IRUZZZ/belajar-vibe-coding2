@@ -1,5 +1,5 @@
 "use client";
-import { Fragment, useState, useTransition } from "react";
+import { Fragment, useState, useTransition, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowDownToLine, ArrowUpFromLine, Check, HandCoins, Wallet, X } from "lucide-react";
 import { createHutang, bayarHutang, deleteHutang } from "@/lib/actions/hutang";
@@ -59,9 +59,9 @@ function Seksi({ title, rows, icon }: { title: string; rows: H[]; icon: "hutang"
               <TH align="right">Aksi</TH>
             </TableHead>
             <tbody>
-              {rows.map((h) => (
+              {rows.map((h, i) => (
                 <Fragment key={h.id}>
-                  <TableRow>
+                  <TableRow className="anim-enter" style={{ "--d": `${Math.min(i * 25, 250)}ms` } as CSSProperties}>
                     <TD>
                       <div className="flex flex-wrap items-center gap-1.5 font-medium">
                         {h.pihak}

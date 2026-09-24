@@ -4,6 +4,7 @@ import { useId, useMemo, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { ArrowDownRight, ArrowUpRight, ChartLine } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { AnimatedNumber } from "@/components/animated-number";
 import { formatRupiah } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -136,14 +137,15 @@ export function CashflowChart({
         <div className="mb-3 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[12px] text-muted">
           <span className="inline-flex items-center gap-1">
             <ArrowUpRight className="h-3.5 w-3.5 text-ok" />
-            Rp{formatRupiah(totals.masuk)}
+            <AnimatedNumber value={totals.masuk} />
           </span>
           <span className="inline-flex items-center gap-1">
             <ArrowDownRight className="h-3.5 w-3.5 text-glow" />
-            Rp{formatRupiah(totals.keluar)}
+            <AnimatedNumber value={totals.keluar} />
           </span>
           <span className={cn("ml-auto font-semibold", totals.net < 0 ? "text-bad" : "text-ink")}>
-            Net {totals.net < 0 ? "−" : "+"}Rp{formatRupiah(Math.abs(totals.net))}
+            Net {totals.net < 0 ? "−" : "+"}
+            <AnimatedNumber value={Math.abs(totals.net)} prefix="" />
           </span>
         </div>
 

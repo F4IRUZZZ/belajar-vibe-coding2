@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export function Table({ children, className }: { children: ReactNode; className?: string }) {
@@ -19,8 +19,8 @@ export function TableHead({ children }: { children: ReactNode }) {
   );
 }
 
-export function TableRow({ children, className }: { children: ReactNode; className?: string }) {
-  return <tr className={cn("border-b border-line/50 transition-colors last:border-0 hover:bg-accent/40", className)}>{children}</tr>;
+export function TableRow({ children, className, style }: { children: ReactNode; className?: string; style?: CSSProperties }) {
+  return <tr style={style} className={cn("border-b border-line/50 transition-colors last:border-0 hover:bg-accent/40", className)}>{children}</tr>;
 }
 
 export function TH({

@@ -10,6 +10,8 @@ import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/field";
 import { CashflowChart } from "@/components/cashflow-chart";
 import { RekapButtons } from "@/components/rekap-buttons";
+import { AnimatedNumber } from "@/components/animated-number";
+import { Reveal } from "@/components/reveal";
 import { bulanIni } from "@/lib/format";
 import {
   ArrowDownRight,
@@ -71,7 +73,7 @@ export default async function Dashboard({
               Saldo · {labelPeriode}
             </p>
             <h1 className={`mt-0.5 text-3xl font-semibold tracking-tight ${saldo.saldo < 0 ? "text-bad" : "text-ink"}`}>
-              Rp{formatRupiah(saldo.saldo)}
+              <AnimatedNumber value={saldo.saldo} />
             </h1>
           </div>
         </div>
@@ -140,6 +142,7 @@ export default async function Dashboard({
       </div>
 
       <div className="mb-6 grid gap-3 lg:grid-cols-2">
+        <Reveal>
         <Card>
           <CardContent className="p-4">
             <div className="mb-3 flex items-center justify-between">
@@ -182,6 +185,8 @@ export default async function Dashboard({
             )}
           </CardContent>
         </Card>
+        </Reveal>
+        <Reveal delay={0.08}>
         <div>
           <div className="mb-2 flex items-center justify-end gap-1">
             <span className="font-mono text-[11px] text-muted">
@@ -196,8 +201,10 @@ export default async function Dashboard({
           </div>
           <CashflowChart data={harian} />
         </div>
+        </Reveal>
       </div>
 
+      <Reveal>
       <Card className="mb-6">
         <CardContent className="p-4">
           <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted">Keluar per kategori</p>
@@ -228,8 +235,10 @@ export default async function Dashboard({
             )}
           </CardContent>
         </Card>
+      </Reveal>
 
       {(insight.persenKeluar != null || insight.kategoriNaik.length > 0 || insight.tempoDekat.length > 0) && (
+        <Reveal>
         <Card className="mb-6">
           <CardContent className="p-4">
             <p className="mb-2 flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
@@ -261,6 +270,7 @@ export default async function Dashboard({
             </ul>
           </CardContent>
         </Card>
+        </Reveal>
       )}
 
       <div className="grid gap-3 sm:grid-cols-3">

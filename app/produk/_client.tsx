@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useState, useTransition, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { Package, Pencil, Trash2, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import { createProduk, updateProduk, deleteProduk } from "@/lib/actions/produk";
@@ -135,7 +135,7 @@ export function ProdukClient({
                 {initial.map((p, i) => {
                   const t = tren[p.id];
                   return (
-                  <TableRow key={p.id}>
+                  <TableRow key={p.id} className="anim-enter" style={{ "--d": `${Math.min(i * 25, 250)}ms` } as CSSProperties}>
                     <TD mono className="text-muted">{i + 1}</TD>
                     <TD className="font-medium">{p.nama}</TD>
                     <TD>{p.kategori}</TD>

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useState, useTransition, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowDownRight, ArrowUpRight, CalendarClock, Play, Plus, Trash2 } from "lucide-react";
 import { createJadwal, deleteJadwal, jalankanJadwal, toggleJadwal } from "@/lib/actions/jadwal";
@@ -141,8 +141,8 @@ export function JadwalClient({ initial }: { initial: J[] }) {
                 <TH align="right">Aksi</TH>
               </TableHead>
               <tbody>
-                {initial.map((j) => (
-                  <TableRow key={j.id}>
+                {initial.map((j, i) => (
+                  <TableRow key={j.id} className="anim-enter" style={{ "--d": `${Math.min(i * 25, 250)}ms` } as CSSProperties}>
                     <TD>
                       <span className="font-medium">{j.kategori}</span>
                       <span className="font-mono text-[11px] text-muted"> · {j.jenis} {j.frekuensi}</span>

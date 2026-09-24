@@ -1,6 +1,7 @@
 "use client";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Goal, Pencil, Plus, Trash2 } from "lucide-react";
 import { createTarget, deleteTarget, updateTarget } from "@/lib/actions/target";
 import { formatRupiah, formatTanggalId, parseRupiah, todayLocal } from "@/lib/format";
@@ -24,6 +25,7 @@ type T = {
 
 export function TargetClient({ initial }: { initial: T[] }) {
   const router = useRouter();
+  const reduce = useReducedMotion();
   const [nama, setNama] = useState("");
   const [targetStr, setTargetStr] = useState("");
   const [deadline, setDeadline] = useState("");
@@ -116,8 +118,17 @@ export function TargetClient({ initial }: { initial: T[] }) {
         </Card>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
+          <AnimatePresence initial={false}>
           {initial.map((t) => (
-            <Card key={t.id}>
+            <motion.div
+              key={t.id}
+              layout
+              initial={{ opacity: 0, scale: reduce ? 1 : 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: reduce ? 1 : 0.97 }}
+              transition={{ duration: reduce ? 0 : 0.25, ease: [0.22, 1, 0.36, 1] }}
+            >
+            <Card>
               <CardContent className="p-4">
                 <div className="mb-1 flex items-center justify-between gap-2">
                   <span className="font-semibold">{t.nama}</span>
@@ -160,7 +171,9 @@ export function TargetClient({ initial }: { initial: T[] }) {
                 </div>
               </CardContent>
             </Card>
+            </motion.div>
           ))}
+          </AnimatePresence>
         </div>
       )}
     </div>

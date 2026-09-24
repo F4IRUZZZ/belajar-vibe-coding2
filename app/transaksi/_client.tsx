@@ -1,5 +1,5 @@
 "use client";
-import { Fragment, useState, useTransition } from "react";
+import { Fragment, useState, useTransition, type CSSProperties } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowDownRight, ArrowUpRight, MessageSquarePlus, Pencil, Plus, Search, Trash2, Undo2, X } from "lucide-react";
@@ -302,9 +302,9 @@ export function TransaksiList({
               <TH align="right">Aksi</TH>
             </TableHead>
             <tbody>
-              {rows.map((t) => (
+              {rows.map((t, i) => (
                 <Fragment key={t.id}>
-                  <TableRow>
+                  <TableRow className="anim-enter" style={{ "--d": `${Math.min(i * 25, 250)}ms` } as CSSProperties}>
                     <TD>
                       <input
                         type="checkbox"
