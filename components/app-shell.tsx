@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
 import {
   ArrowLeftRight,
+  CalendarClock,
   FlaskConical,
   Goal,
   HandCoins,
@@ -24,6 +25,7 @@ const NAV = [
   { href: "/hutang", label: "Hutang", icon: HandCoins },
   { href: "/anggaran", label: "Anggaran", icon: PiggyBank },
   { href: "/target", label: "Target", icon: Goal },
+  { href: "/jadwal", label: "Rutin", icon: CalendarClock },
   { href: "/pengaturan", label: "Pengaturan", icon: Settings },
 ];
 

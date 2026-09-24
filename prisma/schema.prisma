@@ -152,3 +152,28 @@ model Target {
 
   @@index([userId])
 }
+
+enum Frekuensi {
+  mingguan
+  bulanan
+}
+
+// Template transaksi berulang. Dieksekusi oleh jalankanJadwal (tombol manual
+// atau cron memanggil /api/jadwal/run). lastKunci = tanggal jatuh tempo yang
+// terakhir dieksekusi, anti-catat-ganda.
+model Jadwal {
+  id        String         @id @default(cuid())
+  userId    String
+  frekuensi Frekuensi
+  jenis     JenisTransaksi
+  jumlah    Int // Rupiah
+  kategori  String
+  catatan   String?
+  nextRun   DateTime
+  lastKunci String?
+  aktif     Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([userId, aktif])
+}
