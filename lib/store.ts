@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "./prisma";
 import type { Prisma } from "@prisma/client";
-import { bulanIni, rentangBulan, startOfMonth, startOfWeek } from "./format";
+import { bulanIni, formatRupiah, rentangBulan, startOfMonth, startOfWeek } from "./format";
 
 export type Periode = "semua" | "minggu" | "bulan";
 
@@ -199,4 +199,83 @@ export async function getAnggaranVsRealisasi(bulan: string = bulanIni()) {
     .map(([kategori, terpakai]) => ({ kategori, terpakai }))
     .sort((a, b) => b.terpakai - a.terpakai);
   return { bulan, item, tanpaAnggaran };
+}
+
+// Satu-satunya definisi lewat-tempo: belum lunas + ada jatuh tempo yang sudah lewat.
+export function isLewatTempo(h: { status: string; jatuhTempo: Date | string | null }): boolean {
+  if (h.status === "lunas" || !h.jatuhTempo) return false;
+  return new Date(h.jatuhTempo).getTime() < Date.now();
+}
+
+const NAMA_BULAN = [
+  "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+  "Jul", "Agu", "Sep", "Okt", "Nov", "Des",
+];
+
+export function labelBulan(bulan: string): string {
+  const m = /^(\d{4})-(\d{2})$/.exec(bulan);
+  if (!m) return bulan;
+  return `${NAMA_BULAN[Number(m[2]) - 1]} ${m[1]}`;
+}
+
+// Data rekap bulanan untuk teks share WA.
+export async function getRekap(bulan: string = bulanIni()) {
+  const { dari, sampai } = rentangBulan(bulan);
+  const range = { tanggal: { gte: dari, lt: sampai } };
+  const [masuk, keluar, perKategori, hutang] = await Promise.all([
+    prisma.transaksi.aggregate({ _sum: { jumlah: true }, where: { ...range, jenis: "masuk" } }),
+    prisma.transaksi.aggregate({ _sum: { jumlah: true }, where: { ...range, jenis: "keluar" } }),
+    prisma.transaksi.groupBy({
+      by: ["kategori"],
+      where: { ...range, jenis: "keluar" },
+      _sum: { jumlah: true },
+    }),
+    prisma.hutang.findMany({ where: { status: "belum" } }),
+  ]);
+  const totalMasuk = masuk._sum.jumlah ?? 0;
+  const totalKeluar = keluar._sum.jumlah ?? 0;
+  const top = perKategori
+    .map((k) => ({ kategori: k.kategori, jumlah: k._sum.jumlah ?? 0 }))
+    .sort((a, b) => b.jumlah - a.jumlah)
+    .slice(0, 3)
+    .map((k) => ({ ...k, persen: totalKeluar ? Math.round((k.jumlah / totalKeluar) * 100) : 0 }));
+  const sisaHutang = hutang
+    .filter((h) => h.arah === "hutang")
+    .reduce((a, h) => a + (h.jumlah - h.dibayar), 0);
+  const sisaPiutang = hutang
+    .filter((h) => h.arah === "piutang")
+    .reduce((a, h) => a + (h.jumlah - h.dibayar), 0);
+  const lewatTempo = hutang.filter(isLewatTempo).length;
+  return {
+    bulan,
+    totalMasuk,
+    totalKeluar,
+    saldo: totalMasuk - totalKeluar,
+    top,
+    sisaHutang,
+    sisaPiutang,
+    pihakHutang: hutang.filter((h) => h.arah === "hutang").length,
+    lewatTempo,
+  };
+}
+
+// Teks rekap siap paste ke grup WA keluarga.
+export function formatRekapWa(r: Awaited<ReturnType<typeof getRekap>>): string {
+  const rp = (n: number) => `Rp${formatRupiah(n)}`;
+  const baris = [
+    `*Keuangan Keluarga, ${labelBulan(r.bulan)}*`,
+    `Saldo: ${rp(r.saldo)} (Masuk ${rp(r.totalMasuk)} - Keluar ${rp(r.totalKeluar)})`,
+  ];
+  if (r.top.length > 0) {
+    baris.push(`Top keluar: ${r.top.map((t) => `${t.kategori} ${rp(t.jumlah)} (${t.persen}%)`).join(", ")}`);
+  } else {
+    baris.push("Belum ada pengeluaran bulan ini.");
+  }
+  if (r.sisaHutang > 0 || r.sisaPiutang > 0) {
+    let liga = `Sisa hutang ${rp(r.sisaHutang)} (${r.pihakHutang} pihak)`;
+    if (r.sisaPiutang > 0) liga += `, piutang ${rp(r.sisaPiutang)}`;
+    if (r.lewatTempo > 0) liga += `, ${r.lewatTempo} LEWAT TEMPO`;
+    baris.push(liga);
+  }
+  return baris.join("\n");
 }

@@ -7,6 +7,8 @@ import { Progress } from "@/components/ui/progress";
 import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/field";
 import { CashflowChart } from "@/components/cashflow-chart";
+import { RekapButtons } from "@/components/rekap-buttons";
+import { bulanIni } from "@/lib/format";
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -62,7 +64,8 @@ export default async function Dashboard({
             <ArrowDownRight className="h-3 w-3" />
             Keluar Rp{formatRupiah(saldo.totalKeluar)}
           </Badge>
-          <span className="ml-auto flex gap-1">
+          <span className="ml-auto flex items-center gap-1">
+            <RekapButtons bulan={bulanIni()} />
             {(["semua", "minggu", "bulan"] as Periode[]).map((x) => (
               <Link
                 key={x}
