@@ -36,6 +36,14 @@ function isActive(pathname: string, href: string) {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  // Halaman publik (login) tampil fullscreen tanpa chrome aplikasi.
+  if (pathname === "/login" || pathname === "/register") {
+    return (
+      <main className="min-h-full">
+        <div className="mx-auto max-w-5xl px-4 py-6">{children}</div>
+      </main>
+    );
+  }
 
   return (
     <div className="flex min-h-full flex-col">
