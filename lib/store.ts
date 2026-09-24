@@ -5,6 +5,9 @@ import { bulanIni, formatRupiah, rentangBulan, startOfMonth, startOfWeek } from 
 
 export type Periode = "semua" | "minggu" | "bulan";
 
+// Nama dompet bawaan yang selalu ada per user.
+export const DOMPET_KAS = "Kas";
+
 export function periodeRange(p: Periode): { dari?: Date; sampai?: Date } {
   if (p === "minggu") return { dari: startOfWeek() };
   if (p === "bulan") return { dari: startOfMonth() };
@@ -389,4 +392,30 @@ export async function getInsight(userId: string, sekarang: Date = new Date()): P
         jatuhTempo: h.jatuhTempo!,
       })),
   };
+}
+
+// Saldo per dompet (periode + user). Transaksi lama ber-dompetId NULL
+// dilipat ke "Kas" agar total per dompet tetap = saldo keseluruhan.
+export async function getSaldoPerDompet(periode: Periode = "semua", userId: string) {
+  const { dari } = periodeRange(periode);
+  const base = dari ? { tanggal: { gte: dari } } : {};
+  let dompets = await prisma.dompet.findMany({ where: { userId }, orderBy: { nama: "asc" } });
+  if (!dompets.some((d) => d.nama === DOMPET_KAS)) {
+    await prisma.dompet.create({ data: { userId, nama: DOMPET_KAS } });
+    dompets = await prisma.dompet.findMany({ where: { userId }, orderBy: { nama: "asc" } });
+  }
+  const hasil = await Promise.all(
+    dompets.map(async (d) => {
+      const lipatNull = d.nama === DOMPET_KAS ? [{ dompetId: null }] : [];
+      const where = { ...base, userId, OR: [{ dompetId: d.id }, ...lipatNull] };
+      const [masuk, keluar] = await Promise.all([
+        prisma.transaksi.aggregate({ _sum: { jumlah: true }, where: { ...where, jenis: "masuk" } }),
+        prisma.transaksi.aggregate({ _sum: { jumlah: true }, where: { ...where, jenis: "keluar" } }),
+      ]);
+      const totalMasuk = masuk._sum.jumlah ?? 0;
+      const totalKeluar = keluar._sum.jumlah ?? 0;
+      return { id: d.id, nama: d.nama, masuk: totalMasuk, keluar: totalKeluar, saldo: totalMasuk - totalKeluar };
+    }),
+  );
+  return hasil;
 }

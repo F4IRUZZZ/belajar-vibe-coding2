@@ -23,6 +23,7 @@ async function bersih() {
   await prisma.anggaran.deleteMany();
   await prisma.target.deleteMany();
   await prisma.jadwal.deleteMany();
+  await prisma.dompet.deleteMany();
 }
 
 let uid = "";

@@ -23,7 +23,7 @@ type Tx = {
   produk: Produk | null; catatan: Cat[];
 };
 
-export function TransaksiForm({ produk, targets }: { produk: Produk[]; targets: { id: string; nama: string }[] }) {
+export function TransaksiForm({ produk, targets, dompets }: { produk: Produk[]; targets: { id: string; nama: string }[]; dompets: { id: string; nama: string }[] }) {
   const router = useRouter();
   const [jenis, setJenis] = useState<"masuk" | "keluar">("keluar");
   const [jumlahStr, setJumlahStr] = useState("");
@@ -32,6 +32,7 @@ export function TransaksiForm({ produk, targets }: { produk: Produk[]; targets: 
   const [kategoriBebas, setKategoriBebas] = useState("");
   const [catatan, setCatatan] = useState("");
   const [targetId, setTargetId] = useState("");
+  const [dompetId, setDompetId] = useState("");
   const [hargaStr, setHargaStr] = useState("");
   const [err, setErr] = useState("");
   const [pending, start] = useTransition();
@@ -67,9 +68,10 @@ export function TransaksiForm({ produk, targets }: { produk: Produk[]; targets: 
           produkId: prod ? prod.id : undefined,
           hargaSatuan: showHarga && hargaStr ? hargaStr : undefined,
           targetId: jenis === "masuk" && targetId ? targetId : undefined,
+          dompetId: dompetId || undefined,
           catatan: catatan || undefined,
         });
-        setJumlahStr(""); setCatatan(""); setKategoriBebas(""); setProdukId(""); setHargaStr(""); setTargetId("");
+        setJumlahStr(""); setCatatan(""); setKategoriBebas(""); setProdukId(""); setHargaStr(""); setTargetId(""); setDompetId("");
         router.refresh();
       } catch (e) {
         setErr(e instanceof Error ? e.message : "Gagal menyimpan");
@@ -141,6 +143,18 @@ export function TransaksiForm({ produk, targets }: { produk: Produk[]; targets: 
             />
           </Field>
         </Expand>
+        {dompets.length > 1 && (
+          <Field label="Dompet" htmlFor="tx-dompet">
+            <Select
+              id="tx-dompet"
+              ariaLabel="Dompet"
+              placeholder="Kas (bawaan)"
+              value={dompetId}
+              onChange={setDompetId}
+              options={dompets.map((d) => ({ value: d.id, label: d.nama }))}
+            />
+          </Field>
+        )}
         <Expand open={showKategori}>
           <Field label="Kategori" htmlFor="tx-kategori">
             <Input

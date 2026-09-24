@@ -87,6 +87,8 @@ model Transaksi {
   hutangLunas Hutang[] @relation("HutangLunas")
   targetId String?
   target   Target? @relation(fields: [targetId], references: [id], onDelete: SetNull)
+  dompetId String?
+  dompet   Dompet? @relation(fields: [dompetId], references: [id], onDelete: Restrict)
 
   @@index([jenis, tanggal])
   @@index([kategori])
@@ -176,4 +178,19 @@ model Jadwal {
   updatedAt DateTime       @updatedAt
 
   @@index([userId, aktif])
+}
+
+// Sumber dana (Kas, Bank, E-wallet). Transaksi lama userId-lama ber-dompetId
+// NULL dibaca sebagai "Kas" di agregasi.
+model Dompet {
+  id        String      @id @default(cuid())
+  userId    String
+  nama      String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  transaksi Transaksi[]
+
+  @@unique([userId, nama])
+  @@index([userId])
 }

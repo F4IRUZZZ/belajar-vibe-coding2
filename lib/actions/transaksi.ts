@@ -13,6 +13,7 @@ const transaksiSchema = z.object({
   produkId: z.string().optional(),
   hargaSatuan: z.string().optional(),
   targetId: z.string().optional(),
+  dompetId: z.string().optional(),
   catatan: z.string().max(500).optional(),
 });
 
@@ -33,6 +34,13 @@ export async function createTransaksi(input: z.infer<typeof transaksiSchema>) {
     if (!t) throw new Error("Target tidak ditemukan");
     targetId = t.id;
   }
+  // Dompet wajib milik sendiri; kosong = dompet pertama ("Kas").
+  let dompetId: string | null = null;
+  if (p.dompetId) {
+    const d = await prisma.dompet.findFirst({ where: { id: p.dompetId, userId: user.id }, select: { id: true } });
+    if (!d) throw new Error("Dompet tidak ditemukan");
+    dompetId = d.id;
+  }
   const tx = await prisma.transaksi.create({
     data: {
       userId: user.id,
@@ -40,6 +48,7 @@ export async function createTransaksi(input: z.infer<typeof transaksiSchema>) {
       jumlah,
       hargaSatuan,
       targetId,
+      dompetId,
       tanggal,
       kategori: p.kategori.trim(),
       produkId: p.produkId || null,

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ambilUser } from "@/lib/auth";
-import { getSaldo, getRingkasanKategori, getGrafikHarian, getAnggaranVsRealisasi, getInsight, type Periode } from "@/lib/store";
+import { getSaldo, getRingkasanKategori, getGrafikHarian, getAnggaranVsRealisasi, getInsight, getSaldoPerDompet, type Periode } from "@/lib/store";
 import { formatRupiah, formatTanggalId } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -33,12 +33,13 @@ export default async function Dashboard({
   const user = await ambilUser();
   if (!user) redirect("/login");
   const periode: Periode = p === "minggu" || p === "bulan" ? p : "semua";
-  const [saldo, kategori, harian, anggaran, insight] = await Promise.all([
+  const [saldo, kategori, harian, anggaran, insight, dompets] = await Promise.all([
     getSaldo(periode, user.id),
     getRingkasanKategori(periode, user.id),
     getGrafikHarian(user.id),
     getAnggaranVsRealisasi(undefined, user.id),
     getInsight(user.id),
+    getSaldoPerDompet(periode, user.id),
   ]);
   const maxDonat = Math.max(1, ...kategori.map((k) => k.jumlah));
   const perhatian = [...anggaran.item]
@@ -70,6 +71,15 @@ export default async function Dashboard({
             <ArrowDownRight className="h-3 w-3" />
             Keluar Rp{formatRupiah(saldo.totalKeluar)}
           </Badge>
+          {dompets.length > 1 && (
+            <span className="flex flex-wrap gap-1">
+              {dompets.map((d) => (
+                <span key={d.id} className="font-mono text-[11px] text-muted">
+                  {d.nama} Rp{formatRupiah(d.saldo)}
+                </span>
+              ))}
+            </span>
+          )}
           <span className="ml-auto flex items-center gap-1">
             <RekapButtons bulan={bulanIni()} />
             {(["semua", "minggu", "bulan"] as Periode[]).map((x) => (

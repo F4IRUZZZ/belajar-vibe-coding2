@@ -32,6 +32,9 @@ async function bersih() {
   await prisma.transaksi.deleteMany();
   await prisma.produk.deleteMany();
   await prisma.anggaran.deleteMany();
+  await prisma.target.deleteMany();
+  await prisma.jadwal.deleteMany();
+  await prisma.dompet.deleteMany();
 }
 
 beforeAll(bersih);
