@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { Download, LogOut, Monitor, Moon, Smartphone, Sun, UserRound } from "lucide-react";
 import { logout } from "@/lib/actions/auth";
+import { InstallButton } from "@/components/install-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { SegmentedControl } from "@/components/ui/segmented";
@@ -112,12 +113,8 @@ export function PengaturanClient({
       <SettingRow
         icon={<Smartphone className="h-4 w-4" />}
         title="Install sebagai aplikasi HP"
-        description="Buka di Chrome Android, menu, lalu “Add to Home screen”."
-        control={
-          <Button variant="secondary" className="shrink-0" onClick={() => { window.location.href = "/manifest.json"; }}>
-            Manifest
-          </Button>
-        }
+        description="Bisa dibuka offline (menu + data terakhir). Data baru butuh internet."
+        control={<InstallButton />}
       />
     </div>
   );
