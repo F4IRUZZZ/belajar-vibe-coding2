@@ -87,3 +87,18 @@ model Hutang {
   @@index([arah, status])
   @@index([userId])
 }
+
+// Anggaran pengeluaran per kategori per bulan ("2026-09").
+// userId NULL = single-tenant (hari ini); di Postgres, NULL tidak bentrok di @@unique.
+model Anggaran {
+  id        String   @id @default(cuid())
+  userId    String?
+  kategori  String
+  batas     Int // Rupiah per bulan
+  bulan     String // YYYY-MM
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, kategori, bulan])
+  @@index([userId, bulan])
+}

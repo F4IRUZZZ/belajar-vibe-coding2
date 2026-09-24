@@ -9,5 +9,8 @@ export default defineConfig({
     environment: "node",
     include: ["lib/**/*.test.ts"],
     setupFiles: ["./vitest.setup.ts"],
+    // File test berbagi satu DB test → jalankan serial agar beforeEach
+    // deleteMany tidak saling menghapus data antar file.
+    poolOptions: { forks: { singleFork: true } },
   },
 });

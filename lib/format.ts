@@ -44,3 +44,20 @@ export function startOfMonth(): Date {
   d.setHours(0, 0, 0, 0);
   return d;
 }
+
+// Bulan berjalan "YYYY-MM" (lokal).
+export function bulanIni(): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+}
+
+// Batas lokal satu bulan "YYYY-MM" -> [dari, sampai).
+export function rentangBulan(bulan: string): { dari: Date; sampai: Date } {
+  const m = /^(\d{4})-(\d{2})$/.exec(bulan);
+  if (!m) throw new Error("Bulan harus YYYY-MM");
+  const th = Number(m[1]);
+  const bl = Number(m[2]);
+  if (bl < 1 || bl > 12) throw new Error("Bulan harus YYYY-MM");
+  return { dari: new Date(th, bl - 1, 1), sampai: new Date(th, bl, 1) };
+}

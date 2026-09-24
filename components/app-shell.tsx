@@ -9,6 +9,7 @@ import {
   HandCoins,
   LayoutDashboard,
   Package,
+  PiggyBank,
   Plus,
   Settings,
   Wallet,
@@ -20,6 +21,7 @@ const NAV = [
   { href: "/transaksi", label: "Transaksi", icon: ArrowLeftRight },
   { href: "/produk", label: "Produk", icon: Package },
   { href: "/hutang", label: "Hutang", icon: HandCoins },
+  { href: "/anggaran", label: "Anggaran", icon: PiggyBank },
   { href: "/pengaturan", label: "Pengaturan", icon: Settings },
 ];
 

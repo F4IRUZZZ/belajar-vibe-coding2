@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "./prisma";
 import type { Prisma } from "@prisma/client";
-import { startOfMonth, startOfWeek } from "./format";
+import { bulanIni, rentangBulan, startOfMonth, startOfWeek } from "./format";
 
 export type Periode = "semua" | "minggu" | "bulan";
 
@@ -127,4 +127,31 @@ export async function getHutang() {
     piutang: rows.filter((r) => r.arah === "piutang"),
     sisa,
   };
+}
+
+export type StatusAnggaran = "aman" | "waspada" | "bocor";
+
+// Anggaran vs realisasi keluar bulan tertentu + kategori tanpa anggaran.
+export async function getAnggaranVsRealisasi(bulan: string = bulanIni()) {
+  const { dari, sampai } = rentangBulan(bulan);
+  const [anggaran, keluar] = await Promise.all([
+    prisma.anggaran.findMany({ where: { userId: null, bulan }, orderBy: { kategori: "asc" } }),
+    prisma.transaksi.groupBy({
+      by: ["kategori"],
+      where: { userId: null, jenis: "keluar", tanggal: { gte: dari, lt: sampai } },
+      _sum: { jumlah: true },
+    }),
+  ]);
+  const realisasi = new Map(keluar.map((k) => [k.kategori, k._sum.jumlah ?? 0]));
+  const item = anggaran.map((a) => {
+    const terpakai = realisasi.get(a.kategori) ?? 0;
+    const persen = a.batas > 0 ? Math.round((terpakai / a.batas) * 100) : 0;
+    const status: StatusAnggaran = persen > 100 ? "bocor" : persen >= 80 ? "waspada" : "aman";
+    realisasi.delete(a.kategori);
+    return { ...a, terpakai, persen, status };
+  });
+  const tanpaAnggaran = [...realisasi.entries()]
+    .map(([kategori, terpakai]) => ({ kategori, terpakai }))
+    .sort((a, b) => b.terpakai - a.terpakai);
+  return { bulan, item, tanpaAnggaran };
 }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getSaldo, getRingkasanKategori, getGrafikHarian, type Periode } from "@/lib/store";
+import { getSaldo, getRingkasanKategori, getGrafikHarian, getAnggaranVsRealisasi, type Periode } from "@/lib/store";
 import { formatRupiah } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import {
   ArrowUpRight,
   HandCoins,
   Package,
+  PiggyBank,
   PlusCircle,
   Tags,
   Wallet,
@@ -25,12 +26,16 @@ export default async function Dashboard({
 }) {
   const { p } = await searchParams;
   const periode: Periode = p === "minggu" || p === "bulan" ? p : "semua";
-  const [saldo, kategori, harian] = await Promise.all([
+  const [saldo, kategori, harian, anggaran] = await Promise.all([
     getSaldo(periode),
     getRingkasanKategori(periode),
     getGrafikHarian(),
+    getAnggaranVsRealisasi(),
   ]);
   const maxDonat = Math.max(1, ...kategori.map((k) => k.jumlah));
+  const perhatian = [...anggaran.item]
+    .sort((a, b) => b.persen - a.persen)
+    .slice(0, 4);
 
   return (
     <div>
@@ -74,8 +79,52 @@ export default async function Dashboard({
       <div className="mb-6 grid gap-3 lg:grid-cols-2">
         <Card>
           <CardContent className="p-4">
-            <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted">Keluar per kategori</p>
-            {kategori.length === 0 ? (
+            <div className="mb-3 flex items-center justify-between">
+              <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
+                Anggaran {anggaran.bulan}
+              </p>
+              <Link href="/anggaran" className="font-mono text-[11px] text-irish-soft hover:text-ink">
+                Kelola
+              </Link>
+            </div>
+            {anggaran.item.length === 0 ? (
+              <EmptyState
+                icon={<PiggyBank className="h-5 w-5" />}
+                title="Belum ada anggaran"
+                hint="Tetapkan batas belanja agar kebocoran ketahuan sejak awal."
+                action={
+                  <Link href="/anggaran" className={cn(buttonVariants({ variant: "secondary", size: "sm" }))}>
+                    <PlusCircle className="h-3.5 w-3.5" />
+                    Buat anggaran
+                  </Link>
+                }
+              />
+            ) : (
+              <div className="space-y-2.5">
+                {perhatian.map((a) => (
+                  <div key={a.id}>
+                    <div className="mb-1 flex justify-between text-[13px]">
+                      <span className="flex items-center gap-1.5">
+                        {a.kategori}
+                        <Badge variant={a.status === "bocor" ? "bad" : a.status === "waspada" ? "warn" : "ok"}>
+                          {a.persen}%
+                        </Badge>
+                      </span>
+                      <span className="font-mono text-muted">Rp{formatRupiah(a.terpakai)} / Rp{formatRupiah(a.batas)}</span>
+                    </div>
+                    <Progress value={Math.min(100, a.persen)} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="mb-6">
+        <CardContent className="p-4">
+          <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted">Keluar per kategori</p>
+          {kategori.length === 0 ? (
               <EmptyState
                 icon={<Tags className="h-5 w-5" />}
                 title="Belum ada pengeluaran"
@@ -102,8 +151,6 @@ export default async function Dashboard({
             )}
           </CardContent>
         </Card>
-        <CashflowChart data={harian} />
-      </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
         {[
