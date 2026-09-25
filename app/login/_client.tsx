@@ -83,12 +83,12 @@ export function LoginClient() {
             aria-label="Contoh tampilan saldo"
           >
             <div className="flex items-baseline justify-between">
-              <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
-                Contoh · Saldo
+              <p className="text-sm font-semibold">
+                Contoh saldo
               </p>
               <Badge variant="secondary">[CONTOH]</Badge>
             </div>
-            <p className="mt-1 text-3xl font-semibold tracking-tight">
+            <p className="mt-1 text-2xl font-semibold tracking-tight">
               Rp{formatRupiah(1250000)}
             </p>
             <div className="mt-3 flex gap-2">
@@ -117,9 +117,6 @@ export function LoginClient() {
         <div className="anim-fade lg:sticky lg:top-6">
           <Card className="shadow-card">
             <CardContent className="space-y-3 p-6">
-              <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
-                Masuk
-              </p>
               <h2 className="text-xl font-semibold tracking-tight">
                 Lanjut ke catatanmu
               </h2>
@@ -133,7 +130,7 @@ export function LoginClient() {
                 iuran, tidak ada password untuk dihafal.
               </p>
               <div className="border-t border-line/70 pt-3">
-                <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
+                <p className="mb-2 text-[14px] font-semibold">
                   Mulai
                 </p>
                 <ol className="space-y-1.5 text-[14px]">
