@@ -86,7 +86,7 @@ export function Select({
             openList();
           }
         }}
-        className="flex h-9 w-full items-center gap-2 rounded-md border border-line bg-transparent px-2.5 text-left text-sm outline-none transition-colors hover:border-muted focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-glow disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex h-9 w-full items-center gap-2 rounded-[10px] border border-line bg-transparent px-2.5 text-left text-sm outline-none transition-colors hover:border-muted focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-glow disabled:cursor-not-allowed disabled:opacity-50"
       >
         <span className={cn("min-w-0 flex-1 truncate", !selected && "text-muted")}>
           {selected?.label ?? placeholder ?? "…"}
