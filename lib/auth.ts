@@ -22,6 +22,7 @@ export type SesiUser = {
   id: string;
   email: string;
   username: string;
+  image: string | null;
   role: "pribadi" | "keluarga";
 };
 
@@ -32,6 +33,7 @@ export async function ambilUser(): Promise<SesiUser | null> {
     id: s.user.id,
     email: s.user.email,
     username: s.user.name,
+    image: s.user.image ?? null,
     role: "keluarga",
   };
 }

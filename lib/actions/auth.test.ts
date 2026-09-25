@@ -30,10 +30,16 @@ describe("sesi better-auth", () => {
     await expect(wajibUser()).rejects.toThrow("Masuk dulu");
   });
 
-  it("cookie sesi valid = user terpetakan (nama Google)", async () => {
+  it("cookie sesi valid = user terpetakan (nama + foto Google)", async () => {
     const s = await buatSesiTest("ibu@contoh.id", "Ibu");
+    await prisma.user.update({ where: { id: s.userId }, data: { image: "https://contoh.id/foto.jpg" } });
     box.cookie = s.cookie;
-    expect(await ambilUser()).toMatchObject({ id: s.userId, email: "ibu@contoh.id", username: "Ibu" });
+    expect(await ambilUser()).toMatchObject({
+      id: s.userId,
+      email: "ibu@contoh.id",
+      username: "Ibu",
+      image: "https://contoh.id/foto.jpg",
+    });
   });
 
   it("token basi/kedaluwarsa = anonim", async () => {

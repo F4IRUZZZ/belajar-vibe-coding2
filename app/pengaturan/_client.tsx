@@ -46,7 +46,7 @@ export function PengaturanClient({
 }: {
   csvHref: string;
   hutangHref: string;
-  user: { email: string; username: string; role: string } | null;
+  user: { email: string; username: string; image: string | null; role: string } | null;
 }) {
   const router = useRouter();
   const { theme, setTheme, resolvedTheme } = useTheme();
@@ -65,7 +65,13 @@ export function PengaturanClient({
   return (
     <div className="space-y-3">
       <SettingRow
-        icon={<UserRound className="h-4 w-4" />}
+        icon={
+          user?.image ? (
+            <img src={user.image} alt="" className="h-9 w-9 rounded-full object-cover" referrerPolicy="no-referrer" />
+          ) : (
+            <UserRound className="h-4 w-4" />
+          )
+        }
         title={user ? `${user.username} · ${user.role}` : "Akun"}
         description={user ? user.email : "Belum masuk"}
         control={
