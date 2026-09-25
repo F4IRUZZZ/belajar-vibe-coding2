@@ -72,7 +72,7 @@ export default async function Dashboard({
             <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
               Saldo · {labelPeriode}
             </p>
-            <h1 className={`mt-0.5 text-3xl font-semibold tracking-tight ${saldo.saldo < 0 ? "text-bad" : "text-ink"}`}>
+            <h1 className={`mt-0.5 text-2xl font-semibold tracking-tight ${saldo.saldo < 0 ? "text-bad" : "text-ink"}`}>
               <AnimatedNumber value={saldo.saldo} />
             </h1>
           </div>
@@ -146,7 +146,7 @@ export default async function Dashboard({
         <Card>
           <CardContent className="p-4">
             <div className="mb-3 flex items-center justify-between">
-              <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
+              <p className="text-[15px] font-semibold">
                 Anggaran {anggaran.bulan}
               </p>
               <Link href="/anggaran" className="font-mono text-[11px] text-irish-soft hover:text-ink">
@@ -207,7 +207,7 @@ export default async function Dashboard({
       <Reveal>
       <Card className="mb-6">
         <CardContent className="p-4">
-          <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted">Keluar per kategori</p>
+          <p className="mb-3 text-[15px] font-semibold">Keluar per kategori</p>
           {kategori.length === 0 ? (
               <EmptyState
                 icon={<Tags className="h-5 w-5" />}
@@ -241,8 +241,8 @@ export default async function Dashboard({
         <Reveal>
         <Card className="mb-6">
           <CardContent className="p-4">
-            <p className="mb-2 flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
-              <Lightbulb className="h-3.5 w-3.5" />
+            <p className="mb-2 flex items-center gap-1.5 text-[15px] font-semibold">
+              <Lightbulb className="h-4 w-4 text-warn" />
               Insight bulan ini
             </p>
             <ul className="space-y-1.5 text-[13px]">

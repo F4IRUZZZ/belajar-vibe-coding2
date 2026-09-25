@@ -36,14 +36,20 @@ export default async function TransaksiPage({
         title="Transaksi"
         description="catat gaji mingguan, belanja, koreksi salah ketik"
       />
-      <TransaksiForm produk={produk} targets={targets.map((t) => ({ id: t.id, nama: t.nama }))} dompets={dompets} />
-      <TransaksiList
-        initial={JSON.parse(JSON.stringify(rows))}
-        initialCursor={nextCursor}
-        total={total}
-        tab={tab ?? "semua"}
-        search={q ?? ""}
-      />
+      <div className="grid items-start gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
+        <div className="lg:sticky lg:top-20">
+          <TransaksiForm produk={produk} targets={targets.map((t) => ({ id: t.id, nama: t.nama }))} dompets={dompets} />
+        </div>
+        <div className="min-w-0">
+          <TransaksiList
+            initial={JSON.parse(JSON.stringify(rows))}
+            initialCursor={nextCursor}
+            total={total}
+            tab={tab ?? "semua"}
+            search={q ?? ""}
+          />
+        </div>
+      </div>
     </div>
   );
 }

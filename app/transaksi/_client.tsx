@@ -292,11 +292,11 @@ export function TransaksiList({
                   checked={sel.length === rows.length && rows.length > 0}
                   onChange={toggleAll}
                   aria-label="Pilih semua"
-                  className="h-3.5 w-3.5 accent-[#5b9cff]"
+                  className="h-3.5 w-3.5 accent-[#059669]"
                 />
               </TH>
               <TH>Tanggal</TH>
-              <TH>Jenis</TH>
+              <TH className="hidden sm:table-cell">Jenis</TH>
               <TH align="right">Jumlah</TH>
               <TH>Kategori</TH>
               <TH align="right">Aksi</TH>
@@ -311,11 +311,11 @@ export function TransaksiList({
                         checked={sel.includes(t.id)}
                         onChange={() => toggle(t.id)}
                         aria-label={`Pilih transaksi ${t.kategori}`}
-                        className="h-3.5 w-3.5 accent-[#5b9cff]"
+                        className="h-3.5 w-3.5 accent-[#059669]"
                       />
                     </TD>
                     <TD mono>{new Date(t.tanggal).toISOString().slice(0, 10)}</TD>
-                    <TD><Badge variant={t.jenis === "masuk" ? "ok" : "bad"}>{t.jenis}</Badge></TD>
+                    <TD className="hidden sm:table-cell"><Badge variant={t.jenis === "masuk" ? "ok" : "bad"}>{t.jenis}</Badge></TD>
                     <TD align="right" className="font-medium">Rp{formatRupiah(t.jumlah)}</TD>
                     <TD>{t.kategori}{t.produk ? <span className="text-muted"> · {t.produk.nama}</span> : null}</TD>
                     <TD align="right">
@@ -453,7 +453,7 @@ export function SampahList({ initial }: { initial: Tx[] }) {
                   checked={sel.length === initial.length}
                   onChange={() => setSel((s) => (s.length === initial.length ? [] : initial.map((t) => t.id)))}
                   aria-label="Pilih semua"
-                  className="h-3.5 w-3.5 accent-[#5b9cff]"
+                  className="h-3.5 w-3.5 accent-[#059669]"
                 />
               </TH>
               <TH>Dihapus</TH>
@@ -471,7 +471,7 @@ export function SampahList({ initial }: { initial: Tx[] }) {
                       checked={sel.includes(t.id)}
                       onChange={() => toggle(t.id)}
                       aria-label={`Pilih ${t.kategori}`}
-                      className="h-3.5 w-3.5 accent-[#5b9cff]"
+                      className="h-3.5 w-3.5 accent-[#059669]"
                     />
                   </TD>
                   <TD mono>{t.deletedAt ? formatTanggalId(t.deletedAt) : "—"}</TD>

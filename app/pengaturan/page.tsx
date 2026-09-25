@@ -11,7 +11,7 @@ export default async function PengaturanPage() {
     <div className="space-y-3">
       <PageHeader
         title="Pengaturan"
-        description="akun, dompet, export, tema"
+        description="akun, dompet, AI, export, tema"
       />
       <PengaturanClient csvHref="/api/export" hutangHref="/api/export/hutang" user={user} />
       <DompetManager initial={dompets} />

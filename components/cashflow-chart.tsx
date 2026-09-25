@@ -140,7 +140,7 @@ export function CashflowChart({
             <AnimatedNumber value={totals.masuk} />
           </span>
           <span className="inline-flex items-center gap-1">
-            <ArrowDownRight className="h-3.5 w-3.5 text-glow" />
+            <ArrowDownRight className="h-3.5 w-3.5 text-bad" />
             <AnimatedNumber value={totals.keluar} />
           </span>
           <span className={cn("ml-auto font-semibold", totals.net < 0 ? "text-bad" : "text-ink")}>
@@ -170,12 +170,12 @@ export function CashflowChart({
           >
             <defs>
               <linearGradient id={gradMasuk} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#7fd6a4" stopOpacity="0.32" />
-                <stop offset="100%" stopColor="#7fd6a4" stopOpacity="0" />
+                <stop offset="0%" stopColor="#34d399" stopOpacity="0.32" />
+                <stop offset="100%" stopColor="#34d399" stopOpacity="0" />
               </linearGradient>
               <linearGradient id={gradKeluar} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#5b9cff" stopOpacity="0.35" />
-                <stop offset="100%" stopColor="#5b9cff" stopOpacity="0" />
+                <stop offset="0%" stopColor="#ef8f7d" stopOpacity="0.35" />
+                <stop offset="100%" stopColor="#ef8f7d" stopOpacity="0" />
               </linearGradient>
             </defs>
 
@@ -210,7 +210,7 @@ export function CashflowChart({
                   key={`l-m-${mode}`}
                   d={lineMasuk}
                   fill="none"
-                  stroke="#7fd6a4"
+                  stroke="#34d399"
                   strokeWidth="2"
                   strokeLinecap="round"
                   vectorEffect="non-scaling-stroke"
@@ -234,7 +234,7 @@ export function CashflowChart({
                   key={`l-k-${mode}`}
                   d={lineKeluar}
                   fill="none"
-                  stroke="#5b9cff"
+                  stroke="#ef8f7d"
                   strokeWidth="2"
                   strokeLinecap="round"
                   vectorEffect="non-scaling-stroke"
@@ -255,7 +255,7 @@ export function CashflowChart({
                       cy={showKeluar && !showMasuk ? geom.keluarPts[i].y : geom.masukPts[i].y}
                       r={isH ? 4.5 : 0}
                       fill="var(--color-panel)"
-                      stroke={showKeluar && !showMasuk ? "#5b9cff" : "#7fd6a4"}
+                      stroke={showKeluar && !showMasuk ? "#ef8f7d" : "#34d399"}
                       strokeWidth="2"
                     />
                   )}
@@ -281,7 +281,7 @@ export function CashflowChart({
             >
               <p className="font-mono text-[11px] text-muted">{hovered.label} · minggu ini</p>
               <p className="mt-0.5 text-[12px] text-ok">Masuk Rp{formatRupiah(hovered.masuk)}</p>
-              <p className="text-[12px] text-irish-soft">Keluar Rp{formatRupiah(hovered.keluar)}</p>
+              <p className="text-[12px] text-bad">Keluar Rp{formatRupiah(hovered.keluar)}</p>
             </div>
           )}
 
@@ -308,7 +308,7 @@ export function CashflowChart({
             <span aria-hidden className="h-0.5 w-4 rounded-full bg-ok" /> masuk
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span aria-hidden className="h-0.5 w-4 rounded-full bg-glow" /> keluar
+            <span aria-hidden className="h-0.5 w-4 rounded-full bg-bad" /> keluar
           </span>
           <span>arahkan kursor untuk detail</span>
         </p>
