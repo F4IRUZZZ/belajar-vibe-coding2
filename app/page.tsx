@@ -1,0 +1,295 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { ambilUser } from "@/lib/auth";
+import { getSaldo, getRingkasanKategori, getGrafikHarian, getGrafikBulanan, getAnggaranVsRealisasi, getInsight, getSaldoPerDompet, type Periode, type Rentang } from "@/lib/store";
+import { formatRupiah, formatTanggalId, parseTanggalLokal } from "@/lib/format";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { buttonVariants } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/field";
+import { CashflowChart } from "@/components/cashflow-chart";
+import { RekapButtons } from "@/components/rekap-buttons";
+import { AnimatedNumber } from "@/components/animated-number";
+import { Reveal } from "@/components/reveal";
+import { bulanIni } from "@/lib/format";
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  HandCoins,
+  Lightbulb,
+  Package,
+  PiggyBank,
+  PlusCircle,
+  Tags,
+  Wallet,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+
+export default async function Dashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ p?: string; dari?: string; sampai?: string; grafik?: string }>;
+}) {
+  const { p, dari, sampai, grafik } = await searchParams;
+  const user = await ambilUser();
+  if (!user) redirect("/login");
+  // Rentang custom mengalahkan pil periode.
+  let rentang: Rentang | undefined;
+  let labelPeriode: string;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dari ?? "") && /^\d{4}-\d{2}-\d{2}$/.test(sampai ?? "") && dari! <= sampai!) {
+    const akhir = parseTanggalLokal(sampai!);
+    akhir.setDate(akhir.getDate() + 1); // sampai inklusif
+    rentang = { dari: parseTanggalLokal(dari!), sampai: akhir };
+    labelPeriode = `${dari} s/d ${sampai}`;
+  } else {
+    const periode: Periode = p === "minggu" || p === "bulan" ? p : "semua";
+    labelPeriode = periode === "semua" ? "Semua waktu" : periode === "minggu" ? "Minggu ini" : "Bulan ini";
+  }
+  const periode: Periode = rentang ? "semua" : p === "minggu" || p === "bulan" ? p : "semua";
+  const modeGrafik = grafik === "bulan" ? "bulan" : "minggu";
+  const [saldo, kategori, harian, anggaran, insight, dompets] = await Promise.all([
+    getSaldo(periode, user.id, rentang),
+    getRingkasanKategori(periode, user.id, rentang),
+    modeGrafik === "bulan" ? getGrafikBulanan(user.id) : getGrafikHarian(user.id),
+    getAnggaranVsRealisasi(undefined, user.id),
+    getInsight(user.id),
+    getSaldoPerDompet(periode, user.id),
+  ]);
+  const maxDonat = Math.max(1, ...kategori.map((k) => k.jumlah));
+  const perhatian = [...anggaran.item]
+    .sort((a, b) => b.persen - a.persen)
+    .slice(0, 4);
+
+  return (
+    <div>
+      <div className="relative mb-6 overflow-hidden rounded-2xl border border-line bg-panel p-5 shadow-card">
+        <div className="relative flex items-center gap-3">
+          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-irish-deep text-white">
+            <Wallet className="h-5 w-5" strokeWidth={2.2} />
+          </span>
+          <div>
+            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
+              Saldo · {labelPeriode}
+            </p>
+            <h1 className={`mt-0.5 text-2xl font-semibold tracking-tight ${saldo.saldo < 0 ? "text-bad" : "text-ink"}`}>
+              <AnimatedNumber value={saldo.saldo} />
+            </h1>
+          </div>
+        </div>
+        <div className="relative mt-4 flex flex-wrap items-center gap-2">
+          <Badge variant="ok">
+            <ArrowUpRight className="h-3 w-3" />
+            Masuk Rp{formatRupiah(saldo.totalMasuk)}
+          </Badge>
+          <Badge variant="bad">
+            <ArrowDownRight className="h-3 w-3" />
+            Keluar Rp{formatRupiah(saldo.totalKeluar)}
+          </Badge>
+          {dompets.length > 1 && (
+            <span className="flex flex-wrap gap-1">
+              {dompets.map((d) => (
+                <span key={d.id} className="font-mono text-[11px] text-muted">
+                  {d.nama} Rp{formatRupiah(d.saldo)}
+                </span>
+              ))}
+            </span>
+          )}
+          <span className="ml-auto flex items-center gap-1">
+            <RekapButtons bulan={bulanIni()} />
+            {(["semua", "minggu", "bulan"] as Periode[]).map((x) => (
+              <Link
+                key={x}
+                href={x === "semua" ? "/" : `/?p=${x}`}
+                className={`rounded-md border px-2.5 py-1 font-mono text-[11px] transition-colors ${!rentang && periode === x ? "border-glow/40 bg-glow/15 text-irish-soft" : "border-line text-muted hover:text-ink"}`}
+              >
+                {x === "semua" ? "Semua" : x === "minggu" ? "Minggu" : "Bulan"}
+              </Link>
+            ))}
+            {rentang && (
+              <Link
+                href="/"
+                className="rounded-md border border-glow/40 bg-glow/15 px-2.5 py-1 font-mono text-[11px] text-irish-soft"
+              >
+                Reset
+              </Link>
+            )}
+          </span>
+        </div>
+        <form action="/" method="get" className="relative mt-3 flex flex-wrap items-center gap-2">
+          <input
+            type="date"
+            name="dari"
+            defaultValue={dari ?? ""}
+            aria-label="Dari tanggal"
+            className="h-8 rounded-md border border-line bg-transparent px-2 text-sm outline-none focus:border-muted"
+          />
+          <span className="font-mono text-[11px] text-muted">s/d</span>
+          <input
+            type="date"
+            name="sampai"
+            defaultValue={sampai ?? ""}
+            aria-label="Sampai tanggal"
+            className="h-8 rounded-md border border-line bg-transparent px-2 text-sm outline-none focus:border-muted"
+          />
+          <button
+            type="submit"
+            className="h-8 rounded-md border border-line px-2.5 font-mono text-[11px] text-muted transition-colors hover:text-ink"
+          >
+            Tampil
+          </button>
+        </form>
+      </div>
+
+      <div className="mb-6 grid gap-3 lg:grid-cols-2">
+        <Reveal>
+        <Card>
+          <CardContent className="p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-[15px] font-semibold">
+                Anggaran {anggaran.bulan}
+              </p>
+              <Link href="/anggaran" className="font-mono text-[11px] text-irish-soft hover:text-ink">
+                Kelola
+              </Link>
+            </div>
+            {anggaran.item.length === 0 ? (
+              <EmptyState
+                icon={<PiggyBank className="h-5 w-5" />}
+                title="Belum ada anggaran"
+                hint="Tetapkan batas belanja agar kebocoran ketahuan sejak awal."
+                action={
+                  <Link href="/anggaran" className={cn(buttonVariants({ variant: "secondary", size: "sm" }))}>
+                    <PlusCircle className="h-3.5 w-3.5" />
+                    Buat anggaran
+                  </Link>
+                }
+              />
+            ) : (
+              <div className="space-y-2.5">
+                {perhatian.map((a) => (
+                  <div key={a.id}>
+                    <div className="mb-1 flex justify-between text-[13px]">
+                      <span className="flex items-center gap-1.5">
+                        {a.kategori}
+                        <Badge variant={a.status === "bocor" ? "bad" : a.status === "waspada" ? "warn" : "ok"}>
+                          {a.persen}%
+                        </Badge>
+                      </span>
+                      <span className="font-mono text-muted">Rp{formatRupiah(a.terpakai)} / Rp{formatRupiah(a.batas)}</span>
+                    </div>
+                    <Progress value={Math.min(100, a.persen)} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        </Reveal>
+        <Reveal delay={0.08}>
+        <div>
+          <div className="mb-2 flex items-center justify-end gap-1">
+            <span className="font-mono text-[11px] text-muted">
+              {modeGrafik === "bulan" ? "12 bulan terakhir" : "7 hari terakhir"}
+            </span>
+            <Link
+              href={modeGrafik === "bulan" ? "/" : "/?grafik=bulan"}
+              className="rounded-md border border-line px-2 py-0.5 font-mono text-[11px] text-muted transition-colors hover:text-ink"
+            >
+              {modeGrafik === "bulan" ? "Mingguan" : "12 bulan"}
+            </Link>
+          </div>
+          <CashflowChart data={harian} />
+        </div>
+        </Reveal>
+      </div>
+
+      <Reveal>
+      <Card className="mb-6">
+        <CardContent className="p-4">
+          <p className="mb-3 text-[15px] font-semibold">Keluar per kategori</p>
+          {kategori.length === 0 ? (
+              <EmptyState
+                icon={<Tags className="h-5 w-5" />}
+                title="Belum ada pengeluaran"
+                hint="Catat transaksi pertama agar ringkasannya muncul di sini."
+                action={
+                  <Link href="/transaksi" className={cn(buttonVariants({ variant: "secondary", size: "sm" }))}>
+                    <PlusCircle className="h-3.5 w-3.5" />
+                    Catat transaksi
+                  </Link>
+                }
+              />
+            ) : (
+              <div className="space-y-2.5">
+                {kategori.map((k) => (
+                  <div key={k.kategori}>
+                    <div className="mb-1 flex justify-between text-[13px]">
+                      <span>{k.kategori}</span>
+                      <span className="font-mono text-muted">Rp{formatRupiah(k.jumlah)} ({k.persen}%)</span>
+                    </div>
+                    <Progress value={(k.jumlah / maxDonat) * 100} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </Reveal>
+
+      {(insight.persenKeluar != null || insight.kategoriNaik.length > 0 || insight.tempoDekat.length > 0) && (
+        <Reveal>
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <p className="mb-2 flex items-center gap-1.5 text-[15px] font-semibold">
+              <Lightbulb className="h-4 w-4 text-warn" />
+              Insight bulan ini
+            </p>
+            <ul className="space-y-1.5 text-[13px]">
+              {insight.persenKeluar != null && (
+                <li>
+                  Pengeluaran{" "}
+                  <Badge variant={insight.persenKeluar > 0 ? "warn" : "ok"}>
+                    {insight.persenKeluar > 0 ? `naik ${insight.persenKeluar}%` : insight.persenKeluar < 0 ? `turun ${-insight.persenKeluar}%` : "sama"}
+                  </Badge>{" "}
+                  vs bulan lalu (Rp{formatRupiah(insight.keluarIni)} vs Rp{formatRupiah(insight.keluarLalu)}).
+                </li>
+              )}
+              {insight.kategoriNaik.map((k) => (
+                <li key={k.kategori}>
+                  {k.kategori} naik {k.persen}% (Rp{formatRupiah(k.lalu)} jadi Rp{formatRupiah(k.ini)}).
+                </li>
+              ))}
+              {insight.tempoDekat.map((h) => (
+                <li key={h.id}>
+                  <Badge variant="bad">tempo</Badge>{" "}
+                  {h.arah} {h.pihak} Rp{formatRupiah(h.sisa)} jatuh {formatTanggalId(h.jatuhTempo)} —{" "}
+                  <Link href="/hutang" className="text-irish-soft hover:text-ink">lihat</Link>.
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+        </Reveal>
+      )}
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        {[
+          { href: "/transaksi", icon: PlusCircle, title: "Catat transaksi", desc: "Gaji, belanja, koreksi" },
+          { href: "/hutang", icon: HandCoins, title: "Hutang / Piutang", desc: "Cicil + auto ke kas" },
+          { href: "/produk", icon: Package, title: "Kelola produk", desc: "Beras, Sabun, …" },
+        ].map((c) => (
+          <Link key={c.href} href={c.href}>
+            <Card className="transition-colors hover:border-muted">
+              <CardContent className="p-4">
+                <c.icon className="mb-2 h-5 w-5 text-irish" strokeWidth={2.1} />
+                <div className="font-semibold">{c.title}</div>
+                <div className="text-sm text-muted">{c.desc}</div>
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}

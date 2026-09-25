@@ -1,0 +1,16 @@
+import path from "node:path";
+import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+  resolve: {
+    alias: { "@": path.resolve(__dirname, ".") },
+  },
+  test: {
+    environment: "node",
+    include: ["lib/**/*.test.ts"],
+    setupFiles: ["./vitest.setup.ts"],
+    // File test berbagi satu DB test → jalankan serial agar beforeEach
+    // deleteMany tidak saling menghapus data antar file.
+    poolOptions: { forks: { singleFork: true } },
+  },
+});

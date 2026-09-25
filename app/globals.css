@@ -1,0 +1,147 @@
+@import "tailwindcss";
+
+@theme {
+  --color-canvas: #14110d;
+  --color-panel: #1c1813;
+  --color-accent: #272119;
+  --color-ink: #f5f0e6;
+  --color-muted: #a89e8d;
+  --color-line: #322b20;
+  --color-glow: #10b981;
+  --color-irish: #10b981;
+  --color-irish-deep: #059669;
+  --color-irish-soft: #6ee7b7;
+  --color-ok: #34d399;
+  --color-warn: #f0b45a;
+  --color-bad: #ef8f7d;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --shadow-card: 0 1px 0 rgba(255, 248, 235, 0.06) inset, 0 12px 32px -16px rgba(0, 0, 0, 0.7);
+  --shadow-overlay: 0 24px 64px -16px rgba(0, 0, 0, 0.8);
+
+  --ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+:root {
+  color-scheme: dark;
+}
+
+/* Terang — menimpa token yang sama sehingga seluruh UI ikut berganti */
+.light {
+  color-scheme: light;
+
+  --color-canvas: #f7f3ea;
+  --color-panel: #fffdf8;
+  --color-accent: #efe8d8;
+  --color-ink: #1e1a14;
+  --color-muted: #6f6455;
+  --color-line: #e0d7c2;
+  --color-glow: #059669;
+  --color-irish: #059669;
+  --color-irish-deep: #047857;
+  --color-irish-soft: #047857;
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+  --color-bad: #c2410c;
+
+  --shadow-card: 0 1px 2px rgba(28, 25, 23, 0.05), 0 10px 28px -20px rgba(28, 25, 23, 0.22);
+  --shadow-overlay: 0 24px 64px -16px rgba(28, 25, 23, 0.28);
+}
+
+/* Custom selection — solid emerald, teks putih */
+::selection {
+  background: var(--color-irish-deep);
+  color: #ffffff;
+}
+
+/* ——— motion tokens (§33) ——— */
+@keyframes enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pop {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes draw-x {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.anim-enter { animation: enter 500ms var(--ease-enter) both; animation-delay: var(--d, 0ms); }
+.anim-pop { animation: pop 200ms var(--ease-enter) both; animation-delay: var(--d, 0ms); }
+.anim-fade { animation: fade-in 280ms ease-out both; }
+.anim-draw { transform-origin: left; animation: draw-x 1000ms var(--ease-enter) both; animation-delay: var(--d, 0ms); }
+.anim-live { animation: live-pulse 2s ease-in-out infinite; }
+.anim-drawer { animation: slide-in-right 350ms var(--ease-enter) both; }
+
+input[type="range"] { accent-color: var(--color-ink); }
+
+/* Engineering grid backdrop — identitas control surface, hanya untuk banner */
+.bg-grid {
+  background-image: radial-gradient(circle, color-mix(in oklab, var(--color-line), var(--color-ink) 16%) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+.mask-fade-b {
+  -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+}
+
+/* Hide scrollbars while keeping scroll */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Slim themed scrollbar for overlays (palette, drawer) */
+.scroll-slim {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line) transparent;
+}
+.scroll-slim::-webkit-scrollbar {
+  width: 8px;
+}
+.scroll-slim::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scroll-slim::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.scroll-slim::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

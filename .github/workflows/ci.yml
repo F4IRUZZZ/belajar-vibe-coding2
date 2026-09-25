@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: catatan_keuangan
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/catatan_keuangan?schema=public
+      DATABASE_URL_TEST: postgresql://postgres:postgres@localhost:5432/catatan_keuangan_test?schema=public
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx prisma validate
+      - run: npx prisma generate
+      - run: npx prisma migrate deploy
+
+      - name: Siapkan DB test
+        run: |
+          psql "$DATABASE_URL" -c "SELECT 1" >/dev/null
+          psql "$DATABASE_URL" -tc "SELECT 1 FROM pg_database WHERE datname='catatan_keuangan_test'" | grep -q 1 || psql "$DATABASE_URL" -c "CREATE DATABASE catatan_keuangan_test;"
+          DATABASE_URL="$DATABASE_URL_TEST" npx prisma db push
+        env:
+          PGPASSWORD: postgres
+
+      - run: npx tsc --noEmit
+      - run: npm test
+      - run: npm run build

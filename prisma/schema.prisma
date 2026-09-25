@@ -1,0 +1,229 @@
+// PostgreSQL untuk dev & produksi (migrasi dari SQLite).
+// Model diadaptasi dari schema.sql + schema-keuangan.sql (MySQL) di repo lama.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum JenisTransaksi {
+  masuk
+  keluar
+}
+
+enum ArahHutang {
+  hutang
+  piutang
+}
+
+enum StatusHutang {
+  belum
+  lunas
+}
+
+model Produk {
+  id        String   @id @default(cuid())
+  userId    String? // NULL = master shared global (mode single-tenant hari ini)
+  nama      String
+  namaLower String   @unique // unik case-insensitive
+  kategori  String   @default("Lainnya")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transaksi Transaksi[]
+
+  @@index([userId])
+}
+
+model Transaksi {
+  id        String         @id @default(cuid())
+  userId    String // pemilik baris (Fase 2, backfill dari NULL)
+  jenis     JenisTransaksi
+  jumlah    Int // Rupiah murni (integer, tanpa sen)
+  hargaSatuan Int? // Harga per unit saat beli (opsional, khusus keluar + produk)
+  tanggal   DateTime
+  kategori  String
+  produkId  String?
+  produk    Produk?        @relation(fields: [produkId], references: [id], onDelete: SetNull)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  catatan Catatan[]
+  hutangLunas Hutang[] @relation("HutangLunas")
+  targetId String?
+  target   Target? @relation(fields: [targetId], references: [id], onDelete: SetNull)
+  dompetId String?
+  dompet   Dompet? @relation(fields: [dompetId], references: [id], onDelete: Restrict)
+  deletedAt DateTime? // soft-delete: sampah 30 hari, lalu purge otomatis
+
+  @@index([jenis, tanggal])
+  @@index([kategori])
+  @@index([userId])
+  @@index([userId, deletedAt])
+}
+
+model Catatan {
+  id          String    @id @default(cuid())
+  transaksiId String
+  transaksi   Transaksi @relation(fields: [transaksiId], references: [id], onDelete: Cascade)
+  isi         String
+  createdAt   DateTime  @default(now())
+
+  @@index([transaksiId])
+}
+
+model Hutang {
+  id               String        @id @default(cuid())
+  userId           String // pemilik baris (Fase 2, backfill dari NULL)
+  arah             ArahHutang
+  pihak            String
+  jumlah           Int
+  dibayar          Int           @default(0)
+  tanggal          DateTime
+  jatuhTempo       DateTime?
+  keterangan       String?
+  status           StatusHutang  @default(belum)
+  transaksiIdLunas String?
+  transaksiLunas   Transaksi?    @relation("HutangLunas", fields: [transaksiIdLunas], references: [id], onDelete: SetNull)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([arah, status])
+  @@index([userId])
+}
+
+// Anggaran pengeluaran per kategori per bulan ("2026-09").
+model Anggaran {
+  id        String   @id @default(cuid())
+  userId    String
+  kategori  String
+  batas     Int // Rupiah per bulan
+  bulan     String // YYYY-MM
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, kategori, bulan])
+  @@index([userId, bulan])
+}
+
+// Target tabungan (sinking fund). Terkumpul = jumlah transaksi MASUK
+// milik user yang ditandai ke target ini (dihitung, bukan disimpan).
+model Target {
+  id        String      @id @default(cuid())
+  userId    String
+  nama      String
+  target    Int // Rupiah
+  deadline  DateTime?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  transaksi Transaksi[]
+
+  @@index([userId])
+}
+
+enum Frekuensi {
+  mingguan
+  bulanan
+}
+
+// Template transaksi berulang. Dieksekusi oleh jalankanJadwal (tombol manual
+// atau cron memanggil /api/jadwal/run). lastKunci = tanggal jatuh tempo yang
+// terakhir dieksekusi, anti-catat-ganda.
+model Jadwal {
+  id        String         @id @default(cuid())
+  userId    String
+  frekuensi Frekuensi
+  jenis     JenisTransaksi
+  jumlah    Int // Rupiah
+  kategori  String
+  catatan   String?
+  nextRun   DateTime
+  lastKunci String?
+  aktif     Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([userId, aktif])
+}
+
+// Sumber dana (Kas, Bank, E-wallet). Transaksi lama userId-lama ber-dompetId
+// NULL dibaca sebagai "Kas" di agregasi.
+model Dompet {
+  id        String      @id @default(cuid())
+  userId    String
+  nama      String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  transaksi Transaksi[]
+
+  @@unique([userId, nama])
+  @@index([userId])
+}
+
+// ===== better-auth (Google OAuth only) =====
+// Tabel huruf-kecil milik adapter; User/Session lama (huruf kapital) dihapus
+// setelah migrasi preservasi-ID. Semua userId data app menunjuk user.id ini.
+model user {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now()) @updatedAt
+  sessions      session[]
+  accounts      account[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("session")
+}
+
+model account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  user      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("account")
+}
+
+model verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@map("verification")
+}
